@@ -1,0 +1,23 @@
+# Build artifacts
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Qt / CMake
+*.autosave
+*.user
+*.user.*
+*.qmlc
+*.qrc.depends
+*.moc
+*_autogen/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/

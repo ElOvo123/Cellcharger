@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HelpDialog</class>
+ <widget class="QDialog" name="HelpDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>520</width>
+    <height>620</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>CellCharger Help</string>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>520</width>
+    <height>620</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>520</width>
+    <height>620</height>
+   </size>
+  </property>
+
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>25</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>25</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <property name="spacing">
+    <number>12</number>
+   </property>
+
+   <!-- Title -->
+   <item>
+    <widget class="QLabel" name="labelTitle">
+     <property name="text">
+      <string>CellCharger Interface</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>20</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+    </widget>
+   </item>
+
+   <!-- Separator -->
+   <item>
+    <widget class="QFrame" name="line">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+    </widget>
+   </item>
+
+   <!-- Scroll Area -->
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+
+       <!-- Description -->
+       <item>
+        <widget class="QLabel" name="labelDescription">
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="text">
+          <string>
+CellCharger is an open-source platform for DCIR and 
+capacity characterization of lithium-ion cells.
+
+The system enables controlled charge and discharge
+cycles, real-time monitoring, and data logging for
+battery performance evaluation.
+
+Developed in collaboration with FST Lisboa to support
+Formula Student engineering teams.
+          </string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Intended Use -->
+       <item>
+        <widget class="QGroupBox" name="groupIntendedUse">
+         <property name="title">
+          <string>Intended Use</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="labelIntendedUse">
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>
+For research, educational, and laboratory testing of 
+lithium-ion cells.
+
+Users are responsible for safe operation and compliance 
+with applicable standards.
+             </string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+       <!-- License -->
+       <item>
+        <widget class="QGroupBox" name="groupLicense">
+         <property name="title">
+          <string>License</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QLabel" name="labelLicense">
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>
+MIT License – Free to use, modify, and distribute.
+
+See repository for full license terms.
+             </string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+       <!-- Project Info -->
+       <item>
+        <widget class="QGroupBox" name="groupProjectInfo">
+         <property name="title">
+          <string>Project Information</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelProject">
+            <property name="text">
+             <string>Project:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="valueProject">
+            <property name="text">
+             <string>CellCharger</string>
+            </property>
+           </widget>
+          </item>
+
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelVersion">
+            <property name="text">
+             <string>Version:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="valueVersion">
+            <property name="text">
+             <string>1.0</string>
+            </property>
+           </widget>
+          </item>
+
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelBuild">
+            <property name="text">
+             <string>Build:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="valueBuild">
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelYear">
+            <property name="text">
+             <string>Year:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="valueYear">
+            <property name="text">
+             <string>2026</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+      </layout>
+     </widget>
+    </widget>
+   </item>
+
+   <!-- Footer -->
+   <item>
+    <widget class="QLabel" name="labelFooter">
+     <property name="text">
+      <string>© 2026 CellCharger Project</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="styleSheet">
+      <string>color: gray; font-size: 11px;</string>
+     </property>
+    </widget>
+   </item>
+
+  </layout>
+ </widget>
+
+ <resources/>
+ <connections/>
+</ui>
