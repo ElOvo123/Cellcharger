@@ -8,7 +8,7 @@ MainWindowView::MainWindowView(QWidget *parent)
 
     ui->setupUi(this);
     
-    connect(ui->menuHelp, &QMenu::aboutToShow, this, &MainWindowView::showHelpWindow);
+    connect(ui->menuHelp, &QMenu::aboutToShow, this, &MainWindowView::helpClicked);
     connect(ui->comsButton, &QToolButton::clicked, this, &MainWindowView::comsClicked);
     connect(ui->consoleButton, &QToolButton::clicked, this, &MainWindowView::consoleClicked);
 }

@@ -18,13 +18,14 @@ class MainWindowView : public QMainWindow {
 public:
     explicit MainWindowView(QWidget *parent = nullptr);
     ~MainWindowView();
-
+    void showHelpWindow();
+    
 signals:
+    void helpClicked();
     void comsClicked();
     void consoleClicked();
     
 private:
     Ui::MainWindow *ui;
     void centerWindow(QWidget* child);
-    void showHelpWindow();
 };

@@ -10,6 +10,7 @@ public:
     explicit MainWindowController(QWidget *parent = nullptr);
 
 private slots:
+    void onHelpWindow();
     void onComs();
     void onConsole();
 
