@@ -11,7 +11,9 @@ MainWindowController::MainWindowController(QWidget *parent)
 }
 
 void MainWindowController::onComs() {
+    MainWindowView::showComsWindow();
     backend.openComs();
+
 }
 
 void MainWindowController::onConsole() {

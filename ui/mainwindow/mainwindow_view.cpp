@@ -1,6 +1,7 @@
 #include "mainwindow_view.h"
 #include "ui_mainwindow.h"
 #include "help_dialog.h"
+#include "coms.h"
 
 MainWindowView::MainWindowView(QWidget *parent)
     : QMainWindow(parent),
@@ -33,4 +34,9 @@ void MainWindowView::showHelpWindow(){
     HelpDialog dialog(this);
     dialog.exec();
     centerWindow(&dialog);
+}
+
+void MainWindowView::showComsWindow() {
+    Coms dialog(this);
+    dialog.exec();
 }

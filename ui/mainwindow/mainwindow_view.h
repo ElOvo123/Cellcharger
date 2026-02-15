@@ -19,7 +19,8 @@ public:
     explicit MainWindowView(QWidget *parent = nullptr);
     ~MainWindowView();
     void showHelpWindow();
-    
+    void showComsWindow();
+
 signals:
     void helpClicked();
     void comsClicked();
