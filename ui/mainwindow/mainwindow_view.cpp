@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "help_dialog.h"
 #include "coms.h"
+#include "coms_controller.h"
 
 MainWindowView::MainWindowView(QWidget *parent)
     : QMainWindow(parent),
@@ -37,6 +38,7 @@ void MainWindowView::showHelpWindow(){
 }
 
 void MainWindowView::showComsWindow() {
-    Coms dialog(this);
-    dialog.exec();
+    Coms *view = new Coms(this);
+    ComsController *controller = new ComsController(view, this);
+    view->show();
 }
