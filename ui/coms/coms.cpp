@@ -3,9 +3,7 @@
 
 #include <QComboBox>
 
-Coms::Coms(QWidget *parent)
-    : QDialog(parent),
-      ui(new Ui::Coms)
+Coms::Coms(QWidget *parent) : QDialog(parent), ui(new Ui::Coms)
 {
     ui->setupUi(this);
 

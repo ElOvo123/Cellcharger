@@ -4,9 +4,7 @@
 #include "coms.h"
 #include "coms_controller.h"
 
-MainWindowView::MainWindowView(QWidget *parent)
-    : QMainWindow(parent),
-      ui(new Ui::MainWindow) {
+MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
     

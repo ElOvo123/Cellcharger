@@ -1,10 +1,7 @@
 #include "coms_controller.h"
 #include <iostream>
 
-ComsController::ComsController(Coms *view,
-                               QObject *parent)
-    : QObject(parent),
-      m_view(view)
+ComsController::ComsController(Coms *view, QObject *parent) : QObject(parent), m_view(view)
 {
     connect(m_view,&Coms::typeChanged, this, &ComsController::onTypeChanged);
     onTypeChanged(0);
