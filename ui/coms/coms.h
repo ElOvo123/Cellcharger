@@ -2,6 +2,7 @@
 #define COMS_H
 
 #include <QDialog>
+#include "coms_config.h"
 
 enum class ComsType
 {
@@ -24,9 +25,13 @@ public:
     ~Coms();
 
     ComsType currentType() const;
+    ComsConfig currentConfig() const;
+    void setStatusText(const QString &text);
+    void setConnectedUI(bool connected);
 
 signals:
     void typeChanged(int index);
+    void connectToggled(bool connected);
 
 private:
     Ui::Coms *ui;

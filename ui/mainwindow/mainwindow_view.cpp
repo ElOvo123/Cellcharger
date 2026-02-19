@@ -35,8 +35,13 @@ void MainWindowView::showHelpWindow(){
     centerWindow(&dialog);
 }
 
-void MainWindowView::showComsWindow() {
+void MainWindowView::showComsWindow()
+{
     Coms *view = new Coms(this);
-    ComsController *controller = new ComsController(view, this);
+    ComsBackend *backend = new ComsBackend(this);
+
+    ComsController *controller =
+        new ComsController(view, backend, this);
+
     view->show();
 }
