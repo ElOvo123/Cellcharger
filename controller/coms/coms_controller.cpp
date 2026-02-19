@@ -15,10 +15,26 @@ void ComsController::onTypeChanged(int)
     {
         case ComsType::Serial:
             std::cout << "Controller: Serial selected" << std::endl;
+            backend.close_all();
+            backend.init_serial();
             break;
 
-        case ComsType::Socket:
-            std::cout << "Controller: Socket selected" << std::endl;
+        case ComsType::Socket_vcan:
+            std::cout << "Controller: Socket vcan selected" << std::endl;
+            backend.close_all();
+            backend.init_socket_vcan();
+            break;
+
+        case ComsType::Socket_UDP:
+            std::cout << "Controller: Socket UDP selected" << std::endl;
+            backend.close_all();
+            backend.init_socket_udp();
+            break;
+
+        case ComsType::Socket_TCP:
+            std::cout << "Controller: Socket TCP selected" << std::endl;
+            backend.close_all();
+            backend.init_socket_tcp();
             break;
     }
 

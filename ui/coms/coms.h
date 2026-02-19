@@ -6,7 +6,9 @@
 enum class ComsType
 {
     Serial = 0,
-    Socket = 1
+    Socket_vcan = 1,
+    Socket_UDP = 2,
+    Socket_TCP = 3
 };
 
 namespace Ui {

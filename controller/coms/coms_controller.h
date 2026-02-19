@@ -3,20 +3,21 @@
 
 #include <QObject>
 #include "coms.h"
+#include "coms_backend.h"
 
 class ComsController : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit ComsController(Coms *view,
-                            QObject *parent = nullptr);
+    explicit ComsController(Coms *view, QObject *parent = nullptr);
 
 private slots:
     void onTypeChanged(int index);
 
 private:
-    Coms *m_view;   // pointer to View (NOT ui)
+    Coms *m_view;
+    ComsBackend backend;
 };
 
-#endif // COMS_CONTROLLER_H
+#endif
