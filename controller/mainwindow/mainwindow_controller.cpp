@@ -16,8 +16,10 @@ void MainWindowController::onComs() {
 
 }
 
-void MainWindowController::onConsole() {
+void MainWindowController::onConsole()
+{
     backend.openConsole();
+    MainWindowView::openConsoleDock();
 }
 
 void MainWindowController::onHelpWindow() {
