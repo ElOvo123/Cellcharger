@@ -20,6 +20,6 @@ signals:
 private:
     explicit Logger(QObject *parent = nullptr);
 
-    mutable QMutex m_mutex;      // protects history
+    mutable QMutex m_mutex;
     QStringList m_history;
 };

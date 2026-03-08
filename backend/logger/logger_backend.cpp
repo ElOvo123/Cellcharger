@@ -1,9 +1,10 @@
 #include "logger_backend.h"
+
 #include <QDateTime>
+#include <QMutexLocker>
 #include <QThread>
 
-Logger::Logger(QObject *parent)
-    : QObject(parent)
+Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
@@ -15,20 +16,22 @@ Logger& Logger::instance()
 
 void Logger::log(const QString& message)
 {
-    QString timestamp =
-        QDateTime::currentDateTime().toString("[hh:mm:ss] ");
+    const QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss] ");
+    const QString threadInfo = QString("[T%1] ").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 
-    QString threadInfo =
-        QString("[T%1] ").arg((quintptr)QThread::currentThreadId());
-
-    QString fullMessage = timestamp + threadInfo + message;
+    const QString fullMessage = timestamp + threadInfo + message;
 
     {
         QMutexLocker locker(&m_mutex);
         m_history.append(fullMessage);
+
+        const int maxEntries = 5000;
+        if (m_history.size() > maxEntries)
+        {
+            m_history.removeFirst();
+        }
     }
 
-    // Thread-safe signal emission
     emit newLogMessage(fullMessage);
 }
 

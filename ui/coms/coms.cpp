@@ -33,9 +33,7 @@ Coms::~Coms()
 
 ComsType Coms::currentType() const
 {
-    return static_cast<ComsType>(
-        ui->comboBoxType->currentData().toInt()
-    );
+    return static_cast<ComsType>(ui->comboBoxType->currentData().toInt());
 }
 
 void Coms::setStatusText(const QString &text)

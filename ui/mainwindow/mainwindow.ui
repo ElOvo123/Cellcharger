@@ -2,7 +2,6 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,33 +10,12 @@
     <height>650</height>
    </rect>
   </property>
-
   <property name="windowTitle">
    <string>CellCharger Interface</string>
   </property>
 
-  <!-- ================= CENTRAL STACK ================= -->
-  <widget class="QStackedWidget" name="stackedWidget">
+  <widget class="QWidget" name="centralwidget"/>
 
-   <!-- EMPTY PAGE -->
-   <widget class="QWidget" name="emptyPage"/>
-
-   <!-- CONSOLE PAGE -->
-   <widget class="QWidget" name="consolePage">
-    <layout class="QVBoxLayout" name="consoleLayout">
-     <item>
-      <widget class="QTextEdit" name="consoleOutput">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-
-  </widget>
-
-  <!-- ================= TOOLBAR ================= -->
   <widget class="QToolBar" name="mainToolBar">
    <property name="windowTitle">
     <string>Main Toolbar</string>
@@ -51,32 +29,35 @@
    <property name="toolButtonStyle">
     <enum>Qt::ToolButtonTextUnderIcon</enum>
    </property>
-
    <addaction name="actionComs"/>
    <addaction name="actionConsole"/>
   </widget>
 
-  <!-- ================= MENUBAR ================= -->
   <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1000</width>
+     <height>22</height>
+    </rect>
+   </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
    </widget>
-
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
    </widget>
-
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
   </widget>
 
   <widget class="QStatusBar" name="statusbar"/>
 
-  <!-- ACTIONS -->
   <action name="actionComs">
    <property name="text">
     <string>Coms</string>
@@ -98,7 +79,6 @@
     </iconset>
    </property>
   </action>
-
  </widget>
  <resources/>
  <connections/>

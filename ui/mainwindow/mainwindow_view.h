@@ -1,16 +1,16 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QVector>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-class QDockWidget;
+class QSplitter;
 class ConsoleWidget;
 
-class MainWindowView : public QMainWindow {
+class MainWindowView : public QMainWindow
+{
     Q_OBJECT
 
 public:
@@ -19,7 +19,7 @@ public:
 
     void showHelpWindow();
     void showComsWindow();
-    void openConsoleDock();
+    void openConsolePanel();
 
 signals:
     void helpClicked();
@@ -28,9 +28,9 @@ signals:
 
 private:
     Ui::MainWindow *ui;
-
-    QVector<QDockWidget*> m_consoleDocks;
+    QSplitter *m_consoleSplitter;
 
     void centerWindow(QWidget* child);
-    void ensureCentralCanCollapse();
+    void closeConsolePanel(ConsoleWidget *panel);
+    void rebalanceConsolePanels();
 };

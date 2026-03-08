@@ -2,27 +2,32 @@
 #include <iostream>
 
 MainWindowController::MainWindowController(QWidget *parent)
-    : MainWindowView(parent) {
-    
-    connect(this, &MainWindowView::helpClicked, this, &MainWindowController::onHelpWindow);
-    connect(this, &MainWindowView::comsClicked, this, &MainWindowController::onComs);
-    connect(this, &MainWindowView::consoleClicked, this, &MainWindowController::onConsole);
+    : MainWindowView(parent)
+{
+    connect(this, &MainWindowView::helpClicked,
+            this, &MainWindowController::onHelpWindow);
 
+    connect(this, &MainWindowView::comsClicked,
+            this, &MainWindowController::onComs);
+
+    connect(this, &MainWindowView::consoleClicked,
+            this, &MainWindowController::onConsole);
 }
 
-void MainWindowController::onComs() {
+void MainWindowController::onComs()
+{
     MainWindowView::showComsWindow();
     backend.openComs();
-
 }
 
 void MainWindowController::onConsole()
 {
     backend.openConsole();
-    MainWindowView::openConsoleDock();
+    MainWindowView::openConsolePanel();
 }
 
-void MainWindowController::onHelpWindow() {
-    std::cout << "Opening help window\n"; 
+void MainWindowController::onHelpWindow()
+{
+    std::cout << "Opening help window\n";
     MainWindowView::showHelpWindow();
 }
