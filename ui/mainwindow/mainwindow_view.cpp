@@ -75,20 +75,23 @@ void MainWindowView::openConsoleDock()
 {
     auto *dock = new QDockWidget(this);
 
-    const int idx = m_consoleDocks.size() + 1;
-    dock->setWindowTitle(QString("Console %1").arg(idx));
+    // remove title bar
+    dock->setTitleBarWidget(new QWidget());
 
     dock->setAllowedAreas(Qt::BottomDockWidgetArea);
-    dock->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+    dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 
     auto *console = new ConsoleWidget(dock);
     dock->setWidget(console);
 
     addDockWidget(Qt::BottomDockWidgetArea, dock);
+    setDockNestingEnabled(true);
 
-    if (!m_consoleDocks.isEmpty()) {
-        tabifyDockWidget(m_consoleDocks.last(), dock);
-        dock->raise();
+    if (!m_consoleDocks.isEmpty())
+    {
+        // split side by side
+        splitDockWidget(m_consoleDocks.last(), dock, Qt::Horizontal);
+        
     }
 
     m_consoleDocks.append(dock);
@@ -96,5 +99,5 @@ void MainWindowView::openConsoleDock()
     int consoleHeight = int(height() * 0.85);
     resizeDocks({dock}, {consoleHeight}, Qt::Vertical);
 
-    Logger::instance().log(QString("Console %1 opened").arg(idx));
+    Logger::instance().log("Console opened");
 }
