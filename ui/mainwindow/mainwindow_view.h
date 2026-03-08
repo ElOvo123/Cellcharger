@@ -1,13 +1,15 @@
 #pragma once
 
 #include <QMainWindow>
+#include "panel_factory.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 class QSplitter;
-class ConsoleWidget;
+class QWidget;
+class PanelContainer;
 
 class MainWindowView : public QMainWindow
 {
@@ -19,7 +21,9 @@ public:
 
     void showHelpWindow();
     void showComsWindow();
+
     void openConsolePanel();
+    void openPanel(PanelType type);
 
 signals:
     void helpClicked();
@@ -28,9 +32,10 @@ signals:
 
 private:
     Ui::MainWindow *ui;
-    QSplitter *m_consoleSplitter;
+    QSplitter *m_panelSplitter;
 
     void centerWindow(QWidget* child);
-    void closeConsolePanel(ConsoleWidget *panel);
-    void rebalanceConsolePanels();
+    void addPanel(QWidget *contentWidget, const QString& title = QString());
+    void removePanel(PanelContainer *panel);
+    void rebalancePanels();
 };

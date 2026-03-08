@@ -10,23 +10,20 @@ ConsoleWidget::ConsoleWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Cons
 {
     ui->setupUi(this);
 
-    ui->closeButton->setCursor(Qt::PointingHandCursor);
+    ui->pauseButton->setCheckable(true);
 
-    ui->closeButton->setStyleSheet("QPushButton { border:none; font-weight:bold; font-size:16px; }" "QPushButton:hover { background:#d9d9d9; }");
-    ui->pauseButton->setStyleSheet("QPushButton { padding: 2px 8px; }" "QPushButton:checked { background:#d9d9d9; }");
+    connect(ui->pauseButton, &QPushButton::toggled, this, &ConsoleWidget::onPauseToggled);
+    connect(ui->clearButton, &QPushButton::clicked, this, &ConsoleWidget::onClearClicked);
+    connect(ui->filterEdit, &QLineEdit::textChanged, this, &ConsoleWidget::onFilterTextChanged);
 
-    for (const QString &line : Logger::instance().history()) 
+    for (const QString &line : Logger::instance().history())
     {
         m_allMessages.append(line);
     }
-    
+
     refreshView();
 
     connect(&Logger::instance(), &Logger::newLogMessage, this, &ConsoleWidget::appendMessage, Qt::QueuedConnection);
-    connect(ui->closeButton, &QPushButton::clicked, this, [this]() {emit closeRequested(this);});
-    connect(ui->pauseButton, &QPushButton::toggled, this, [this](bool checked) { m_paused = checked; ui->pauseButton->setText(checked ? "Resume" : "Pause");});
-    connect(ui->clearButton, &QPushButton::clicked, this, &ConsoleWidget::onClearClicked);
-    connect(ui->filterEdit, &QLineEdit::textChanged, this, &ConsoleWidget::onFilterTextChanged);
 }
 
 ConsoleWidget::~ConsoleWidget()
@@ -38,20 +35,21 @@ void ConsoleWidget::appendMessage(const QString& message)
 {
     m_allMessages.append(message);
 
-    if (m_paused) 
-    {
+    if (m_paused)
         return;
-    }
 
-    if (passesFilter(message)) 
-    {
+    if (passesFilter(message))
         ui->consoleOutput->append(message);
-    }
 }
 
-void ConsoleWidget::onFilterTextChanged(const QString&)
+void ConsoleWidget::onPauseToggled(bool paused)
 {
-    refreshView();
+    m_paused = paused;
+
+    if (paused)
+        ui->pauseButton->setText("Resume");
+    else
+        ui->pauseButton->setText("Pause");
 }
 
 void ConsoleWidget::onClearClicked()
@@ -60,14 +58,17 @@ void ConsoleWidget::onClearClicked()
     ui->consoleOutput->clear();
 }
 
+void ConsoleWidget::onFilterTextChanged(const QString&)
+{
+    refreshView();
+}
+
 bool ConsoleWidget::passesFilter(const QString& message) const
 {
     const QString filter = ui->filterEdit->text().trimmed();
-    
-    if (filter.isEmpty()) 
-    {
+
+    if (filter.isEmpty())
         return true;
-    }
 
     return message.contains(filter, Qt::CaseInsensitive);
 }
@@ -76,11 +77,9 @@ void ConsoleWidget::refreshView()
 {
     ui->consoleOutput->clear();
 
-    for (const QString &line : m_allMessages) 
+    for (const QString &line : m_allMessages)
     {
-        if (passesFilter(line)) 
-        {
+        if (passesFilter(line))
             ui->consoleOutput->append(line);
-        }
     }
 }

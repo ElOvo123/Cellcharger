@@ -18,12 +18,10 @@ public:
 public slots:
     void appendMessage(const QString& message);
 
-signals:
-    void closeRequested(ConsoleWidget *self);
-
 private slots:
     void onFilterTextChanged(const QString& text);
     void onClearClicked();
+    void onPauseToggled(bool paused);
 
 private:
     Ui::ConsoleWidget *ui;
