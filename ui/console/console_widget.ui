@@ -53,7 +53,7 @@
      <item>
       <widget class="QLineEdit" name="filterEdit">
        <property name="placeholderText">
-        <string>Filter logs...</string>
+        <string>Filter RX/TX...</string>
        </property>
        <property name="clearButtonEnabled">
         <bool>true</bool>

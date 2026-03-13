@@ -4,8 +4,7 @@
 #include <QMutexLocker>
 #include <QThread>
 
-Logger::Logger(QObject *parent)
-    : QObject(parent)
+Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
@@ -17,11 +16,8 @@ Logger& Logger::instance()
 
 QString Logger::formatMessage(const QString& message) const
 {
-    const QString timestamp =
-        QDateTime::currentDateTime().toString("[hh:mm:ss] ");
-
-    const QString threadInfo =
-        QString("[T%1] ").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+    const QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss] ");
+    const QString threadInfo = QString("[T%1] ").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 
     return timestamp + threadInfo + message;
 }
