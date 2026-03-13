@@ -1,26 +1,24 @@
-#ifndef COMS_CONTROLLER_H
-#define COMS_CONTROLLER_H
+#pragma once
 
 #include <QObject>
-
+#include "icomms_backend.h"
 #include "coms.h"
-#include "coms_backend.h"
 
 class ComsController : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit ComsController(Coms *view, ComsBackend *backend, QObject *parent = nullptr);
+    explicit ComsController(Coms *view, IComsBackend *backend, QObject *parent = nullptr);
 
 private slots:
-    void onTypeChanged(int index);
+    void onTypeChanged(int);
     void onConnectToggled(bool connected);
-    void onBackendStateChanged(ComsBackend::State state);
+    void onBackendStateChanged(IComsBackend::State state);
+    void onBackendStatusMessage(const QString &message);
+    void onBackendMessageReceived(const QString &message);
 
 private:
     Coms *m_view;
-    ComsBackend *m_backend;
+    IComsBackend *m_backend;
 };
-
-#endif

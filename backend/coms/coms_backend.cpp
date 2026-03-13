@@ -1,4 +1,5 @@
 #include "coms_backend.h"
+#include "logger_backend.h"
 
 #include <iostream>
 #include <QHostAddress>
@@ -12,7 +13,9 @@
 #include <unistd.h>
 #include <cstring>
 
-ComsBackend::ComsBackend(QObject *parent) : QObject(parent){
+ComsBackend::ComsBackend(QObject *parent)
+    : IComsBackend(parent)
+{
 }
 
 ComsBackend::~ComsBackend()
@@ -28,18 +31,17 @@ void ComsBackend::setType(ComsType type)
     m_type = type;
 }
 
-ComsBackend::State ComsBackend::state() const
+void ComsBackend::setConfig(const ComsConfig &config)
 {
-    return m_state;
+    m_config = config;
 }
 
-bool ComsBackend::connectTransport()
+void ComsBackend::connectTransport()
 {
     if (m_state != State::Disconnected)
-        return false;
+        return;
 
-    m_state = State::Connecting;
-    emit stateChanged(m_state);
+    setState(State::Connecting);
 
     bool success = false;
 
@@ -64,28 +66,37 @@ bool ComsBackend::connectTransport()
 
     if (success)
     {
-        m_state = State::Connected;
+        setState(State::Connected);
+
         std::cout << "Connected" << std::endl;
         emit connected();
+        emit statusMessage("Real backend connected");
+
+        Logger::instance().log("COMS: real backend connected");
     }
-    else{
+    else
+    {
         cleanup();
-        m_state = State::Error;
+        setState(State::Error);
+
         std::cout << "Connection failed" << std::endl;
         emit errorOccurred("Connection failed");
-    }
+        emit statusMessage("Connection failed");
 
-    emit stateChanged(m_state);
-    return success;
+        Logger::instance().log("COMS: connection failed");
+    }
 }
 
 void ComsBackend::disconnectTransport()
 {
     cleanup();
-    m_state = State::Disconnected;
+    setState(State::Disconnected);
+
     std::cout << "Disconnected" << std::endl;
     emit disconnected();
-    emit stateChanged(m_state);
+    emit statusMessage("Real backend disconnected");
+
+    Logger::instance().log("COMS: real backend disconnected");
 }
 
 bool ComsBackend::initSerial()
@@ -98,7 +109,11 @@ bool ComsBackend::initSerial()
     if (!m_serial->open(QIODevice::ReadWrite))
         return false;
 
-    std::cout << "Serial initialized on " << m_config.serialPort.toStdString() << std::endl;
+    std::cout << "Serial initialized on "
+              << m_config.serialPort.toStdString() << std::endl;
+
+    Logger::instance().log(
+        QString("COMS: serial initialized on %1").arg(m_config.serialPort));
 
     return true;
 }
@@ -109,29 +124,38 @@ bool ComsBackend::initSocketCAN()
     if (m_can_socket < 0)
     {
         std::cout << "CAN socket creation failed" << std::endl;
+        Logger::instance().log("COMS: CAN socket creation failed");
         return false;
     }
 
     struct ifreq ifr;
-    std::strcpy(ifr.ifr_name, "vcan0");
+    std::memset(&ifr, 0, sizeof(ifr));
+    std::strncpy(ifr.ifr_name, "vcan0", IFNAMSIZ - 1);
 
     if (ioctl(m_can_socket, SIOCGIFINDEX, &ifr) < 0)
     {
         std::cout << "CAN ioctl failed" << std::endl;
+        Logger::instance().log("COMS: CAN ioctl failed");
         return false;
     }
 
     struct sockaddr_can addr;
+    std::memset(&addr, 0, sizeof(addr));
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
-    if (bind(m_can_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0)
+    if (bind(m_can_socket,
+             reinterpret_cast<struct sockaddr *>(&addr),
+             sizeof(addr)) < 0)
     {
         std::cout << "CAN bind failed" << std::endl;
+        Logger::instance().log("COMS: CAN bind failed");
         return false;
     }
 
     std::cout << "SocketCAN initialized" << std::endl;
+    Logger::instance().log("COMS: SocketCAN initialized on vcan0");
+
     return true;
 }
 
@@ -142,10 +166,13 @@ bool ComsBackend::initUDP()
     if (!m_udp->bind(QHostAddress::Any, 5000))
     {
         std::cout << "UDP bind failed" << std::endl;
+        Logger::instance().log("COMS: UDP bind failed on port 5000");
         return false;
     }
 
     std::cout << "UDP initialized on port 5000" << std::endl;
+    Logger::instance().log("COMS: UDP initialized on port 5000");
+
     return true;
 }
 
@@ -156,9 +183,24 @@ bool ComsBackend::initTCP()
     m_tcp->connectToHost(m_config.ip, m_config.port);
 
     if (!m_tcp->waitForConnected(3000))
+    {
+        Logger::instance().log(
+            QString("COMS: TCP connection failed to %1:%2")
+                .arg(m_config.ip)
+                .arg(m_config.port));
         return false;
+    }
 
-    std::cout << "TCP connected to " << m_config.ip.toStdString() << ":" << m_config.port << std::endl;
+    std::cout << "TCP connected to "
+              << m_config.ip.toStdString()
+              << ":"
+              << m_config.port
+              << std::endl;
+
+    Logger::instance().log(
+        QString("COMS: TCP connected to %1:%2")
+            .arg(m_config.ip)
+            .arg(m_config.port));
 
     return true;
 }
@@ -197,7 +239,11 @@ void ComsBackend::cleanup()
     }
 }
 
-void ComsBackend::setConfig(const ComsConfig &config)
+void ComsBackend::setState(State state)
 {
-    m_config = config;
+    if (m_state == state)
+        return;
+
+    m_state = state;
+    emit stateChanged(m_state);
 }

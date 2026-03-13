@@ -1,63 +1,39 @@
-#ifndef COMS_BACKEND_H
-#define COMS_BACKEND_H
+#pragma once
 
-#include <QObject>
+#include "icomms_backend.h"
+
 #include <QSerialPort>
 #include <QTcpSocket>
 #include <QUdpSocket>
 
-#include "coms.h"
-#include "coms_config.h"
-
-class ComsBackend : public QObject
+class ComsBackend : public IComsBackend
 {
     Q_OBJECT
 
 public:
-    enum class State
-    {
-        Disconnected,
-        Connecting,
-        Connected,
-        Error
-    };
-
     explicit ComsBackend(QObject *parent = nullptr);
-    ~ComsBackend();
+    ~ComsBackend() override;
 
-    void setType(ComsType type);
-
-    bool connectTransport();
-    void disconnectTransport();
-
-    State state() const;
-
-    void setConfig(const ComsConfig &config);
-
-signals:
-    void connected();
-    void disconnected();
-    void errorOccurred(QString message);
-    void stateChanged(State newState);
+    void setType(ComsType type) override;
+    void setConfig(const ComsConfig &config) override;
+    void connectTransport() override;
+    void disconnectTransport() override;
 
 private:
     bool initSerial();
     bool initSocketCAN();
     bool initUDP();
     bool initTCP();
-
     void cleanup();
+    void setState(State state);
 
 private:
     ComsType m_type = ComsType::Serial;
+    ComsConfig m_config;
     State m_state = State::Disconnected;
 
     QSerialPort *m_serial = nullptr;
-    QTcpSocket  *m_tcp = nullptr;
-    QUdpSocket  *m_udp = nullptr;
+    QTcpSocket *m_tcp = nullptr;
+    QUdpSocket *m_udp = nullptr;
     int m_can_socket = -1;
-
-    ComsConfig m_config;
 };
-
-#endif

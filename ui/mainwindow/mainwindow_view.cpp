@@ -6,6 +6,7 @@
 #include "coms_controller.h"
 #include "panel_container.h"
 #include "panel_factory.h"
+#include "simulated_coms_backend.h"
 
 #include <QList>
 #include <QMenu>
@@ -57,7 +58,12 @@ void MainWindowView::showHelpWindow()
 void MainWindowView::showComsWindow()
 {
     Coms *view = new Coms(this);
-    ComsBackend *backend = new ComsBackend(this);
+
+#ifdef USE_SIM_COMS
+    IComsBackend *backend = new SimulatedComsBackend(this);
+#else
+    IComsBackend *backend = new ComsBackend(this);
+#endif
 
     new ComsController(view, backend, this);
 

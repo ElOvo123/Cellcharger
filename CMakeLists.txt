@@ -10,6 +10,12 @@ find_package(Qt6 REQUIRED COMPONENTS
     Network
 )
 
+option(USE_SIM_COMS "Use simulated communications backend" ON)
+
+if(USE_SIM_COMS)
+    add_compile_definitions(USE_SIM_COMS)
+endif()
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)

@@ -1,7 +1,14 @@
-#ifndef COMS_CONFIG_H
-#define COMS_CONFIG_H
+#pragma once
 
 #include <QString>
+
+enum class ComsType
+{
+    Serial,
+    Socket_vcan,
+    Socket_UDP,
+    Socket_TCP
+};
 
 struct ComsConfig
 {
@@ -11,5 +18,3 @@ struct ComsConfig
     QString ip;
     int port = 0;
 };
-
-#endif

@@ -2,15 +2,7 @@
 #define COMS_H
 
 #include <QDialog>
-#include "coms_config.h"
-
-enum class ComsType
-{
-    Serial = 0,
-    Socket_vcan = 1,
-    Socket_UDP = 2,
-    Socket_TCP = 3
-};
+#include "coms_types.h"
 
 namespace Ui {
 class Coms;
