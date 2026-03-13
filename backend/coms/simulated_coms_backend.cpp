@@ -26,7 +26,7 @@ void SimulatedComsBackend::connectTransport()
     setState(State::Connected);
 
     emit statusMessage("Simulated backend connected");
-    Logger::instance().log("COMS: simulated backend connected");
+    Logger::instance().logStatus("COMS: simulated backend connected");
 }
 
 void SimulatedComsBackend::disconnectTransport()
@@ -36,7 +36,7 @@ void SimulatedComsBackend::disconnectTransport()
     setState(State::Disconnected);
 
     emit statusMessage("Simulated backend disconnected");
-    Logger::instance().log("COMS: simulated backend disconnected");
+    Logger::instance().logStatus("COMS: simulated backend disconnected");
 }
 
 void SimulatedComsBackend::generateFakeMessage()
@@ -46,7 +46,7 @@ void SimulatedComsBackend::generateFakeMessage()
     const QString msg = QString("SIM RX #%1 | V=3.%2 I=0.%3 T=2%4") .arg(m_counter) .arg((m_counter % 40) + 60) .arg((m_counter % 7) + 2) .arg(m_counter % 10);
 
     emit messageReceived(msg);
-    Logger::instance().log(msg);
+    Logger::instance().logComs(msg);
 }
 
 void SimulatedComsBackend::setState(State state)

@@ -16,14 +16,14 @@ LogWidget::LogWidget(QWidget *parent) : QWidget(parent), ui(new Ui::LogWidget)
     connect(ui->clearButton, &QPushButton::clicked, this, &LogWidget::onClearClicked);
     connect(ui->filterEdit, &QLineEdit::textChanged, this, &LogWidget::onFilterTextChanged);
 
-    for (const QString &line : Logger::instance().history())
+    for (const QString &line : Logger::instance().statusHistory())
     {
         m_allMessages.append(line);
     }
 
     refreshView();
 
-    connect(&Logger::instance(), &Logger::newLogMessage, this, &LogWidget::appendMessage, Qt::QueuedConnection);
+    connect(&Logger::instance(), &Logger::newStatusMessage, this, &LogWidget::appendMessage, Qt::QueuedConnection);
 }
 
 LogWidget::~LogWidget()

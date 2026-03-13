@@ -71,7 +71,7 @@ void ComsBackend::connectTransport()
         emit connected();
         emit statusMessage("Real backend connected");
 
-        Logger::instance().log("COMS: real backend connected");
+        Logger::instance().logStatus("COMS: real backend connected");
     }
     else
     {
@@ -82,7 +82,7 @@ void ComsBackend::connectTransport()
         emit errorOccurred("Connection failed");
         emit statusMessage("Connection failed");
 
-        Logger::instance().log("COMS: connection failed");
+        Logger::instance().logStatus("COMS: connection failed");
     }
 }
 
@@ -95,7 +95,7 @@ void ComsBackend::disconnectTransport()
     emit disconnected();
     emit statusMessage("Real backend disconnected");
 
-    Logger::instance().log("COMS: real backend disconnected");
+    Logger::instance().logStatus("COMS: real backend disconnected");
 }
 
 bool ComsBackend::initSerial()
@@ -110,7 +110,7 @@ bool ComsBackend::initSerial()
 
     std::cout << "Serial initialized on " << m_config.serialPort.toStdString() << std::endl;
 
-    Logger::instance().log(QString("COMS: serial initialized on %1").arg(m_config.serialPort));
+    Logger::instance().logStatus(QString("COMS: serial initialized on %1").arg(m_config.serialPort));
 
     return true;
 }
@@ -121,7 +121,7 @@ bool ComsBackend::initSocketCAN()
     if (m_can_socket < 0)
     {
         std::cout << "CAN socket creation failed" << std::endl;
-        Logger::instance().log("COMS: CAN socket creation failed");
+        Logger::instance().logStatus("COMS: CAN socket creation failed");
         return false;
     }
 
@@ -132,7 +132,7 @@ bool ComsBackend::initSocketCAN()
     if (ioctl(m_can_socket, SIOCGIFINDEX, &ifr) < 0)
     {
         std::cout << "CAN ioctl failed" << std::endl;
-        Logger::instance().log("COMS: CAN ioctl failed");
+        Logger::instance().logStatus("COMS: CAN ioctl failed");
         return false;
     }
 
@@ -144,12 +144,12 @@ bool ComsBackend::initSocketCAN()
     if (bind(m_can_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0)
     {
         std::cout << "CAN bind failed" << std::endl;
-        Logger::instance().log("COMS: CAN bind failed");
+        Logger::instance().logStatus("COMS: CAN bind failed");
         return false;
     }
 
     std::cout << "SocketCAN initialized" << std::endl;
-    Logger::instance().log("COMS: SocketCAN initialized on vcan0");
+    Logger::instance().logStatus("COMS: SocketCAN initialized on vcan0");
 
     return true;
 }
@@ -161,12 +161,12 @@ bool ComsBackend::initUDP()
     if (!m_udp->bind(QHostAddress::Any, 5000))
     {
         std::cout << "UDP bind failed" << std::endl;
-        Logger::instance().log("COMS: UDP bind failed on port 5000");
+        Logger::instance().logStatus("COMS: UDP bind failed on port 5000");
         return false;
     }
 
     std::cout << "UDP initialized on port 5000" << std::endl;
-    Logger::instance().log("COMS: UDP initialized on port 5000");
+    Logger::instance().logStatus("COMS: UDP initialized on port 5000");
 
     return true;
 }
@@ -179,12 +179,12 @@ bool ComsBackend::initTCP()
 
     if (!m_tcp->waitForConnected(3000))
     {
-        Logger::instance().log( QString("COMS: TCP connection failed to %1:%2") .arg(m_config.ip) .arg(m_config.port));
+        Logger::instance().logStatus( QString("COMS: TCP connection failed to %1:%2") .arg(m_config.ip) .arg(m_config.port));
         return false;
     }
 
     std::cout << "TCP connected to " << m_config.ip.toStdString() << ":" << m_config.port << std::endl;
-    Logger::instance().log(QString("COMS: TCP connected to %1:%2") .arg(m_config.ip) .arg(m_config.port));
+    Logger::instance().logStatus(QString("COMS: TCP connected to %1:%2") .arg(m_config.ip) .arg(m_config.port));
 
     return true;
 }

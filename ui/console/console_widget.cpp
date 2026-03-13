@@ -16,14 +16,14 @@ ConsoleWidget::ConsoleWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Cons
     connect(ui->clearButton, &QPushButton::clicked, this, &ConsoleWidget::onClearClicked);
     connect(ui->filterEdit, &QLineEdit::textChanged, this, &ConsoleWidget::onFilterTextChanged);
 
-    for (const QString &line : Logger::instance().history())
+    for (const QString &line : Logger::instance().comsHistory())
     {
         m_allMessages.append(line);
     }
 
     refreshView();
 
-    connect(&Logger::instance(), &Logger::newLogMessage, this, &ConsoleWidget::appendMessage, Qt::QueuedConnection);
+    connect(&Logger::instance(), &Logger::newComsMessage, this, &ConsoleWidget::appendMessage, Qt::QueuedConnection);
 }
 
 ConsoleWidget::~ConsoleWidget()

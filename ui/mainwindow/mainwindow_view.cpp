@@ -28,7 +28,7 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     connect(ui->actionConsole, &QAction::triggered, this, &MainWindowView::consoleClicked);
     connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
 
-    Logger::instance().log("CellCharger started");
+    Logger::instance().logStatus("CellCharger started");
 }
 
 MainWindowView::~MainWindowView()
@@ -52,7 +52,7 @@ void MainWindowView::showHelpWindow()
     dialog.exec();
     centerWindow(&dialog);
 
-    Logger::instance().log("Help window opened");
+    Logger::instance().logStatus("Help window opened");
 }
 
 void MainWindowView::showComsWindow()
@@ -69,7 +69,7 @@ void MainWindowView::showComsWindow()
 
     view->show();
 
-    Logger::instance().log("Coms window opened");
+    Logger::instance().logStatus("Coms window opened");
 }
 
 void MainWindowView::openPanel(PanelType type)
@@ -78,12 +78,12 @@ void MainWindowView::openPanel(PanelType type)
     
     if (!contentWidget) 
     {
-        Logger::instance().log("Failed to create panel");
+        Logger::instance().logStatus("Failed to create panel");
         return;
     }
 
     addPanel(contentWidget, PanelFactory::panelTitle(type));
-    Logger::instance().log(PanelFactory::panelTitle(type) + " opened");
+    Logger::instance().logStatus(PanelFactory::panelTitle(type) + " opened");
 }
 
 void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
@@ -114,7 +114,7 @@ void MainWindowView::removePanel(PanelContainer *panel)
 
     rebalancePanels();
 
-    Logger::instance().log("Panel closed");
+    Logger::instance().logStatus("Panel closed");
 }
 
 void MainWindowView::rebalancePanels()

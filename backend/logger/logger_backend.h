@@ -11,15 +11,23 @@ class Logger : public QObject
 public:
     static Logger& instance();
 
-    void log(const QString& message);
-    QStringList history() const;
+    void logStatus(const QString& message);
+    void logComs(const QString& message);
+
+    QStringList statusHistory() const;
+    QStringList comsHistory() const;
 
 signals:
-    void newLogMessage(const QString& message);
+    void newStatusMessage(const QString& message);
+    void newComsMessage(const QString& message);
 
 private:
     explicit Logger(QObject *parent = nullptr);
 
+    QString formatMessage(const QString& message) const;
+
+private:
     mutable QMutex m_mutex;
-    QStringList m_history;
+    QStringList m_statusHistory;
+    QStringList m_comsHistory;
 };
