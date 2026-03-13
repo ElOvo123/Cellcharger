@@ -8,8 +8,7 @@ class IComsBackend : public QObject
     Q_OBJECT
 
 public:
-    explicit IComsBackend(QObject *parent = nullptr)
-        : QObject(parent)
+    explicit IComsBackend(QObject *parent = nullptr) : QObject(parent)
     {
     }
 

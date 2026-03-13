@@ -1,13 +1,9 @@
 #include "simulated_coms_backend.h"
 #include "logger_backend.h"
 
-SimulatedComsBackend::SimulatedComsBackend(QObject *parent)
-    : IComsBackend(parent)
+SimulatedComsBackend::SimulatedComsBackend(QObject *parent) : IComsBackend(parent)
 {
-    connect(&m_timer,
-            &QTimer::timeout,
-            this,
-            &SimulatedComsBackend::generateFakeMessage);
+    connect(&m_timer, &QTimer::timeout, this, &SimulatedComsBackend::generateFakeMessage);
 }
 
 void SimulatedComsBackend::setType(ComsType type)
@@ -47,12 +43,7 @@ void SimulatedComsBackend::generateFakeMessage()
 {
     ++m_counter;
 
-    const QString msg =
-        QString("SIM RX #%1 | V=3.%2 I=0.%3 T=2%4")
-            .arg(m_counter)
-            .arg((m_counter % 40) + 60)
-            .arg((m_counter % 7) + 2)
-            .arg(m_counter % 10);
+    const QString msg = QString("SIM RX #%1 | V=3.%2 I=0.%3 T=2%4") .arg(m_counter) .arg((m_counter % 40) + 60) .arg((m_counter % 7) + 2) .arg(m_counter % 10);
 
     emit messageReceived(msg);
     Logger::instance().log(msg);

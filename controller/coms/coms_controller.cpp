@@ -1,25 +1,13 @@
 #include "coms_controller.h"
 #include <iostream>
 
-ComsController::ComsController(Coms *view, IComsBackend *backend, QObject *parent)
-    : QObject(parent),
-      m_view(view),
-      m_backend(backend)
+ComsController::ComsController(Coms *view, IComsBackend *backend, QObject *parent) : QObject(parent), m_view(view), m_backend(backend)
 {
-    connect(m_view, &Coms::typeChanged,
-            this, &ComsController::onTypeChanged);
-
-    connect(m_view, &Coms::connectToggled,
-            this, &ComsController::onConnectToggled);
-
-    connect(m_backend, &IComsBackend::stateChanged,
-            this, &ComsController::onBackendStateChanged);
-
-    connect(m_backend, &IComsBackend::statusMessage,
-            this, &ComsController::onBackendStatusMessage);
-
-    connect(m_backend, &IComsBackend::messageReceived,
-            this, &ComsController::onBackendMessageReceived);
+    connect(m_view, &Coms::typeChanged, this, &ComsController::onTypeChanged);
+    connect(m_view, &Coms::connectToggled, this, &ComsController::onConnectToggled);
+    connect(m_backend, &IComsBackend::stateChanged,this, &ComsController::onBackendStateChanged);
+    connect(m_backend, &IComsBackend::statusMessage, this, &ComsController::onBackendStatusMessage);
+    connect(m_backend, &IComsBackend::messageReceived, this, &ComsController::onBackendMessageReceived);
 
     onTypeChanged(0);
 }

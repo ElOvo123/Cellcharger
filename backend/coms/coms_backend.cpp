@@ -13,8 +13,7 @@
 #include <unistd.h>
 #include <cstring>
 
-ComsBackend::ComsBackend(QObject *parent)
-    : IComsBackend(parent)
+ComsBackend::ComsBackend(QObject *parent) : IComsBackend(parent)
 {
 }
 
@@ -109,11 +108,9 @@ bool ComsBackend::initSerial()
     if (!m_serial->open(QIODevice::ReadWrite))
         return false;
 
-    std::cout << "Serial initialized on "
-              << m_config.serialPort.toStdString() << std::endl;
+    std::cout << "Serial initialized on " << m_config.serialPort.toStdString() << std::endl;
 
-    Logger::instance().log(
-        QString("COMS: serial initialized on %1").arg(m_config.serialPort));
+    Logger::instance().log(QString("COMS: serial initialized on %1").arg(m_config.serialPort));
 
     return true;
 }
@@ -144,9 +141,7 @@ bool ComsBackend::initSocketCAN()
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
-    if (bind(m_can_socket,
-             reinterpret_cast<struct sockaddr *>(&addr),
-             sizeof(addr)) < 0)
+    if (bind(m_can_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0)
     {
         std::cout << "CAN bind failed" << std::endl;
         Logger::instance().log("COMS: CAN bind failed");
@@ -184,23 +179,12 @@ bool ComsBackend::initTCP()
 
     if (!m_tcp->waitForConnected(3000))
     {
-        Logger::instance().log(
-            QString("COMS: TCP connection failed to %1:%2")
-                .arg(m_config.ip)
-                .arg(m_config.port));
+        Logger::instance().log( QString("COMS: TCP connection failed to %1:%2") .arg(m_config.ip) .arg(m_config.port));
         return false;
     }
 
-    std::cout << "TCP connected to "
-              << m_config.ip.toStdString()
-              << ":"
-              << m_config.port
-              << std::endl;
-
-    Logger::instance().log(
-        QString("COMS: TCP connected to %1:%2")
-            .arg(m_config.ip)
-            .arg(m_config.port));
+    std::cout << "TCP connected to " << m_config.ip.toStdString() << ":" << m_config.port << std::endl;
+    Logger::instance().log(QString("COMS: TCP connected to %1:%2") .arg(m_config.ip) .arg(m_config.port));
 
     return true;
 }
