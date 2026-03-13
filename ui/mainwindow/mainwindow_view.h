@@ -23,12 +23,14 @@ public:
     void showComsWindow();
 
     void openConsolePanel();
+    void openLogPanel();
     void openPanel(PanelType type);
 
 signals:
     void helpClicked();
     void comsClicked();
     void consoleClicked();
+    void logClicked();
 
 private:
     Ui::MainWindow *ui;

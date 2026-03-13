@@ -15,6 +15,9 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
 {
     ui->setupUi(this);
 
+    ui->mainToolBar->setIconSize(QSize(48, 48));
+    ui->mainToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
     setCentralWidget(m_panelSplitter);
     m_panelSplitter->setChildrenCollapsible(false);
     m_panelSplitter->setHandleWidth(4);
@@ -22,6 +25,7 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     connect(ui->menuHelp,&QMenu::aboutToShow, this, &MainWindowView::helpClicked);
     connect(ui->actionComs,&QAction::triggered, this, &MainWindowView::comsClicked);
     connect(ui->actionConsole, &QAction::triggered, this, &MainWindowView::consoleClicked);
+    connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
 
     Logger::instance().log("CellCharger started");
 }
@@ -60,11 +64,6 @@ void MainWindowView::showComsWindow()
     view->show();
 
     Logger::instance().log("Coms window opened");
-}
-
-void MainWindowView::openConsolePanel()
-{
-    openPanel(PanelType::Console);
 }
 
 void MainWindowView::openPanel(PanelType type)
@@ -128,4 +127,14 @@ void MainWindowView::rebalancePanels()
     }
 
     m_panelSplitter->setSizes(sizes);
+}
+
+void MainWindowView::openConsolePanel()
+{
+    openPanel(PanelType::Console);
+}
+
+void MainWindowView::openLogPanel()
+{
+    openPanel(PanelType::Log);
 }

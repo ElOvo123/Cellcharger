@@ -8,3 +8,7 @@ void InterfaceBackend::openComs() {
 void InterfaceBackend::openConsole() { 
     std::cout << "Opening console\n"; 
 }
+
+void InterfaceBackend::openLog() { 
+    std::cout << "Opening log\n"; 
+}

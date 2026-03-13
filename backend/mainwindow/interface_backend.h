@@ -4,4 +4,5 @@ class InterfaceBackend {
 public:
     void openComs();
     void openConsole();
+    void openLog();
 };

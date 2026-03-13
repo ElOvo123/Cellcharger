@@ -14,6 +14,7 @@ private slots:
     void onHelpWindow();
     void onComs();
     void onConsole();
+    void onLog();
 
 private:
     InterfaceBackend backend;

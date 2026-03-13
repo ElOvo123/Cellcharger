@@ -1,7 +1,7 @@
-<!DOCTYPE RCC>
 <RCC version="1.0">
-  <qresource prefix="/">
-    <file>images/chain.png</file>
-    <file>images/console.png</file>
-  </qresource>
+    <qresource prefix="/">
+        <file>images/chain.png</file>
+        <file>images/console.png</file>
+        <file>images/log.svg</file>
+    </qresource>
 </RCC>

@@ -20,6 +20,12 @@
    <property name="windowTitle">
     <string>Main Toolbar</string>
    </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
    <property name="iconSize">
     <size>
      <width>48</width>
@@ -31,6 +37,7 @@
    </property>
    <addaction name="actionComs"/>
    <addaction name="actionConsole"/>
+   <addaction name="actionLog"/>
   </widget>
 
   <widget class="QMenuBar" name="menubar">
@@ -76,6 +83,17 @@
    <property name="icon">
     <iconset>
      <normalon>:/images/console.png</normalon>
+    </iconset>
+   </property>
+  </action>
+
+  <action name="actionLog">
+   <property name="text">
+    <string>Log</string>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/log.svg</normalon>
     </iconset>
    </property>
   </action>

@@ -1,5 +1,6 @@
 #include "panel_factory.h"
 #include "console_widget.h"
+#include "log_widget.h"
 
 #include <QLabel>
 #include <QVBoxLayout>
@@ -11,6 +12,8 @@ QWidget* PanelFactory::createPanelWidget(PanelType type, QWidget *parent)
     {
         case PanelType::Console:
             return new ConsoleWidget(parent);
+        case PanelType::Log:
+            return new LogWidget(parent);
     }
 
     return nullptr;
@@ -22,6 +25,8 @@ QString PanelFactory::panelTitle(PanelType type)
     {
         case PanelType::Console:
             return "Console";
+        case PanelType::Log:
+            return "Log";
     }
 
     return "Panel";
