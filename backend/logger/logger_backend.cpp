@@ -17,9 +17,8 @@ Logger& Logger::instance()
 QString Logger::formatMessage(const QString& message) const
 {
     const QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss] ");
-    const QString threadInfo = QString("[T%1] ").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 
-    return timestamp + threadInfo + message;
+    return timestamp + message;
 }
 
 void Logger::logStatus(const QString& message)

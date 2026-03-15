@@ -10,6 +10,8 @@ find_package(Qt6 REQUIRED COMPONENTS
     Network
 )
 
+find_package(yaml-cpp REQUIRED)
+
 option(USE_SIM_COMS "Use simulated communications backend" ON)
 
 if(USE_SIM_COMS)
@@ -20,6 +22,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+configure_file(
+    ${CMAKE_SOURCE_DIR}/config/pcp.yaml
+    ${CMAKE_BINARY_DIR}/pcp.yaml
+    COPYONLY
+)
+
 add_executable(qt_app
     main.cpp
 )
@@ -27,6 +35,8 @@ add_executable(qt_app
 add_subdirectory(ui)
 add_subdirectory(controller)
 add_subdirectory(backend)
+
+
 
 set_target_properties(qt_app PROPERTIES
     AUTOUIC_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/ui"
@@ -36,4 +46,5 @@ target_link_libraries(qt_app PRIVATE
     Qt6::Widgets 
     Qt6::SerialPort 
     Qt6::Network
+    yaml-cpp
 )

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icomms_backend.h"
+#include "pcp_encoder.h"
 #include <QTimer>
 
 class SimulatedComsBackend : public IComsBackend
@@ -27,4 +28,7 @@ private:
     State m_state = State::Disconnected;
     QTimer m_timer;
     int m_counter = 0;
+
+    PCPEncoder m_pcpEncoder;
+    uint32_t m_deviceId = 0x2;
 };

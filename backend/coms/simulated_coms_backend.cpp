@@ -1,9 +1,11 @@
 #include "simulated_coms_backend.h"
 #include "logger_backend.h"
+#include "pcp_formatter.h"
 
 SimulatedComsBackend::SimulatedComsBackend(QObject *parent) : IComsBackend(parent)
 {
     connect(&m_timer, &QTimer::timeout, this, &SimulatedComsBackend::generateFakeMessage);
+    m_pcpEncoder.loadFromFile("pcp.yaml");
 }
 
 void SimulatedComsBackend::setType(ComsType type)
@@ -43,7 +45,22 @@ void SimulatedComsBackend::generateFakeMessage()
 {
     ++m_counter;
 
-    const QString msg = QString("SIM RX #%1 | V=3.%2 I=0.%3 T=2%4") .arg(m_counter) .arg((m_counter % 40) + 60) .arg((m_counter % 7) + 2) .arg(m_counter % 10);
+    const double voltage = 12.0 + (m_counter % 30) * 0.05;
+    const double current = -2.0 + (m_counter % 20) * 0.2;
+    const double temperature = 25.0 + (m_counter % 10);
+    const double state = m_counter % 5;
+
+    PCPFrame frame = m_pcpEncoder.encode(
+        "status",
+        m_deviceId,
+        {
+            {"voltage", voltage},
+            {"current", current},
+            {"temperature", temperature},
+            {"state", state}
+        });
+
+    const QString msg = PCPFormatter::toConsoleString(frame, "RX");
 
     emit messageReceived(msg);
     Logger::instance().logComs(msg);
