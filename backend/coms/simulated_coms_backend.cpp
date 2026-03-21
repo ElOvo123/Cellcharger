@@ -1,11 +1,14 @@
 #include "simulated_coms_backend.h"
 #include "logger_backend.h"
 #include "pcp_formatter.h"
+#include "pcp_decode_formatter.h"
 
 SimulatedComsBackend::SimulatedComsBackend(QObject *parent) : IComsBackend(parent)
 {
     connect(&m_timer, &QTimer::timeout, this, &SimulatedComsBackend::generateFakeMessage);
-    m_pcpEncoder.loadFromFile("pcp.yaml");
+    const QString yamlPath = QCoreApplication::applicationDirPath() + "/pcp.yaml";
+    m_pcpEncoder.loadFromFile(yamlPath.toStdString());
+    m_pcpDecoder.loadFromFile(yamlPath.toStdString());
 }
 
 void SimulatedComsBackend::setType(ComsType type)
@@ -61,6 +64,12 @@ void SimulatedComsBackend::generateFakeMessage()
         });
 
     const QString msg = PCPFormatter::toConsoleString(frame, "RX");
+
+    auto decoded = m_pcpDecoder.decode(frame.id, frame.dlc, frame.data);
+    if (decoded.has_value())
+    {
+        Logger::instance().logStatus(PCPDecodeFormatter::toText(decoded.value()));
+    }
 
     emit messageReceived(msg);
     Logger::instance().logComs(msg);

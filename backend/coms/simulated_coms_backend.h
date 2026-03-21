@@ -2,7 +2,9 @@
 
 #include "icomms_backend.h"
 #include "pcp_encoder.h"
+#include "pcp_decoder.h"
 #include <QTimer>
+#include <QCoreApplication>
 
 class SimulatedComsBackend : public IComsBackend
 {
@@ -30,5 +32,6 @@ private:
     int m_counter = 0;
 
     PCPEncoder m_pcpEncoder;
+    PCPDecoder m_pcpDecoder;
     uint32_t m_deviceId = 0x2;
 };
