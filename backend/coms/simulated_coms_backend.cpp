@@ -68,7 +68,7 @@ void SimulatedComsBackend::generateFakeMessage()
     auto decoded = m_pcpDecoder.decode(frame.id, frame.dlc, frame.data);
     if (decoded.has_value())
     {
-        Logger::instance().logStatus(PCPDecodeFormatter::toText(decoded.value()));
+        Logger::instance().logDecoded(PCPDecodeFormatter::toText(decoded.value()));
     }
 
     emit messageReceived(msg);

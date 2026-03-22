@@ -38,7 +38,7 @@ ConsoleWidget::ConsoleWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Cons
     refreshView();
 
     connect(&Logger::instance(),&Logger::newComsMessage, this, &ConsoleWidget::appendMessage, Qt::QueuedConnection);
-    connect(&Logger::instance(), &Logger::newStatusMessage, this, &ConsoleWidget::onStatusMessage, Qt::QueuedConnection);
+    connect(&Logger::instance(), &Logger::newDecodedMessage, this, &ConsoleWidget::onStatusMessage, Qt::QueuedConnection);
 }
 
 ConsoleWidget::~ConsoleWidget()
@@ -153,7 +153,7 @@ bool ConsoleWidget::passesIdFilter(const QString& message) const
     if (idFilter.isEmpty())
         return true;
 
-    QRegularExpression re(R"(0x([0-9A-Fa-f]+))");
+    QRegularExpression re(R"(0[xX]([0-9A-Fa-f]+))");
     QRegularExpressionMatch match = re.match(message);
 
     if (!match.hasMatch())
