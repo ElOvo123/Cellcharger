@@ -1,86 +1,186 @@
 #include "coms_controller.h"
-#include <iostream>
 
-ComsController::ComsController(Coms *view, IComsBackend *backend, QObject *parent) : QObject(parent), m_view(view), m_backend(backend)
+#include "coms_backend.h"
+#include "logger_backend.h"
+#include "simulated_coms_backend.h"
+
+ComsController::ComsController(Coms *view,
+                               const PCPDatabase* pcpDatabase,
+                               QObject *parent)
+    : QObject(parent),
+      m_view(view),
+      m_pcpDatabase(pcpDatabase)
 {
-    connect(m_view, &Coms::typeChanged, this, &ComsController::onTypeChanged);
-    connect(m_view, &Coms::connectToggled, this, &ComsController::onConnectToggled);
-    connect(m_backend, &IComsBackend::stateChanged,this, &ComsController::onBackendStateChanged);
-    connect(m_backend, &IComsBackend::statusMessage, this, &ComsController::onBackendStatusMessage);
-    connect(m_backend, &IComsBackend::messageReceived, this, &ComsController::onBackendMessageReceived);
+    connect(m_view, &Coms::addConnectionRequested,
+            this, &ComsController::onAddConnectionRequested);
+    connect(m_view, &Coms::connectConnectionRequested,
+            this, &ComsController::onConnectConnectionRequested);
+    connect(m_view, &Coms::disconnectConnectionRequested,
+            this, &ComsController::onDisconnectConnectionRequested);
+    connect(m_view, &Coms::removeConnectionRequested,
+            this, &ComsController::onRemoveConnectionRequested);
 
-    onTypeChanged(0);
+    refreshView();
 }
 
 void ComsController::onTypeChanged(int)
 {
-    ComsType type = m_view->currentType();
-    m_backend->setType(type);
+}
 
+void ComsController::onAddConnectionRequested()
+{
+    ConnectionEntry entry;
+    entry.type = ComsType::Serial;
+    entry.config.baudrate = 115200;
+    entry.backend = createBackend();
+
+    connect(entry.backend, &IComsBackend::stateChanged, this,
+            [this, backend = entry.backend](IComsBackend::State state)
+            {
+                for (ConnectionEntry& item : m_connections)
+                {
+                    if (item.backend != backend)
+                        continue;
+
+                    item.state = state;
+                    refreshView();
+                    refreshOverallIndicator();
+                    return;
+                }
+            });
+
+    connect(entry.backend, &IComsBackend::statusMessage, this,
+            [this](const QString& message)
+            {
+                m_view->setStatusText(message);
+            });
+
+    connect(entry.backend, &IComsBackend::messageReceived, this,
+            [this](const QString&)
+            {
+                m_view->pulseReceiveActivity();
+                refreshOverallIndicator();
+            });
+
+    m_connections.append(entry);
+    refreshView();
+    m_view->setStatusText("Connection added");
+}
+
+void ComsController::onConnectConnectionRequested(int row)
+{
+    if (row < 0 || row >= m_connections.size())
+        return;
+
+    ConnectionEntry& entry = m_connections[row];
+    entry.type = m_view->connectionType(row);
+    entry.config = m_view->connectionConfig(row);
+    entry.backend->setType(entry.type);
+    entry.backend->setConfig(entry.config);
+    entry.backend->connectTransport();
+    refreshView();
+}
+
+void ComsController::onDisconnectConnectionRequested(int row)
+{
+    if (row < 0 || row >= m_connections.size())
+        return;
+
+    m_connections[row].backend->disconnectTransport();
+}
+
+void ComsController::onRemoveConnectionRequested(int row)
+{
+    if (row < 0 || row >= m_connections.size())
+        return;
+
+    ConnectionEntry entry = m_connections.takeAt(row);
+    if (entry.backend)
+    {
+        entry.backend->disconnectTransport();
+        entry.backend->deleteLater();
+    }
+
+    refreshView();
+    refreshOverallIndicator();
+    m_view->setStatusText("Connection removed");
+}
+
+IComsBackend* ComsController::createBackend() const
+{
+#ifdef USE_SIM_COMS
+    return new SimulatedComsBackend(m_pcpDatabase, const_cast<ComsController*>(this));
+#else
+    return new ComsBackend(const_cast<ComsController*>(this));
+#endif
+}
+
+QString ComsController::transportName(ComsType type) const
+{
     switch (type)
     {
         case ComsType::Serial:
-            std::cout << "Serial selected" << std::endl;
-            break;
-
+            return "Serial";
         case ComsType::Socket_vcan:
-            std::cout << "Socket vcan selected" << std::endl;
-            break;
-
+            return "Socket vcan";
         case ComsType::Socket_UDP:
-            std::cout << "Socket UDP selected" << std::endl;
-            break;
-
+            return "Socket UDP";
         case ComsType::Socket_TCP:
-            std::cout << "Socket TCP selected" << std::endl;
-            break;
+            return "Socket TCP";
     }
+
+    return "Unknown";
 }
 
-void ComsController::onConnectToggled(bool connected)
+void ComsController::refreshView()
 {
-    if (connected)
+    QList<ComsConnectionInfo> rows;
+    rows.reserve(m_connections.size());
+
+    for (int i = 0; i < m_connections.size(); ++i)
     {
-        m_backend->setConfig(m_view->currentConfig());
-        m_backend->connectTransport();
+        ConnectionEntry& entry = m_connections[i];
+        entry.type = m_view->connectionType(i);
+        entry.config = m_view->connectionConfig(i);
+
+        ComsConnectionInfo row;
+        row.type = entry.type;
+        row.config = entry.config;
+        row.connected = entry.state == IComsBackend::State::Connected;
+
+        switch (entry.state)
+        {
+            case IComsBackend::State::Disconnected:
+                row.indicatorColor = QColor("#d6b63f");
+                break;
+            case IComsBackend::State::Connecting:
+                row.indicatorColor = QColor("#8aa7d8");
+                break;
+            case IComsBackend::State::Connected:
+                row.indicatorColor = QColor("#4caf50");
+                break;
+            case IComsBackend::State::Error:
+                row.indicatorColor = QColor("#d97b5c");
+                break;
+        }
+
+        rows.append(row);
     }
-    else
+
+    m_view->setConnections(rows);
+}
+
+void ComsController::refreshOverallIndicator()
+{
+    bool hasConnected = false;
+    for (const ConnectionEntry& entry : m_connections)
     {
-        m_backend->disconnectTransport();
+        if (entry.state != IComsBackend::State::Connected)
+            continue;
+
+        hasConnected = true;
+        break;
     }
-}
 
-void ComsController::onBackendStateChanged(IComsBackend::State state)
-{
-    switch (state)
-    {
-        case IComsBackend::State::Disconnected:
-            m_view->setStatusText("Status: Disconnected");
-            m_view->setConnectedUI(false);
-            break;
-
-        case IComsBackend::State::Connecting:
-            m_view->setStatusText("Status: Connecting...");
-            break;
-
-        case IComsBackend::State::Connected:
-            m_view->setStatusText("Status: Connected");
-            m_view->setConnectedUI(true);
-            break;
-
-        case IComsBackend::State::Error:
-            m_view->setStatusText("Status: Error");
-            m_view->setConnectedUI(false);
-            break;
-    }
-}
-
-void ComsController::onBackendStatusMessage(const QString &message)
-{
-    std::cout << message.toStdString() << std::endl;
-}
-
-void ComsController::onBackendMessageReceived(const QString &message)
-{
-    std::cout << "RX: " << message.toStdString() << std::endl;
+    m_view->setOverallConnected(hasConnected);
 }

@@ -3,10 +3,14 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 PanelContainer::PanelContainer(const QString& title, QWidget *parent) : QWidget(parent)
 {
+    setMinimumWidth(0);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(4);
@@ -27,6 +31,8 @@ PanelContainer::PanelContainer(const QString& title, QWidget *parent) : QWidget(
     topBarLayout->addWidget(m_closeButton);
 
     QWidget *contentHost = new QWidget(this);
+    contentHost->setMinimumWidth(0);
+    contentHost->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_contentLayout = new QVBoxLayout(contentHost);
     m_contentLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -49,6 +55,8 @@ void PanelContainer::setContentWidget(QWidget *widget)
     }
 
     m_contentWidget = widget;
+    m_contentWidget->setMinimumWidth(0);
+    m_contentWidget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     m_contentLayout->addWidget(m_contentWidget);
 }
 

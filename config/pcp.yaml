@@ -3,35 +3,109 @@ id_layout:
   device_id_bits: 4
   message_id_bits: 7
 
-messages:
-  status:
-    message_id: 0x12
-    dlc: 8
-    signals:
-      voltage:
-        start_bit: 0
-        bit_length: 12
-        signed: false
-        scale: 0.01
-        offset: 0.0
+devices:
+  1:
+    name: Charger Bus
+    messages:
+      status:
+        message_id: 18
+        dlc: 8
+        # status: 0 = idle, 1 = charging, 2 = fault
+        # fault_code: 0 when there is no fault
+        signals:
+          charger_id:
+            start_bit: 0
+            bit_length: 8
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          status:
+            start_bit: 8
+            bit_length: 2
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          fault_code:
+            start_bit: 10
+            bit_length: 8
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          voltage:
+            start_bit: 18
+            bit_length: 16
+            signed: false
+            scale: 0.001
+            offset: 0.0
+          current:
+            start_bit: 34
+            bit_length: 16
+            signed: true
+            scale: 0.001
+            offset: 0.0
+          temperature:
+            start_bit: 50
+            bit_length: 14
+            signed: true
+            scale: 0.1
+            offset: 0.0
 
-      current:
-        start_bit: 12
-        bit_length: 10
-        signed: true
-        scale: 0.1
-        offset: 0.0
+      cell_info:
+        message_id: 19
+        dlc: 8
+        signals:
+          slot_id:
+            start_bit: 0
+            bit_length: 8
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          cell_voltage:
+            start_bit: 8
+            bit_length: 16
+            signed: false
+            scale: 0.001
+            offset: 0.0
+          cell_current:
+            start_bit: 24
+            bit_length: 16
+            signed: true
+            scale: 0.001
+            offset: 0.0
+          cell_temp:
+            start_bit: 40
+            bit_length: 16
+            signed: true
+            scale: 0.001
+            offset: 0.0
 
-      temperature:
-        start_bit: 22
-        bit_length: 8
-        signed: false
-        scale: 1.0
-        offset: -40.0
-
-      state:
-        start_bit: 30
-        bit_length: 3
-        signed: false
-        scale: 1.0
-        offset: 0.0
+      command:
+        message_id: 20
+        dlc: 4
+        # mode: 0 = cc_cv, 1 = ir, 2 = ecm, 3 = capacity
+        # start: 0 = stop, 1 = start
+        signals:
+          charger_id:
+            start_bit: 0
+            bit_length: 8
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          mode:
+            start_bit: 8
+            bit_length: 3
+            signed: false
+            scale: 1.0
+            offset: 0.0
+          setpoint:
+            start_bit: 11
+            bit_length: 16
+            signed: false
+            scale: 0.001
+            offset: 0.0
+          start:
+            start_bit: 27
+            bit_length: 1
+            signed: false
+            scale: 1.0
+            offset: 0.0

@@ -7,7 +7,8 @@ class QWidget;
 enum class PanelType
 {
     Console,
-    Log
+    Log,
+    ComsStatus
 };
 
 class PanelFactory

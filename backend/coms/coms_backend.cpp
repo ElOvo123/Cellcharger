@@ -117,6 +117,8 @@ bool ComsBackend::initSerial()
 
 bool ComsBackend::initSocketCAN()
 {
+    const QString canInterface = normalizedCanInterface(m_config.canInterface);
+
     m_can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (m_can_socket < 0)
     {
@@ -127,12 +129,16 @@ bool ComsBackend::initSocketCAN()
 
     struct ifreq ifr;
     std::memset(&ifr, 0, sizeof(ifr));
-    std::strncpy(ifr.ifr_name, "vcan0", IFNAMSIZ - 1);
+    std::strncpy(ifr.ifr_name,
+                 canInterface.toLocal8Bit().constData(),
+                 IFNAMSIZ - 1);
 
     if (ioctl(m_can_socket, SIOCGIFINDEX, &ifr) < 0)
     {
-        std::cout << "CAN ioctl failed" << std::endl;
-        Logger::instance().logStatus("COMS: CAN ioctl failed");
+        std::cout << "CAN ioctl failed for "
+                  << canInterface.toStdString() << std::endl;
+        Logger::instance().logStatus(
+            QString("COMS: CAN ioctl failed for %1").arg(canInterface));
         return false;
     }
 
@@ -143,13 +149,17 @@ bool ComsBackend::initSocketCAN()
 
     if (bind(m_can_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0)
     {
-        std::cout << "CAN bind failed" << std::endl;
-        Logger::instance().logStatus("COMS: CAN bind failed");
+        std::cout << "CAN bind failed for "
+                  << canInterface.toStdString() << std::endl;
+        Logger::instance().logStatus(
+            QString("COMS: CAN bind failed for %1").arg(canInterface));
         return false;
     }
 
-    std::cout << "SocketCAN initialized" << std::endl;
-    Logger::instance().logStatus("COMS: SocketCAN initialized on vcan0");
+    std::cout << "SocketCAN initialized on "
+              << canInterface.toStdString() << std::endl;
+    Logger::instance().logStatus(
+        QString("COMS: SocketCAN initialized on %1").arg(canInterface));
 
     return true;
 }

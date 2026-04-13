@@ -38,6 +38,7 @@
    <addaction name="actionComs"/>
    <addaction name="actionConsole"/>
    <addaction name="actionLog"/>
+   <addaction name="actionComsStatus"/>
   </widget>
 
   <widget class="QMenuBar" name="menubar">
@@ -94,6 +95,16 @@
    <property name="icon">
     <iconset>
      <normalon>:/images/log.svg</normalon>
+    </iconset>
+   </property>
+  </action>
+  <action name="actionComsStatus">
+   <property name="text">
+    <string>Status</string>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/chain.png</normalon>
     </iconset>
    </property>
   </action>

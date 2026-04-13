@@ -7,6 +7,7 @@ MainWindowController::MainWindowController(QWidget *parent) : MainWindowView(par
     connect(this, &MainWindowView::comsClicked, this, &MainWindowController::onComs);
     connect(this, &MainWindowView::consoleClicked, this, &MainWindowController::onConsole);
     connect(this, &MainWindowView::logClicked, this, &MainWindowController::onLog);
+    connect(this, &MainWindowView::comsStatusClicked, this, &MainWindowController::onComsStatus);
 }
 
 void MainWindowController::onComs()
@@ -18,13 +19,18 @@ void MainWindowController::onComs()
 void MainWindowController::onConsole()
 {
     backend.openConsole();
-    MainWindowView::openConsolePanel();
+    MainWindowView::openPanel(PanelType::Console);
 }
 
 void MainWindowController::onLog()
 {
     backend.openLog();
-    MainWindowView::openLogPanel();
+    MainWindowView::openPanel(PanelType::Log);
+}
+
+void MainWindowController::onComsStatus()
+{
+    MainWindowView::openPanel(PanelType::ComsStatus);
 }
 
 void MainWindowController::onHelpWindow()

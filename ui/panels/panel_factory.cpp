@@ -1,4 +1,5 @@
 #include "panel_factory.h"
+#include "charger_status_widget.h"
 #include "console_widget.h"
 #include "log_widget.h"
 
@@ -14,6 +15,8 @@ QWidget* PanelFactory::createPanelWidget(PanelType type, QWidget *parent)
             return new ConsoleWidget(parent);
         case PanelType::Log:
             return new LogWidget(parent);
+        case PanelType::ComsStatus:
+            return new ChargerStatusWidget(parent);
     }
 
     return nullptr;
@@ -27,6 +30,8 @@ QString PanelFactory::panelTitle(PanelType type)
             return "Console";
         case PanelType::Log:
             return "Log";
+        case PanelType::ComsStatus:
+            return "Status";
     }
 
     return "Panel";

@@ -1,9 +1,25 @@
 #include "pcp_formatter.h"
 
-QString PCPFormatter::toConsoleString(const PCPFrame& frame, const QString& direction)
+QString PCPFormatter::toConsoleString(const PCPFrame& frame,
+                                      const QString& direction,
+                                      const PCPDatabase& database)
 {
-    QString dataString;
+    const PCPIdLayout& layout = database.idLayout();
+    const uint32_t messageIdMask = (1u << layout.messageIdBits) - 1u;
+    const uint32_t messageId = frame.id & messageIdMask;
+    const uint32_t deviceId = frame.id >> layout.messageIdBits;
 
+    const QString deviceText =
+        QString("%1 (%2)")
+            .arg(QString::fromStdString(database.deviceName(deviceId)))
+            .arg(deviceId);
+
+    QString messageName = "unknown";
+    const PCPMessageDefinition* msgDef = database.messageById(deviceId, messageId);
+    if (msgDef)
+        messageName = QString::fromStdString(msgDef->name);
+
+    QString dataString;
     for (int i = 0; i < frame.dlc; ++i)
     {
         dataString += QString("%1 ")
@@ -11,10 +27,11 @@ QString PCPFormatter::toConsoleString(const PCPFrame& frame, const QString& dire
                           .toUpper();
     }
 
-    return QString("%1 0x%2 [%3] %4")
+    return QString("%1 | %2 | %3 | Message %4 | DLC %5 | %6")
         .arg(direction)
-        .arg(frame.id, 3, 16, QChar('0'))
-        .toUpper()
+        .arg(deviceText)
+        .arg(messageName)
+        .arg(messageId)
         .arg(frame.dlc)
         .arg(dataString.trimmed());
 }

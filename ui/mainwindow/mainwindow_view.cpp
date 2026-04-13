@@ -7,8 +7,11 @@
 #include "panel_container.h"
 #include "panel_factory.h"
 #include "simulated_coms_backend.h"
+#include "console_widget.h"
 
 #include <QList>
+#include <QSizePolicy>
+#include <QVBoxLayout>
 #include <QMenu>
 #include <QSplitter>
 
@@ -19,16 +22,30 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     ui->mainToolBar->setIconSize(QSize(48, 48));
     ui->mainToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-    setCentralWidget(m_panelSplitter);
+    m_centralContainer = new QWidget(this);
+    auto *centralLayout = new QVBoxLayout(m_centralContainer);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    centralLayout->addWidget(m_panelSplitter);
+
+    setCentralWidget(m_centralContainer);
     m_panelSplitter->setChildrenCollapsible(false);
     m_panelSplitter->setHandleWidth(4);
+    m_panelSplitter->setMinimumWidth(0);
+    m_panelSplitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     connect(ui->menuHelp,&QMenu::aboutToShow, this, &MainWindowView::helpClicked);
     connect(ui->actionComs,&QAction::triggered, this, &MainWindowView::comsClicked);
     connect(ui->actionConsole, &QAction::triggered, this, &MainWindowView::consoleClicked);
     connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
+    connect(ui->actionComsStatus, &QAction::triggered, this, &MainWindowView::comsStatusClicked);
 
     Logger::instance().logStatus("CellCharger started");
+
+    m_pcpDatabase.loadFromFile("pcp.yaml");
+    ConsoleWidget::setSharedPCPDatabase(&m_pcpDatabase);
+
+    Logger::instance().logStatus("PCP database loaded");
 }
 
 MainWindowView::~MainWindowView()
@@ -57,17 +74,15 @@ void MainWindowView::showHelpWindow()
 
 void MainWindowView::showComsWindow()
 {
-    Coms *view = new Coms(this);
+    if (!m_comsWindow)
+    {
+        m_comsWindow = new Coms(this);
+        m_comsController = new ComsController(m_comsWindow, &m_pcpDatabase, this);
+    }
 
-#ifdef USE_SIM_COMS
-    IComsBackend *backend = new SimulatedComsBackend(this);
-#else
-    IComsBackend *backend = new ComsBackend(this);
-#endif
-
-    new ComsController(view, backend, this);
-
-    view->show();
+    m_comsWindow->show();
+    m_comsWindow->raise();
+    m_comsWindow->activateWindow();
 
     Logger::instance().logStatus("Coms window opened");
 }
@@ -95,8 +110,11 @@ void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
 
     auto *panel = new PanelContainer(title, this);
     panel->setContentWidget(contentWidget);
+    panel->setMinimumWidth(0);
 
     m_panelSplitter->addWidget(panel);
+    for (int i = 0; i < m_panelSplitter->count(); ++i)
+        m_panelSplitter->setStretchFactor(i, 1);
 
     connect(panel, &PanelContainer::closeRequested, this, &MainWindowView::removePanel);
     rebalancePanels();
@@ -127,20 +145,11 @@ void MainWindowView::rebalancePanels()
     }
 
     QList<int> sizes;
+    const int splitterWidth = qMax(1, m_panelSplitter->size().width());
     for (int i = 0; i < count; ++i) 
     {
-        sizes.append(width() / count);
+        sizes.append(splitterWidth / count);
     }
 
     m_panelSplitter->setSizes(sizes);
-}
-
-void MainWindowView::openConsolePanel()
-{
-    openPanel(PanelType::Console);
-}
-
-void MainWindowView::openLogPanel()
-{
-    openPanel(PanelType::Log);
 }
