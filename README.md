@@ -2,7 +2,7 @@
 
 Dear Formula Student teams and enthusiasts,
 
-I have designed a battery cell charger and cycler for the characterization and testing of individual battery cells. This project is currently under development, but it is based on a previous version that is already in use, <strong>always manufacture at your own risk!</strong><br> If you encounter any issues or have suggestions for improvements, please use the GitHub Issues section. For discussions and technical questions, feel free to use the Discussions tab.
+I have designed a battery cell charger and cycler for the characterization and testing of individual battery cells. This project is currently under development, but it is based on a previous version that is already in use, <br><strong>always manufacture at your own risk!</strong><br> If you encounter any issues or have suggestions for improvements, please use the GitHub Issues section. For discussions and technical questions, feel free to use the Discussions tab.
 
 This project is published as open-source the hardware is licensed under the CERN-OHL-W v2 the software is licensed under the MIT License
 Feel free to use, modify, and improve it.
