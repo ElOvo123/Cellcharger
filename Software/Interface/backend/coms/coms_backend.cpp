@@ -1,5 +1,6 @@
 #include "coms_backend.h"
 #include "logger_backend.h"
+#include "../pcp/pcp_formatter.h"
 
 #include <iostream>
 #include <QHostAddress>
@@ -96,6 +97,53 @@ void ComsBackend::disconnectTransport()
     emit statusMessage("Real backend disconnected");
 
     Logger::instance().logStatus("COMS: real backend disconnected");
+}
+
+bool ComsBackend::sendFrame(const PCPFrame& frame, const PCPDatabase& database)
+{
+    const QString formatted = PCPFormatter::toConsoleString(frame, "TX", database);
+    const QByteArray payload = formatted.toUtf8() + '\n';
+
+    std::cout << formatted.toStdString() << std::endl;
+    emit messageSent(formatted);
+    Logger::instance().logComs(formatted);
+
+    switch (m_type)
+    {
+        case ComsType::Serial:
+            return m_serial && m_serial->isOpen() && m_serial->write(payload) >= 0;
+
+        case ComsType::Socket_vcan:
+        {
+            if (m_can_socket < 0)
+                return false;
+
+            struct can_frame canFrame;
+            std::memset(&canFrame, 0, sizeof(canFrame));
+            canFrame.can_id = frame.id;
+            canFrame.len = frame.dlc;
+            for (int i = 0; i < frame.dlc && i < 8; ++i)
+                canFrame.data[i] = frame.data[static_cast<size_t>(i)];
+
+            return write(m_can_socket, &canFrame, sizeof(canFrame)) == static_cast<ssize_t>(sizeof(canFrame));
+        }
+
+        case ComsType::Socket_UDP:
+        {
+            if (!m_udp)
+                return false;
+
+            const QHostAddress address =
+                m_config.ip.isEmpty() ? QHostAddress::LocalHost : QHostAddress(m_config.ip);
+            const quint16 port = m_config.port > 0 ? static_cast<quint16>(m_config.port) : 5000;
+            return m_udp->writeDatagram(payload, address, port) >= 0;
+        }
+
+        case ComsType::Socket_TCP:
+            return m_tcp && m_tcp->isOpen() && m_tcp->write(payload) >= 0;
+    }
+
+    return false;
 }
 
 bool ComsBackend::initSerial()

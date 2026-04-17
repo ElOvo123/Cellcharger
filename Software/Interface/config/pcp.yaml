@@ -82,7 +82,7 @@ devices:
       command:
         message_id: 20
         dlc: 4
-        # mode: 0 = cc_cv, 1 = ir, 2 = ecm, 3 = capacity
+        # mode: 0 = cc, 1 = cv, 2 = ir, 3 = ecm, 4 = capacity
         # start: 0 = stop, 1 = start
         signals:
           charger_id:

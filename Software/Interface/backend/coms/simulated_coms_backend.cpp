@@ -3,6 +3,8 @@
 #include "../pcp/pcp_formatter.h"
 #include "../pcp/pcp_decode_formatter.h"
 
+#include <iostream>
+
 SimulatedComsBackend::SimulatedComsBackend(const PCPDatabase* db, QObject *parent)
     : IComsBackend(parent),
       m_pcpDatabase(db),
@@ -76,6 +78,14 @@ void SimulatedComsBackend::disconnectTransport()
     emit disconnected();
     emit statusMessage("Simulated backend disconnected");
     Logger::instance().logStatus("COMS: simulated backend disconnected");
+}
+
+bool SimulatedComsBackend::sendFrame(const PCPFrame& frame, const PCPDatabase& database)
+{
+    const QString message = PCPFormatter::toConsoleString(frame, "TX", database);
+    std::cout << message.toStdString() << std::endl;
+    publishFrame(frame, "TX", true);
+    return true;
 }
 
 void SimulatedComsBackend::setState(State state)

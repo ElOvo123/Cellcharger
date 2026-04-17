@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QWidget>
 
 #include <array>
@@ -9,6 +10,9 @@ class ChargerStatusWidget;
 }
 
 class ComsActivityWidget;
+class ChargerHistoryPlotWidget;
+class QComboBox;
+class QDoubleSpinBox;
 class QLabel;
 class QTimer;
 class QTabWidget;
@@ -20,6 +24,9 @@ class ChargerStatusWidget : public QWidget
 public:
     explicit ChargerStatusWidget(QWidget *parent = nullptr);
     ~ChargerStatusWidget();
+
+signals:
+    void commandRequested(uint32_t chargerId, int mode, bool start, double setpoint);
 
 private:
     struct SlotWidgets
@@ -36,6 +43,9 @@ private:
     };
 
     void setupTabWidget();
+    void setupCommandButtons();
+    void setupDetailedControls();
+    void updateDetailedSetpointLabel();
     void clearSlots();
     void applySlotState(int slotIndex, bool active);
     int slotIndexForDevice(uint32_t deviceId);
@@ -46,10 +56,16 @@ private:
                          const QString& statusText);
     void markSlotFresh(int slotIndex);
     void processDecodedMessage(const QString& message);
+    void emitCommandForSlot(int slotIndex, int mode, bool start);
+    void emitDetailedCommand(bool start);
+    void appendHistorySample(uint32_t chargerId,
+                             const QMap<QString, QString>& signalValues);
 
 private:
     Ui::ChargerStatusWidget *ui = nullptr;
     QTabWidget *m_tabWidget = nullptr;
     ComsActivityWidget *m_activityWidget = nullptr;
+    ChargerHistoryPlotWidget *m_historyPlot = nullptr;
+    QElapsedTimer m_historyTimer;
     std::array<SlotWidgets, 3> m_slots;
 };

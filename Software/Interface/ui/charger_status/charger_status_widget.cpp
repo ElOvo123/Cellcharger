@@ -1,11 +1,16 @@
 #include "charger_status_widget.h"
 
+#include "charger_history_plot_widget.h"
 #include "coms_activity_widget.h"
 #include "logger_backend.h"
 #include "ui_charger_status_widget.h"
 
+#include <QButtonGroup>
+#include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QFrame>
 #include <QLabel>
+#include <QPushButton>
 #include <QRegularExpression>
 #include <QString>
 #include <QStyle>
@@ -16,6 +21,18 @@
 namespace
 {
 constexpr int kFreshTimeoutMs = 500;
+
+bool parseNumericSignal(const QMap<QString, QString>& signalValues,
+                        const QString& signalName,
+                        double& value)
+{
+    if (!signalValues.contains(signalName))
+        return false;
+
+    bool ok = false;
+    value = signalValues.value(signalName).toDouble(&ok);
+    return ok;
+}
 
 QString signalDisplay(const QMap<QString, QString>& signalValues,
                       const QString& primaryName,
@@ -113,12 +130,62 @@ ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
         "QLabel#detailedTabPlaceholderLabel {"
         "  color: palette(window-text);"
         "}"
+        "QWidget#detailedTab {"
+        "  background-color: palette(window);"
+        "}"
+        "QFrame#detailedTopBarFrame, QFrame#detailedControlsFrame {"
+        "  background-color: palette(base);"
+        "  border: 1px solid #c8c8c8;"
+        "}"
+        "QComboBox#detailedChargerComboBox, QDoubleSpinBox#detailedSetpointSpinBox {"
+        "  min-height: 30px;"
+        "  background-color: white;"
+        "  border: 1px solid #b8b8b8;"
+        "  padding: 2px 8px;"
+        "}"
+        "QComboBox#detailedChargerComboBox QAbstractItemView {"
+        "  background-color: white;"
+        "  color: black;"
+        "  selection-background-color: #dcdcdc;"
+        "  selection-color: black;"
+        "}"
+        "QPushButton#detailedSetpointMinusButton, QPushButton#detailedSetpointPlusButton {"
+        "  min-height: 30px;"
+        "  min-width: 34px;"
+        "  background-color: white;"
+        "  border: 1px solid #b8b8b8;"
+        "  font-weight: 700;"
+        "}"
+        "QPushButton#detailedSetSetpointButton {"
+        "  min-height: 30px;"
+        "  background-color: white;"
+        "  border: 1px solid #b8b8b8;"
+        "  padding: 0 12px;"
+        "}"
+        "QPushButton#detailedModeCcButton, QPushButton#detailedModeCvButton {"
+        "  min-height: 30px;"
+        "  min-width: 58px;"
+        "  background-color: white;"
+        "  border: 1px solid #b8b8b8;"
+        "  font-weight: 600;"
+        "}"
+        "QPushButton#detailedModeCcButton:checked, QPushButton#detailedModeCvButton:checked {"
+        "  background-color: #e9e9e9;"
+        "  color: palette(button-text);"
+        "  border: 1px solid #9d9d9d;"
+        "}"
+        "QPushButton#detailedStartButton, QPushButton#detailedStopButton {"
+        "  min-height: 32px;"
+        "}"
     );
     setupTabWidget();
+    setupCommandButtons();
+    setupDetailedControls();
 
     m_activityWidget = new ComsActivityWidget(ui->activityHost);
     m_activityWidget->setObjectName("activityIndicator");
     ui->activityHostLayout->addWidget(m_activityWidget, 0, Qt::AlignCenter);
+    m_historyTimer.start();
 
     m_slots[0].led = ui->slotLed1;
     m_slots[0].overviewLabel = ui->slotStatusLabel1;
@@ -193,6 +260,109 @@ void ChargerStatusWidget::setupTabWidget()
     m_tabWidget->tabBar()->setExpanding(false);
 }
 
+void ChargerStatusWidget::setupCommandButtons()
+{
+    connect(ui->startButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 0, true); });
+    connect(ui->stopButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 0, false); });
+    connect(ui->irButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 2, true); });
+    connect(ui->ecmButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 3, true); });
+    connect(ui->capacityButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 4, true); });
+
+    connect(ui->startButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 0, true); });
+    connect(ui->stopButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 0, false); });
+    connect(ui->irButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 2, true); });
+    connect(ui->ecmButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 3, true); });
+    connect(ui->capacityButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 4, true); });
+
+    connect(ui->startButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 0, true); });
+    connect(ui->stopButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 0, false); });
+    connect(ui->irButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 2, true); });
+    connect(ui->ecmButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 3, true); });
+    connect(ui->capacityButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 4, true); });
+}
+
+void ChargerStatusWidget::setupDetailedControls()
+{
+    m_historyPlot = new ChargerHistoryPlotWidget(ui->detailedPlotHost);
+    m_historyPlot->setObjectName("detailedHistoryPlot");
+    ui->detailedPlotHostLayout->addWidget(m_historyPlot);
+
+    ui->detailedChargerComboBox->addItem("Charger 1", 1);
+    ui->detailedChargerComboBox->addItem("Charger 2", 2);
+    ui->detailedChargerComboBox->addItem("Charger 3", 3);
+
+    auto *modeGroup = new QButtonGroup(this);
+    modeGroup->setExclusive(true);
+    modeGroup->addButton(ui->detailedModeCcButton, 0);
+    modeGroup->addButton(ui->detailedModeCvButton, 1);
+    ui->detailedModeCcButton->setChecked(true);
+
+    ui->detailedSetpointSpinBox->setDecimals(3);
+    ui->detailedSetpointSpinBox->setRange(0.0, 1000000.0);
+    ui->detailedSetpointSpinBox->setSingleStep(0.05);
+    ui->detailedSetpointSpinBox->setValue(4.2);
+    ui->detailedSetpointSpinBox->setMinimumWidth(96);
+    ui->detailedSetpointSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    updateDetailedSetpointLabel();
+
+    connect(ui->detailedChargerComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this](int index)
+            {
+                if (!m_historyPlot || index < 0)
+                    return;
+
+                const uint32_t chargerId =
+                    ui->detailedChargerComboBox->itemData(index).toUInt();
+                m_historyPlot->setSelectedCharger(chargerId);
+            });
+    connect(ui->detailedModeCcButton, &QPushButton::toggled, this,
+            [this](bool checked)
+            {
+                if (checked)
+                    updateDetailedSetpointLabel();
+            });
+    connect(ui->detailedModeCvButton, &QPushButton::toggled, this,
+            [this](bool checked)
+            {
+                if (checked)
+                    updateDetailedSetpointLabel();
+            });
+    connect(ui->detailedSetpointMinusButton, &QPushButton::clicked, this,
+            [this]()
+            {
+                if (ui->detailedSetpointSpinBox)
+                    ui->detailedSetpointSpinBox->stepDown();
+            });
+    connect(ui->detailedSetpointPlusButton, &QPushButton::clicked, this,
+            [this]()
+            {
+                if (ui->detailedSetpointSpinBox)
+                    ui->detailedSetpointSpinBox->stepUp();
+            });
+    connect(ui->detailedSetSetpointButton, &QPushButton::clicked, this,
+            [this]()
+            {
+                emitDetailedCommand(true);
+            });
+    connect(ui->detailedStartButton, &QPushButton::clicked, this,
+            [this]() { emitDetailedCommand(true); });
+    connect(ui->detailedStopButton, &QPushButton::clicked, this,
+            [this]() { emitDetailedCommand(false); });
+}
+
+void ChargerStatusWidget::updateDetailedSetpointLabel()
+{
+    if (!ui->detailedSetpointLabel || !ui->detailedModeCcButton || !ui->detailedModeCvButton)
+        return;
+
+    const bool cvMode = ui->detailedModeCvButton->isChecked();
+    ui->detailedSetpointLabel->setText("Setpoint");
+    if (ui->detailedSetpointSpinBox)
+        ui->detailedSetpointSpinBox->setSuffix(QString());
+    if (ui->detailedSetpointUnitLabel)
+        ui->detailedSetpointUnitLabel->setText(cvMode ? "V" : "A");
+}
+
 void ChargerStatusWidget::clearSlots()
 {
     for (int i = 0; i < static_cast<int>(m_slots.size()); ++i)
@@ -216,6 +386,10 @@ void ChargerStatusWidget::clearSlots()
             slot.timer->stop();
         applySlotState(i, false);
     }
+
+    if (m_historyPlot)
+        m_historyPlot->clearHistory();
+    m_historyTimer.restart();
 }
 
 void ChargerStatusWidget::applySlotState(int slotIndex, bool active)
@@ -303,6 +477,54 @@ void ChargerStatusWidget::markSlotFresh(int slotIndex)
         timer->start(kFreshTimeoutMs);
 }
 
+void ChargerStatusWidget::emitCommandForSlot(int slotIndex, int mode, bool start)
+{
+    if (slotIndex < 0 || slotIndex >= static_cast<int>(m_slots.size()))
+        return;
+
+    const SlotWidgets& slot = m_slots[static_cast<size_t>(slotIndex)];
+    const uint32_t chargerId = slot.assigned ? slot.deviceId : static_cast<uint32_t>(slotIndex + 1);
+    const double setpoint = start ? 4.2 : 0.0;
+    emit commandRequested(chargerId, mode, start, setpoint);
+}
+
+void ChargerStatusWidget::emitDetailedCommand(bool start)
+{
+    if (!ui->detailedChargerComboBox || !ui->detailedSetpointSpinBox ||
+        !ui->detailedModeCcButton || !ui->detailedModeCvButton)
+        return;
+
+    const int chargerIndex = ui->detailedChargerComboBox->currentIndex();
+    if (chargerIndex < 0)
+        return;
+
+    const uint32_t chargerId = ui->detailedChargerComboBox->itemData(chargerIndex).toUInt();
+    const int mode = ui->detailedModeCvButton->isChecked() ? 1 : 0;
+    const double setpoint = ui->detailedSetpointSpinBox->value();
+    emit commandRequested(chargerId, mode, start, setpoint);
+}
+
+void ChargerStatusWidget::appendHistorySample(uint32_t chargerId,
+                                              const QMap<QString, QString>& signalValues)
+{
+    if (!m_historyPlot)
+        return;
+
+    double voltage = 0.0;
+    double current = 0.0;
+    if (!parseNumericSignal(signalValues, "voltage", voltage) &&
+        !parseNumericSignal(signalValues, "volt", voltage))
+    {
+        return;
+    }
+
+    if (!parseNumericSignal(signalValues, "current", current))
+        return;
+
+    const double elapsedSeconds = static_cast<double>(m_historyTimer.elapsed()) / 1000.0;
+    m_historyPlot->appendSample(chargerId, elapsedSeconds, voltage, current);
+}
+
 void ChargerStatusWidget::processDecodedMessage(const QString& message)
 {
     const QStringList lines = message.split('\n', Qt::SkipEmptyParts);
@@ -350,6 +572,7 @@ void ChargerStatusWidget::processDecodedMessage(const QString& message)
     if (slotIndex < 0)
         return;
 
+    appendHistorySample(chargerId, signalValues);
     updateSlotLabel(
         slotIndex,
         signalDisplay(signalValues, "volt", "voltage"),

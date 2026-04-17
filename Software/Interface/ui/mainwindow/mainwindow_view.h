@@ -44,7 +44,9 @@ private:
     PCPDatabase m_pcpDatabase;
 
     void centerWindow(QWidget* child);
+    void ensureComsController();
     void addPanel(QWidget *contentWidget, const QString& title = QString());
     void removePanel(PanelContainer *panel);
     void rebalancePanels();
+    void dispatchChargerCommand(uint32_t chargerId, int mode, bool start, double setpoint);
 };

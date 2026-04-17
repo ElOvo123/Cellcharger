@@ -1,12 +1,15 @@
 #include <QtTest>
 
 #include "coms_activity_widget.h"
+#include "charger_history_plot_widget.h"
 #include "charger_status_widget.h"
 #include "help_dialog.h"
 #include "logger_backend.h"
 #include "log_widget.h"
 #include "panel_container.h"
 
+#include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QLabel>
 #include <QPixmap>
@@ -25,6 +28,7 @@ private slots:
     void comsActivityWidget_ignoresInvalidIndexesAndOnlyEmitsOnStateChanges();
     void comsActivityWidget_exposesExpectedSizeHintsAndPaints();
     void chargerStatusWidget_hasOverviewGeneralAndDetailedTabs();
+    void chargerStatusWidget_detailedControlsEmitSelectedCommandAndCollectHistory();
     void chargerStatusWidget_updatesFromLoggerTraffic();
     void chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevices();
     void helpDialog_initializesExpectedWindowState();
@@ -116,6 +120,25 @@ void WidgetTests::chargerStatusWidget_hasOverviewGeneralAndDetailedTabs()
     QCOMPARE(tabWidget->tabText(1), QString("General"));
     QCOMPARE(tabWidget->tabText(2), QString("Detailed"));
 
+    auto* detailedPlot = widget->findChild<ChargerHistoryPlotWidget*>("detailedHistoryPlot");
+    auto* detailedChargerCombo = widget->findChild<QComboBox*>("detailedChargerComboBox");
+    auto* detailedModeCcButton = widget->findChild<QPushButton*>("detailedModeCcButton");
+    auto* detailedModeCvButton = widget->findChild<QPushButton*>("detailedModeCvButton");
+    auto* detailedSetpointSpin = widget->findChild<QDoubleSpinBox*>("detailedSetpointSpinBox");
+    auto* detailedStartButton = widget->findChild<QPushButton*>("detailedStartButton");
+    auto* detailedStopButton = widget->findChild<QPushButton*>("detailedStopButton");
+    QVERIFY(detailedPlot != nullptr);
+    QVERIFY(detailedChargerCombo != nullptr);
+    QVERIFY(detailedModeCcButton != nullptr);
+    QVERIFY(detailedModeCvButton != nullptr);
+    QVERIFY(detailedSetpointSpin != nullptr);
+    QVERIFY(detailedStartButton != nullptr);
+    QVERIFY(detailedStopButton != nullptr);
+    QCOMPARE(detailedChargerCombo->count(), 3);
+    QCOMPARE(detailedModeCcButton->text(), QString("CC"));
+    QCOMPARE(detailedModeCvButton->text(), QString("CV"));
+    QVERIFY(detailedModeCcButton->isChecked());
+
     for (int column = 1; column <= 3; ++column)
     {
         auto* voltageLabel = widget->findChild<QLabel*>(QString("generalVoltageLabel%1").arg(column));
@@ -144,6 +167,59 @@ void WidgetTests::chargerStatusWidget_hasOverviewGeneralAndDetailedTabs()
     }
 
     delete widget;
+}
+
+void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndCollectHistory()
+{
+    ChargerStatusWidget widget;
+    QSignalSpy commandSpy(&widget, &ChargerStatusWidget::commandRequested);
+
+    auto* detailedPlot = widget.findChild<ChargerHistoryPlotWidget*>("detailedHistoryPlot");
+    auto* chargerCombo = widget.findChild<QComboBox*>("detailedChargerComboBox");
+    auto* modeCcButton = widget.findChild<QPushButton*>("detailedModeCcButton");
+    auto* modeCvButton = widget.findChild<QPushButton*>("detailedModeCvButton");
+    auto* setpointSpin = widget.findChild<QDoubleSpinBox*>("detailedSetpointSpinBox");
+    auto* startButton = widget.findChild<QPushButton*>("detailedStartButton");
+    auto* stopButton = widget.findChild<QPushButton*>("detailedStopButton");
+
+    QVERIFY(detailedPlot != nullptr);
+    QVERIFY(chargerCombo != nullptr);
+    QVERIFY(modeCcButton != nullptr);
+    QVERIFY(modeCvButton != nullptr);
+    QVERIFY(setpointSpin != nullptr);
+    QVERIFY(startButton != nullptr);
+    QVERIFY(stopButton != nullptr);
+
+    chargerCombo->setCurrentIndex(1);
+    QTest::mouseClick(modeCvButton, Qt::LeftButton);
+    setpointSpin->setValue(4.175);
+    QTest::mouseClick(startButton, Qt::LeftButton);
+
+    QCOMPARE(commandSpy.count(), 1);
+    const QList<QVariant> startCommand = commandSpy.takeFirst();
+    QCOMPARE(startCommand.at(0).toUInt(), 2u);
+    QCOMPARE(startCommand.at(1).toInt(), 1);
+    QCOMPARE(startCommand.at(2).toBool(), true);
+    QCOMPARE(startCommand.at(3).toDouble(), 4.175);
+
+    Logger::instance().logDecoded(
+        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+        "  charger_id = 2 (raw=2)\n"
+        "  current = 1.5 (raw=1500)\n"
+        "  status = 1 (raw=1)\n"
+        "  temperature = 26 (raw=260)\n"
+        "  voltage = 4.12 (raw=4120)");
+    QCoreApplication::processEvents();
+    QVERIFY(detailedPlot->sampleCountForCharger(2) >= 1);
+    QCOMPARE(detailedPlot->selectedCharger(), 2u);
+
+    QTest::mouseClick(stopButton, Qt::LeftButton);
+    QCOMPARE(commandSpy.count(), 1);
+    const QList<QVariant> stopCommand = commandSpy.takeFirst();
+    QCOMPARE(stopCommand.at(0).toUInt(), 2u);
+    QCOMPARE(stopCommand.at(1).toInt(), 1);
+    QCOMPARE(stopCommand.at(2).toBool(), false);
+    QCOMPARE(stopCommand.at(3).toDouble(), 4.175);
 }
 
 void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()

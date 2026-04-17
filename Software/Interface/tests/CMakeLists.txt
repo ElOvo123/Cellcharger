@@ -65,6 +65,8 @@ add_executable(widget_tests
     ${CMAKE_SOURCE_DIR}/ui/log/log_widget.ui
     ${CMAKE_SOURCE_DIR}/ui/charger_status/coms_activity_widget.cpp
     ${CMAKE_SOURCE_DIR}/ui/charger_status/coms_activity_widget.h
+    ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_history_plot_widget.cpp
+    ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_history_plot_widget.h
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.cpp
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.h
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.ui

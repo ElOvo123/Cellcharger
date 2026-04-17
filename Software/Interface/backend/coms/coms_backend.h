@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icomms_backend.h"
+#include "../pcp/pcp_encoder.h"
 
 #include <QSerialPort>
 #include <QTcpSocket>
@@ -18,6 +19,7 @@ public:
     void setConfig(const ComsConfig &config) override;
     void connectTransport() override;
     void disconnectTransport() override;
+    bool sendFrame(const PCPFrame& frame, const PCPDatabase& database) override;
 
 private:
     bool initSerial();

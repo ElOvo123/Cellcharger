@@ -326,23 +326,16 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="startButton1">
-              <property name="text">
-               <string>Start</string>
+             <spacer name="generalSpacer1">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
-             </widget>
+             </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="stopButton1">
+             <widget class="QPushButton" name="capacityButton1">
               <property name="text">
-               <string>Stop</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="irButton1">
-              <property name="text">
-               <string>IR</string>
+               <string>Capacity</string>
               </property>
              </widget>
             </item>
@@ -354,18 +347,25 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="capacityButton1">
+             <widget class="QPushButton" name="irButton1">
               <property name="text">
-               <string>Capacity</string>
+               <string>IR</string>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="generalSpacer1">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
+             <widget class="QPushButton" name="stopButton1">
+              <property name="text">
+               <string>Stop</string>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="startButton1">
+              <property name="text">
+               <string>Start</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -420,23 +420,16 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="startButton2">
-              <property name="text">
-               <string>Start</string>
+             <spacer name="generalSpacer2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
-             </widget>
+             </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="stopButton2">
+             <widget class="QPushButton" name="capacityButton2">
               <property name="text">
-               <string>Stop</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="irButton2">
-              <property name="text">
-               <string>IR</string>
+               <string>Capacity</string>
               </property>
              </widget>
             </item>
@@ -448,18 +441,25 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="capacityButton2">
+             <widget class="QPushButton" name="irButton2">
               <property name="text">
-               <string>Capacity</string>
+               <string>IR</string>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="generalSpacer2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
+             <widget class="QPushButton" name="stopButton2">
+              <property name="text">
+               <string>Stop</string>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="startButton2">
+              <property name="text">
+               <string>Start</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -514,23 +514,16 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="startButton3">
-              <property name="text">
-               <string>Start</string>
+             <spacer name="generalSpacer3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
-             </widget>
+             </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="stopButton3">
+             <widget class="QPushButton" name="capacityButton3">
               <property name="text">
-               <string>Stop</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="irButton3">
-              <property name="text">
-               <string>IR</string>
+               <string>Capacity</string>
               </property>
              </widget>
             </item>
@@ -542,18 +535,25 @@ Status
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="capacityButton3">
+             <widget class="QPushButton" name="irButton3">
               <property name="text">
-               <string>Capacity</string>
+               <string>IR</string>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="generalSpacer3">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
+             <widget class="QPushButton" name="stopButton3">
+              <property name="text">
+               <string>Stop</string>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="startButton3">
+              <property name="text">
+               <string>Start</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -580,21 +580,179 @@ Status
         <number>8</number>
        </property>
        <item>
-        <widget class="QLabel" name="detailedTabPlaceholderLabel">
-         <property name="wordWrap">
-          <bool>true</bool>
+        <widget class="QFrame" name="detailedTopBarFrame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
          </property>
-         <property name="text">
-          <string>Detailed charger diagnostics will appear here.</string>
-         </property>
+         <layout class="QHBoxLayout" name="detailedTopBarLayout">
+          <property name="leftMargin">
+           <number>12</number>
+          </property>
+          <property name="topMargin">
+           <number>12</number>
+          </property>
+          <property name="rightMargin">
+           <number>12</number>
+          </property>
+          <property name="bottomMargin">
+           <number>12</number>
+          </property>
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="detailedChargerLabel">
+            <property name="text">
+             <string>Charger</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="detailedChargerComboBox"/>
+          </item>
+          <item>
+           <spacer name="detailedTopBarSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
-        <spacer name="detailedBottomSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+        <widget class="QWidget" name="detailedPlotHost">
+         <layout class="QVBoxLayout" name="detailedPlotHostLayout">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="detailedControlsFrame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
          </property>
-        </spacer>
+         <layout class="QHBoxLayout" name="detailedControlsLayout">
+          <property name="leftMargin">
+           <number>12</number>
+          </property>
+          <property name="topMargin">
+           <number>12</number>
+          </property>
+          <property name="rightMargin">
+           <number>12</number>
+          </property>
+          <property name="bottomMargin">
+           <number>12</number>
+          </property>
+          <property name="spacing">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="detailedModeLabel">
+            <property name="text">
+             <string>Mode</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedModeCcButton">
+            <property name="text">
+             <string>CC</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoExclusive">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedModeCvButton">
+            <property name="text">
+             <string>CV</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoExclusive">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="detailedSetpointLabel">
+            <property name="text">
+             <string>Setpoint</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="detailedSetpointSpinBox"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="detailedSetpointUnitLabel">
+            <property name="text">
+             <string>A</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedSetpointMinusButton">
+            <property name="text">
+             <string>-</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedSetpointPlusButton">
+            <property name="text">
+             <string>+</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedSetSetpointButton">
+            <property name="text">
+             <string>Set Setpoint</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="detailedControlsSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedStopButton">
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="detailedStartButton">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
       </layout>
      </widget>

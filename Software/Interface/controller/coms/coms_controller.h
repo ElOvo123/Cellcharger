@@ -15,6 +15,11 @@ public:
                             const PCPDatabase* pcpDatabase,
                             QObject *parent = nullptr);
 
+    bool sendChargerCommand(uint32_t chargerId,
+                            int mode,
+                            bool start,
+                            double setpoint);
+
 private slots:
     void onTypeChanged(int index);
     void onAddConnectionRequested();

@@ -1,5 +1,6 @@
 #include "mainwindow_view.h"
 #include "ui_mainwindow.h"
+#include "charger_status_widget.h"
 #include "help_dialog.h"
 #include "logger_backend.h"
 #include "coms.h"
@@ -40,11 +41,11 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
     connect(ui->actionComsStatus, &QAction::triggered, this, &MainWindowView::comsStatusClicked);
 
-    Logger::instance().logStatus("CellCharger started");
-
     m_pcpDatabase.loadFromFile("pcp.yaml");
     ConsoleWidget::setSharedPCPDatabase(&m_pcpDatabase);
 
+    ensureComsController();
+    Logger::instance().logStatus("CellCharger started");
     Logger::instance().logStatus("PCP database loaded");
 }
 
@@ -74,11 +75,7 @@ void MainWindowView::showHelpWindow()
 
 void MainWindowView::showComsWindow()
 {
-    if (!m_comsWindow)
-    {
-        m_comsWindow = new Coms(this);
-        m_comsController = new ComsController(m_comsWindow, &m_pcpDatabase, this);
-    }
+    ensureComsController();
 
     m_comsWindow->show();
     m_comsWindow->raise();
@@ -112,12 +109,33 @@ void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
     panel->setContentWidget(contentWidget);
     panel->setMinimumWidth(0);
 
+    if (auto* chargerStatusWidget = qobject_cast<ChargerStatusWidget*>(contentWidget))
+    {
+        connect(chargerStatusWidget, &ChargerStatusWidget::commandRequested, this,
+                [this](uint32_t chargerId, int mode, bool start, double setpoint)
+                {
+                    dispatchChargerCommand(chargerId, mode, start, setpoint);
+                });
+    }
+
     m_panelSplitter->addWidget(panel);
     for (int i = 0; i < m_panelSplitter->count(); ++i)
         m_panelSplitter->setStretchFactor(i, 1);
 
     connect(panel, &PanelContainer::closeRequested, this, &MainWindowView::removePanel);
     rebalancePanels();
+}
+
+void MainWindowView::ensureComsController()
+{
+    if (m_comsWindow && m_comsController)
+        return;
+
+    if (!m_comsWindow)
+        m_comsWindow = new Coms(this);
+
+    if (!m_comsController)
+        m_comsController = new ComsController(m_comsWindow, &m_pcpDatabase, this);
 }
 
 void MainWindowView::removePanel(PanelContainer *panel)
@@ -152,4 +170,13 @@ void MainWindowView::rebalancePanels()
     }
 
     m_panelSplitter->setSizes(sizes);
+}
+
+void MainWindowView::dispatchChargerCommand(uint32_t chargerId, int mode, bool start, double setpoint)
+{
+    ensureComsController();
+    if (!m_comsController)
+        return;
+
+    m_comsController->sendChargerCommand(chargerId, mode, start, setpoint);
 }

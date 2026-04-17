@@ -3,6 +3,9 @@
 #include <QObject>
 #include "coms_types.h"
 
+class PCPDatabase;
+struct PCPFrame;
+
 class IComsBackend : public QObject
 {
     Q_OBJECT
@@ -27,6 +30,7 @@ public:
     virtual void setConfig(const ComsConfig &config) = 0;
     virtual void connectTransport() = 0;
     virtual void disconnectTransport() = 0;
+    virtual bool sendFrame(const PCPFrame& frame, const PCPDatabase& database) = 0;
 
 signals:
     void stateChanged(IComsBackend::State state);

@@ -20,6 +20,7 @@ public:
     void setConfig(const ComsConfig &config) override;
     void connectTransport() override;
     void disconnectTransport() override;
+    bool sendFrame(const PCPFrame& frame, const PCPDatabase& database) override;
 
 private slots:
     void generateFakeMessage();

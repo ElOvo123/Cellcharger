@@ -4,6 +4,8 @@
 #include "logger_backend.h"
 #include "simulated_coms_backend.h"
 
+#include <iostream>
+
 ComsController::ComsController(Coms *view,
                                const PCPDatabase* pcpDatabase,
                                QObject *parent)
@@ -183,4 +185,51 @@ void ComsController::refreshOverallIndicator()
     }
 
     m_view->setOverallConnected(hasConnected);
+}
+
+bool ComsController::sendChargerCommand(uint32_t chargerId,
+                                        int mode,
+                                        bool start,
+                                        double setpoint)
+{
+    if (!m_pcpDatabase)
+    {
+        Logger::instance().logStatus("COMS: no PCP database available for charger command");
+        return false;
+    }
+
+    PCPEncoder encoder(m_pcpDatabase);
+    PCPFrame frame;
+    try
+    {
+        frame = encoder.encode(1, "command", {
+            {"charger_id", static_cast<double>(chargerId)},
+            {"mode", static_cast<double>(mode)},
+            {"setpoint", setpoint},
+            {"start", start ? 1.0 : 0.0}
+        });
+    }
+    catch (const std::exception& ex)
+    {
+        Logger::instance().logStatus(QString("COMS: failed to encode charger command: %1").arg(ex.what()));
+        return false;
+    }
+
+    std::cout << "Status command: charger_id=" << chargerId
+              << " mode=" << mode
+              << " start=" << (start ? 1 : 0)
+              << " setpoint=" << setpoint
+              << std::endl;
+
+    for (ConnectionEntry& entry : m_connections)
+    {
+        if (!entry.backend || entry.state != IComsBackend::State::Connected)
+            continue;
+
+        if (entry.backend->sendFrame(frame, *m_pcpDatabase))
+            return true;
+    }
+
+    Logger::instance().logStatus("COMS: no connected backend available to send charger command");
+    return false;
 }
