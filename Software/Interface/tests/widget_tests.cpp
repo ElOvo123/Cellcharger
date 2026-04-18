@@ -284,7 +284,7 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalVoltage1->text(), QString("Voltage: 12.7 V"));
     QCOMPARE(generalCurrent1->text(), QString("Current: 3.2 A"));
     QCOMPARE(generalTemp1->text(), QString("Temp: 31 C"));
-    QVERIFY(generalTitle1->text().contains("DEV 1"));
+    QCOMPARE(generalTitle1->text(), QString("Charger 1"));
 
     Logger::instance().logDecoded(
         "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
@@ -303,7 +303,7 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalVoltage2->text(), QString("Voltage: 12.9 V"));
     QCOMPARE(generalCurrent2->text(), QString("Current: 4.1 A"));
     QCOMPARE(generalTemp2->text(), QString("Temp: 29 C"));
-    QVERIFY(generalTitle2->text().contains("DEV 2"));
+    QCOMPARE(generalTitle2->text(), QString("Charger 2"));
 
     Logger::instance().logDecoded(
         "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
@@ -323,7 +323,7 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalVoltage3->text(), QString("Voltage: 13.1 V"));
     QCOMPARE(generalCurrent3->text(), QString("Current: 5.0 A"));
     QCOMPARE(generalTemp3->text(), QString("Temp: 27 C"));
-    QVERIFY(generalTitle3->text().contains("DEV 3"));
+    QCOMPARE(generalTitle3->text(), QString("Charger 3"));
 
     Logger::instance().logDecoded(
         "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
@@ -404,9 +404,9 @@ void WidgetTests::chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevic
         "  status = 0 (raw=0)");
     QCoreApplication::processEvents();
 
-    QVERIFY(generalTitle1->text().contains("DEV 1"));
-    QVERIFY(generalTitle2->text().contains("DEV 2"));
-    QVERIFY(generalTitle3->text().contains("DEV 3"));
+    QCOMPARE(generalTitle1->text(), QString("Charger 1"));
+    QCOMPARE(generalTitle2->text(), QString("Charger 2"));
+    QCOMPARE(generalTitle3->text(), QString("Charger 3"));
     QVERIFY(activityIndicator->isSlotFresh(0));
     QVERIFY(activityIndicator->isSlotFresh(1));
     QVERIFY(activityIndicator->isSlotFresh(2));
@@ -430,7 +430,7 @@ void WidgetTests::chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevic
         "  status = 1 (raw=1)");
     QCoreApplication::processEvents();
     QVERIFY(slot1Label->text().contains("12.9 V"));
-    QVERIFY(generalTitle1->text().contains("DEV 1"));
+    QCOMPARE(generalTitle1->text(), QString("Charger 1"));
 
     const QString slot1Before = slot1Label->text();
     const QString slot2Before = slot2Label->text();

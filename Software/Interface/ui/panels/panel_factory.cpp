@@ -2,6 +2,7 @@
 #include "charger_status_widget.h"
 #include "console_widget.h"
 #include "log_widget.h"
+#include "profile_setup_widget.h"
 
 #include <QLabel>
 #include <QVBoxLayout>
@@ -17,6 +18,8 @@ QWidget* PanelFactory::createPanelWidget(PanelType type, QWidget *parent)
             return new LogWidget(parent);
         case PanelType::ComsStatus:
             return new ChargerStatusWidget(parent);
+        case PanelType::ProfileSetup:
+            return new ProfileSetupWidget(parent);
     }
 
     return nullptr;
@@ -32,6 +35,8 @@ QString PanelFactory::panelTitle(PanelType type)
             return "Log";
         case PanelType::ComsStatus:
             return "Status";
+        case PanelType::ProfileSetup:
+            return "Profile Setup";
     }
 
     return "Panel";

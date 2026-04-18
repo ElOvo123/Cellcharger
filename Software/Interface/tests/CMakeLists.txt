@@ -92,3 +92,23 @@ set_tests_properties(widget_tests PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+add_executable(profile_setup_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/profile_setup_tests.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_plot_widget.cpp
+)
+
+target_include_directories(profile_setup_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup
+)
+
+target_link_libraries(profile_setup_tests PRIVATE
+    Qt6::Test
+    Qt6::Widgets
+)
+
+add_test(NAME profile_setup_tests COMMAND profile_setup_tests)
+set_tests_properties(profile_setup_tests PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)

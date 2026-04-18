@@ -367,6 +367,13 @@ Status
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QPushButton" name="enduranceTestButton1">
+              <property name="text">
+               <string>Endurance Test</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -461,6 +468,13 @@ Status
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QPushButton" name="enduranceTestButton2">
+              <property name="text">
+               <string>Endurance Test</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -552,6 +566,13 @@ Status
              <widget class="QPushButton" name="startButton3">
               <property name="text">
                <string>Start</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="enduranceTestButton3">
+              <property name="text">
+               <string>Endurance Test</string>
               </property>
              </widget>
             </item>

@@ -40,6 +40,7 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     connect(ui->actionConsole, &QAction::triggered, this, &MainWindowView::consoleClicked);
     connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
     connect(ui->actionComsStatus, &QAction::triggered, this, &MainWindowView::comsStatusClicked);
+    connect(ui->actionProfileSetup, &QAction::triggered, this, &MainWindowView::profileSetupClicked);
 
     m_pcpDatabase.loadFromFile("pcp.yaml");
     ConsoleWidget::setSharedPCPDatabase(&m_pcpDatabase);

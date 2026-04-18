@@ -66,9 +66,14 @@ set_target_properties(qt_app PROPERTIES
     AUTOUIC_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/ui"
 )
 
+target_include_directories(qt_app PRIVATE
+    ui/profile_setup
+)
+
 target_link_libraries(qt_app PRIVATE   
     Qt6::Widgets 
     Qt6::SerialPort 
     Qt6::Network
     yaml-cpp
+    profile_setup
 )

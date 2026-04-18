@@ -4,7 +4,6 @@ build-coverage/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
 coverage-reports/
 *.gcov
 

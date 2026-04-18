@@ -34,6 +34,7 @@ signals:
     void consoleClicked();
     void logClicked();
     void comsStatusClicked();
+    void profileSetupClicked();
 
 private:
     Ui::MainWindow *ui;

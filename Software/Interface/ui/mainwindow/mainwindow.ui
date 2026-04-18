@@ -39,6 +39,7 @@
    <addaction name="actionConsole"/>
    <addaction name="actionLog"/>
    <addaction name="actionComsStatus"/>
+   <addaction name="actionProfileSetup"/>
   </widget>
 
   <widget class="QMenuBar" name="menubar">
@@ -105,6 +106,16 @@
    <property name="icon">
     <iconset>
      <normalon>:/images/chain.png</normalon>
+    </iconset>
+   </property>
+  </action>
+  <action name="actionProfileSetup">
+   <property name="text">
+    <string>Profile Setup</string>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/page.svg</normalon>
     </iconset>
    </property>
   </action>

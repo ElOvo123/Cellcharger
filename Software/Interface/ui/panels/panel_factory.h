@@ -8,7 +8,8 @@ enum class PanelType
 {
     Console,
     Log,
-    ComsStatus
+    ComsStatus,
+    ProfileSetup
 };
 
 class PanelFactory

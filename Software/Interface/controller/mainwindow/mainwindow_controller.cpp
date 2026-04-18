@@ -8,6 +8,7 @@ MainWindowController::MainWindowController(QWidget *parent) : MainWindowView(par
     connect(this, &MainWindowView::consoleClicked, this, &MainWindowController::onConsole);
     connect(this, &MainWindowView::logClicked, this, &MainWindowController::onLog);
     connect(this, &MainWindowView::comsStatusClicked, this, &MainWindowController::onComsStatus);
+    connect(this, &MainWindowView::profileSetupClicked, this, &MainWindowController::onProfileSetup);
 }
 
 void MainWindowController::onComs()
@@ -31,6 +32,11 @@ void MainWindowController::onLog()
 void MainWindowController::onComsStatus()
 {
     MainWindowView::openPanel(PanelType::ComsStatus);
+}
+
+void MainWindowController::onProfileSetup()
+{
+    MainWindowView::openPanel(PanelType::ProfileSetup);
 }
 
 void MainWindowController::onHelpWindow()

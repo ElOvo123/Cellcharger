@@ -267,18 +267,21 @@ void ChargerStatusWidget::setupCommandButtons()
     connect(ui->irButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 2, true); });
     connect(ui->ecmButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 3, true); });
     connect(ui->capacityButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 4, true); });
+    connect(ui->enduranceTestButton1, &QPushButton::clicked, this, [this]() { emitCommandForSlot(0, 5, true); });
 
     connect(ui->startButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 0, true); });
     connect(ui->stopButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 0, false); });
     connect(ui->irButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 2, true); });
     connect(ui->ecmButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 3, true); });
     connect(ui->capacityButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 4, true); });
+    connect(ui->enduranceTestButton2, &QPushButton::clicked, this, [this]() { emitCommandForSlot(1, 5, true); });
 
     connect(ui->startButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 0, true); });
     connect(ui->stopButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 0, false); });
     connect(ui->irButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 2, true); });
     connect(ui->ecmButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 3, true); });
     connect(ui->capacityButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 4, true); });
+    connect(ui->enduranceTestButton3, &QPushButton::clicked, this, [this]() { emitCommandForSlot(2, 5, true); });
 }
 
 void ChargerStatusWidget::setupDetailedControls()
@@ -451,9 +454,7 @@ void ChargerStatusWidget::updateSlotLabel(int slotIndex,
 
     if (slot.generalTitleLabel)
     {
-        const QString titleText = slot.assigned
-            ? QString("Charger %1 · DEV %2").arg(slotIndex + 1).arg(slot.deviceId)
-            : QString("Charger %1").arg(slotIndex + 1);
+        const QString titleText = QString("Charger %1").arg(slotIndex + 1);
         slot.generalTitleLabel->setText(titleText);
     }
 

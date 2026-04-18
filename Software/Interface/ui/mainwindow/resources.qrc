@@ -3,5 +3,6 @@
         <file>images/chain.png</file>
         <file>images/console.png</file>
         <file>images/log.svg</file>
+        <file>images/page.svg</file>
     </qresource>
 </RCC>
