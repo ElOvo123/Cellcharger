@@ -9,6 +9,7 @@
 #include "panel_factory.h"
 #include "simulated_coms_backend.h"
 #include "console_widget.h"
+#include "profile_setup_widget.h"
 
 #include <QList>
 #include <QSizePolicy>
@@ -113,6 +114,15 @@ void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
     if (auto* chargerStatusWidget = qobject_cast<ChargerStatusWidget*>(contentWidget))
     {
         connect(chargerStatusWidget, &ChargerStatusWidget::commandRequested, this,
+                [this](uint32_t chargerId, int mode, bool start, double setpoint)
+                {
+                    dispatchChargerCommand(chargerId, mode, start, setpoint);
+                });
+    }
+
+    if (auto* profileSetupWidget = qobject_cast<ProfileSetupWidget*>(contentWidget))
+    {
+        connect(profileSetupWidget, &ProfileSetupWidget::commandRequested, this,
                 [this](uint32_t chargerId, int mode, bool start, double setpoint)
                 {
                     dispatchChargerCommand(chargerId, mode, start, setpoint);

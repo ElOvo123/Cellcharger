@@ -35,6 +35,7 @@ public:
 
     void setSetpoints(const std::vector<Setpoint>& setpoints);
     void setDisplayMode(DisplayMode mode);
+    void setActiveStepMarker(bool visible, double time, double value);
     void updatePlot();
 
 protected:
@@ -60,6 +61,9 @@ private:
     QPoint m_lastPanPos;
     bool m_selecting = false;
     QRect m_selectionRect;
+    bool m_activeStepVisible = false;
+    double m_activeStepTime = 0.0;
+    double m_activeStepValue = 0.0;
 
     double interpolate(double t0, double v0, double t1, double v1, double t, const QString& curveType, double rampStep);
     static double paddedLowerBound(double minValue, double maxValue);

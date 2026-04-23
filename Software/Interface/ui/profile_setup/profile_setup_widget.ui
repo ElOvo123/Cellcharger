@@ -25,171 +25,525 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="profileControlsLayout">
-     <item>
-      <widget class="QLabel" name="profileNameLabel">
-       <property name="text">
-        <string>Profile Name:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="profileNameEdit">
-       <property name="text">
-        <string>New Profile</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="controlModeLabel">
-       <property name="text">
-        <string>Control Mode:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="controlModeComboBox">
-       <item>
-        <property name="text">
-         <string>All Parameters</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Voltage Only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Current Only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Temperature Only</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="saveProfileButton">
-       <property name="text">
-        <string>Save Profile</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="loadProfileButton">
-       <property name="text">
-        <string>Load Profile</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="plotGroupBox">
-     <property name="title">
-      <string>Profile Visualization</string>
+    <widget class="QTabWidget" name="slotTabWidget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <layout class="QVBoxLayout" name="plotLayout">
-      <item>
-       <widget class="QWidget" name="plotWidget">
-        <property name="minimumSize">
-         <size>
-          <width>400</width>
-          <height>200</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <widget class="QWidget" name="slot1Tab">
+      <attribute name="title">
+       <string>Slot 1</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="slot1Layout">
+       <item>
+        <layout class="QHBoxLayout" name="profileControlsLayout1">
+         <item>
+          <widget class="QLabel" name="profileNameLabel1">
+           <property name="text">
+            <string>Profile Name:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="profileNameEdit1">
+           <property name="text">
+            <string>New Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="controlModeLabel1">
+           <property name="text">
+            <string>Control Mode:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="controlModeComboBox1">
+           <item>
+            <property name="text">
+             <string>All Parameters</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Voltage Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Current Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Temperature Only</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveProfileButton1">
+           <property name="text">
+            <string>Save Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadProfileButton1">
+           <property name="text">
+            <string>Load Profile</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="plotGroupBox1">
+         <property name="title">
+          <string>Profile Visualization</string>
+         </property>
+         <layout class="QVBoxLayout" name="plotLayout1">
+          <item>
+           <widget class="QWidget" name="plotWidget1">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>200</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="setpointsTable1">
+         <property name="columnCount">
+          <number>6</number>
+         </property>
+         <column>
+          <property name="text">
+           <string>Time (s)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Voltage (V)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Current (A)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Temperature (°C)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Curve to Before</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Ramp Step</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="setpointButtonsLayout1">
+         <item>
+          <widget class="QPushButton" name="addSetpointButton1">
+           <property name="text">
+            <string>Add Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="removeSetpointButton1">
+           <property name="text">
+            <string>Remove Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="updatePlotButton1">
+           <property name="text">
+            <string>Update Plot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer1">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="startTestButton1">
+           <property name="text">
+            <string>Start Test</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="slot2Tab">
+      <attribute name="title">
+       <string>Slot 2</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="slot2Layout">
+       <item>
+        <layout class="QHBoxLayout" name="profileControlsLayout2">
+         <item>
+          <widget class="QLabel" name="profileNameLabel2">
+           <property name="text">
+            <string>Profile Name:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="profileNameEdit2">
+           <property name="text">
+            <string>New Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="controlModeLabel2">
+           <property name="text">
+            <string>Control Mode:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="controlModeComboBox2">
+           <item>
+            <property name="text">
+             <string>All Parameters</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Voltage Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Current Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Temperature Only</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveProfileButton2">
+           <property name="text">
+            <string>Save Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadProfileButton2">
+           <property name="text">
+            <string>Load Profile</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="plotGroupBox2">
+         <property name="title">
+          <string>Profile Visualization</string>
+         </property>
+         <layout class="QVBoxLayout" name="plotLayout2">
+          <item>
+           <widget class="QWidget" name="plotWidget2">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>200</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="setpointsTable2">
+         <property name="columnCount">
+          <number>6</number>
+         </property>
+         <column>
+          <property name="text">
+           <string>Time (s)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Voltage (V)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Current (A)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Temperature (°C)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Curve to Before</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Ramp Step</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="setpointButtonsLayout2">
+         <item>
+          <widget class="QPushButton" name="addSetpointButton2">
+           <property name="text">
+            <string>Add Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="removeSetpointButton2">
+           <property name="text">
+            <string>Remove Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="updatePlotButton2">
+           <property name="text">
+            <string>Update Plot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="startTestButton2">
+           <property name="text">
+            <string>Start Test</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="slot3Tab">
+      <attribute name="title">
+       <string>Slot 3</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="slot3Layout">
+       <item>
+        <layout class="QHBoxLayout" name="profileControlsLayout3">
+         <item>
+          <widget class="QLabel" name="profileNameLabel3">
+           <property name="text">
+            <string>Profile Name:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="profileNameEdit3">
+           <property name="text">
+            <string>New Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="controlModeLabel3">
+           <property name="text">
+            <string>Control Mode:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="controlModeComboBox3">
+           <item>
+            <property name="text">
+             <string>All Parameters</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Voltage Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Current Only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Temperature Only</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveProfileButton3">
+           <property name="text">
+            <string>Save Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadProfileButton3">
+           <property name="text">
+            <string>Load Profile</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="plotGroupBox3">
+         <property name="title">
+          <string>Profile Visualization</string>
+         </property>
+         <layout class="QVBoxLayout" name="plotLayout3">
+          <item>
+           <widget class="QWidget" name="plotWidget3">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>200</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="setpointsTable3">
+         <property name="columnCount">
+          <number>6</number>
+         </property>
+         <column>
+          <property name="text">
+           <string>Time (s)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Voltage (V)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Current (A)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Temperature (°C)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Curve to Before</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Ramp Step</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="setpointButtonsLayout3">
+         <item>
+          <widget class="QPushButton" name="addSetpointButton3">
+           <property name="text">
+            <string>Add Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="removeSetpointButton3">
+           <property name="text">
+            <string>Remove Setpoint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="updatePlotButton3">
+           <property name="text">
+            <string>Update Plot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="startTestButton3">
+           <property name="text">
+            <string>Start Test</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
     </widget>
-   </item>
-   <item>
-    <widget class="QTableWidget" name="setpointsTable">
-     <property name="columnCount">
-      <number>6</number>
-     </property>
-     <column>
-      <property name="text">
-       <string>Time (s)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Voltage (V)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Current (A)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Temperature (°C)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Curve to Before</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Ramp Step</string>
-      </property>
-     </column>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="setpointButtonsLayout">
-     <item>
-      <widget class="QPushButton" name="addSetpointButton">
-       <property name="text">
-        <string>Add Setpoint</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="removeSetpointButton">
-       <property name="text">
-        <string>Remove Setpoint</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="updatePlotButton">
-       <property name="text">
-        <string>Update Plot</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="startTestButton">
-       <property name="text">
-        <string>Start Test</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
- <resources/>
- <connections/>
 </ui>

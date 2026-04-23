@@ -1,49 +1,73 @@
 #include "profile_setup_widget.h"
 #include "ui_profile_setup_widget.h"
 #include "profile_plot_widget.h"
+#include "profile_setup_logic.h"
+#include "profile_yaml_logic.h"
+#include "logger_backend.h"
 
 #include <QComboBox>
+#include <QFile>
 #include <QDoubleSpinBox>
 #include <QHeaderView>
+#include <QPainter>
+#include <QStandardPaths>
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QFile>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QStandardPaths>
 
-ProfileSetupWidget::ProfileSetupWidget(QWidget *parent) :
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <algorithm>
+
+namespace
+{
+QIcon makeActiveStepIcon()
+{
+    QPixmap pixmap(14, 14);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor("#1d4ed8"));
+    painter.drawEllipse(QRectF(2.0, 2.0, 10.0, 10.0));
+
+    return QIcon(pixmap);
+}
+}
+
+ProfileSetupWidget::ProfileSetupWidget(QWidget *parent, ProfileSetupDialogs* dialogs) :
     QWidget(parent),
     ui(new Ui::ProfileSetupWidget)
 {
     ui->setupUi(this);
+    m_activeStepIcon = makeActiveStepIcon();
+    if (dialogs)
+    {
+        m_dialogs = dialogs;
+    }
+    else
+    {
+        m_ownedDialogs = std::make_unique<DefaultProfileSetupDialogs>();
+        m_dialogs = m_ownedDialogs.get();
+    }
 
-    ui->setpointsTable->setColumnCount(6);
-    ui->setpointsTable->setHorizontalHeaderLabels({"Time (s)", "Voltage (V)", "Current (A)", "Temperature (°C)", "Curve to Before", "Ramp Step"});
-    ui->setpointsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    ui->setpointsTable->horizontalHeader()->setStretchLastSection(true);
-    ui->setpointsTable->horizontalHeader()->setMinimumSectionSize(80);
-    ui->setpointsTable->verticalHeader()->setVisible(false);
-    ui->setpointsTable->setRowCount(0);
+    // Setup each slot
+    setupSlot(1);
+    setupSlot(2);
+    setupSlot(3);
 
-    // Setup plot
-    m_plotWidget = new ProfilePlotWidget(ui->plotWidget);
-    auto *plotLayout = new QVBoxLayout(ui->plotWidget);
-    plotLayout->setContentsMargins(0, 0, 0, 0);
-    plotLayout->addWidget(m_plotWidget);
+    connect(ui->saveProfileButton1, &QPushButton::clicked, this, &ProfileSetupWidget::saveProfile);
+    connect(ui->loadProfileButton1, &QPushButton::clicked, this, &ProfileSetupWidget::loadProfile);
+    connect(ui->saveProfileButton2, &QPushButton::clicked, this, &ProfileSetupWidget::saveProfile);
+    connect(ui->loadProfileButton2, &QPushButton::clicked, this, &ProfileSetupWidget::loadProfile);
+    connect(ui->saveProfileButton3, &QPushButton::clicked, this, &ProfileSetupWidget::saveProfile);
+    connect(ui->loadProfileButton3, &QPushButton::clicked, this, &ProfileSetupWidget::loadProfile);
 
-    connect(ui->addSetpointButton, &QPushButton::clicked, this, &ProfileSetupWidget::addSetpoint);
-    connect(ui->removeSetpointButton, &QPushButton::clicked, this, &ProfileSetupWidget::removeSetpoint);
-    connect(ui->updatePlotButton, &QPushButton::clicked, this, &ProfileSetupWidget::updatePlot);
-    connect(ui->controlModeComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot);
-    connect(ui->saveProfileButton, &QPushButton::clicked, this, &ProfileSetupWidget::saveProfile);
-    connect(ui->loadProfileButton, &QPushButton::clicked, this, &ProfileSetupWidget::loadProfile);
-    connect(ui->startTestButton, &QPushButton::clicked, this, &ProfileSetupWidget::startTest);
-
-    updatePlot();
+    // Connect control mode combo boxes to update plot when changed
+    connect(ui->controlModeComboBox1, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot1);
+    connect(ui->controlModeComboBox2, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot2);
+    connect(ui->controlModeComboBox3, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot3);
 }
 
 ProfileSetupWidget::~ProfileSetupWidget()
@@ -51,277 +75,584 @@ ProfileSetupWidget::~ProfileSetupWidget()
     delete ui;
 }
 
-void ProfileSetupWidget::addSetpoint()
+void ProfileSetupWidget::setupSlot(int slotIndex)
 {
-    int row = ui->setpointsTable->rowCount();
-    ui->setpointsTable->insertRow(row);
+    QTableWidget *table = nullptr;
+    QWidget *plotWidget = nullptr;
+    ProfilePlotWidget *&plotWidgetRef = (slotIndex == 1) ? m_plotWidget1 : (slotIndex == 2) ? m_plotWidget2 : m_plotWidget3;
+    void (ProfileSetupWidget::*addSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::addSetpoint1 : (slotIndex == 2) ? &ProfileSetupWidget::addSetpoint2 : &ProfileSetupWidget::addSetpoint3;
+    void (ProfileSetupWidget::*removeSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::removeSetpoint1 : (slotIndex == 2) ? &ProfileSetupWidget::removeSetpoint2 : &ProfileSetupWidget::removeSetpoint3;
+    void (ProfileSetupWidget::*updateSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::updatePlot1 : (slotIndex == 2) ? &ProfileSetupWidget::updatePlot2 : &ProfileSetupWidget::updatePlot3;
+    void (ProfileSetupWidget::*startSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::startTest1 : (slotIndex == 2) ? &ProfileSetupWidget::startTest2 : &ProfileSetupWidget::startTest3;
+    QPushButton *addButton = (slotIndex == 1) ? ui->addSetpointButton1 : (slotIndex == 2) ? ui->addSetpointButton2 : ui->addSetpointButton3;
+    QPushButton *removeButton = (slotIndex == 1) ? ui->removeSetpointButton1 : (slotIndex == 2) ? ui->removeSetpointButton2 : ui->removeSetpointButton3;
+    QPushButton *updateButton = (slotIndex == 1) ? ui->updatePlotButton1 : (slotIndex == 2) ? ui->updatePlotButton2 : ui->updatePlotButton3;
+    QPushButton *startButton = (slotIndex == 1) ? ui->startTestButton1 : (slotIndex == 2) ? ui->startTestButton2 : ui->startTestButton3;
+
+    if (slotIndex == 1) {
+        table = ui->setpointsTable1;
+        plotWidget = ui->plotWidget1;
+    } else if (slotIndex == 2) {
+        table = ui->setpointsTable2;
+        plotWidget = ui->plotWidget2;
+    } else {
+        table = ui->setpointsTable3;
+        plotWidget = ui->plotWidget3;
+    }
+
+    table->setColumnCount(6);
+    table->setColumnCount(7);
+    table->setHorizontalHeaderLabels({"", "Time (s)", "Voltage (V)", "Current (A)", "Temperature (°C)", "Curve to Before", "Ramp Step"});
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setMinimumSectionSize(80);
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+    table->setColumnWidth(0, 28);
+    table->verticalHeader()->setVisible(false);
+    table->setRowCount(0);
+
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    runtime.table = table;
+    runtime.activeRow = -1;
+    runtime.elapsedSeconds = 0;
+    runtime.timer = new QTimer(this);
+    runtime.timer->setInterval(1000);
+    connect(runtime.timer, &QTimer::timeout, this,
+            [this, slotIndex]()
+            {
+                SlotRuntime& activeRuntime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+                activeRuntime.elapsedSeconds += 1;
+                updateActiveStepIndicator(slotIndex);
+            });
+
+    // Setup plot
+    plotWidgetRef = new ProfilePlotWidget(plotWidget);
+    auto *plotLayout = new QVBoxLayout(plotWidget);
+    plotLayout->setContentsMargins(0, 0, 0, 0);
+    plotLayout->addWidget(plotWidgetRef);
+
+    connect(addButton, &QPushButton::clicked, this, addSlot);
+    connect(removeButton, &QPushButton::clicked, this, removeSlot);
+    connect(updateButton, &QPushButton::clicked, this, updateSlot);
+    connect(startButton, &QPushButton::clicked, this, startSlot);
+
+    // Call updatePlot for initial display
+    (this->*updateSlot)();
+}
+
+void ProfileSetupWidget::addSetpoint1() { addSetpointRow(1, ui->setpointsTable1->rowCount()); }
+void ProfileSetupWidget::addSetpoint2() { addSetpointRow(2, ui->setpointsTable2->rowCount()); }
+void ProfileSetupWidget::addSetpoint3() { addSetpointRow(3, ui->setpointsTable3->rowCount()); }
+
+void ProfileSetupWidget::removeSetpoint1()
+{
+    int row = ui->setpointsTable1->currentRow();
+    if (row >= 0 && ui->setpointsTable1->rowCount() > 0) {
+        ui->setpointsTable1->removeRow(row);
+        updatePlot1();
+    }
+}
+
+void ProfileSetupWidget::removeSetpoint2()
+{
+    int row = ui->setpointsTable2->currentRow();
+    if (row >= 0 && ui->setpointsTable2->rowCount() > 0) {
+        ui->setpointsTable2->removeRow(row);
+        updatePlot2();
+    }
+}
+
+void ProfileSetupWidget::removeSetpoint3()
+{
+    int row = ui->setpointsTable3->currentRow();
+    if (row >= 0 && ui->setpointsTable3->rowCount() > 0) {
+        ui->setpointsTable3->removeRow(row);
+        updatePlot3();
+    }
+}
+
+void ProfileSetupWidget::addSetpointRow(int slotIndex, int rowIndex)
+{
+    QTableWidget *table = nullptr;
+    void (ProfileSetupWidget::*updateSlot)() = nullptr;
+
+    if (slotIndex == 1) {
+        table = ui->setpointsTable1;
+        updateSlot = &ProfileSetupWidget::updatePlot1;
+    } else if (slotIndex == 2) {
+        table = ui->setpointsTable2;
+        updateSlot = &ProfileSetupWidget::updatePlot2;
+    } else {
+        table = ui->setpointsTable3;
+        updateSlot = &ProfileSetupWidget::updatePlot3;
+    }
+
+    table->insertRow(rowIndex);
+
+    auto *activeItem = new QTableWidgetItem();
+    activeItem->setFlags(Qt::ItemIsEnabled);
+    activeItem->setTextAlignment(Qt::AlignCenter);
+    table->setItem(rowIndex, 0, activeItem);
 
     double prevTime = 0;
     double prevVolt = 4.2;
     double prevCurr = 1.0;
     double prevTemp = 25;
 
-    if (row > 0) {
-        if (auto *prevTimeSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row - 1, 0)))
+    if (rowIndex > 0) {
+        if (auto *prevTimeSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(rowIndex - 1, 1)))
             prevTime = prevTimeSpin->value();
-        if (auto *prevVoltSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row - 1, 1)))
+        if (auto *prevVoltSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(rowIndex - 1, 2)))
             prevVolt = prevVoltSpin->value();
-        if (auto *prevCurrSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row - 1, 2)))
+        if (auto *prevCurrSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(rowIndex - 1, 3)))
             prevCurr = prevCurrSpin->value();
-        if (auto *prevTempSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row - 1, 3)))
+        if (auto *prevTempSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(rowIndex - 1, 4)))
             prevTemp = prevTempSpin->value();
     }
 
     auto *timeSpin = new QDoubleSpinBox();
     timeSpin->setRange(0, 3600);
     timeSpin->setValue(prevTime + 60.0);
-    ui->setpointsTable->setCellWidget(row, 0, timeSpin);
+    table->setCellWidget(rowIndex, 1, timeSpin);
 
     auto *voltSpin = new QDoubleSpinBox();
     voltSpin->setRange(0, 100);
     voltSpin->setValue(prevVolt);
-    ui->setpointsTable->setCellWidget(row, 1, voltSpin);
+    table->setCellWidget(rowIndex, 2, voltSpin);
 
     auto *currSpin = new QDoubleSpinBox();
     currSpin->setRange(0, 50);
     currSpin->setValue(prevCurr);
-    ui->setpointsTable->setCellWidget(row, 2, currSpin);
+    table->setCellWidget(rowIndex, 3, currSpin);
 
     auto *tempSpin = new QDoubleSpinBox();
     tempSpin->setRange(0, 100);
     tempSpin->setValue(prevTemp);
-    ui->setpointsTable->setCellWidget(row, 3, tempSpin);
+    table->setCellWidget(rowIndex, 4, tempSpin);
 
     auto *curveCombo = new QComboBox();
     curveCombo->addItem("Ramp");
     curveCombo->addItem("Linear");
     curveCombo->addItem("Exponential");
+    curveCombo->addItem("Step");
     curveCombo->setCurrentText("Ramp");
-    ui->setpointsTable->setCellWidget(row, 4, curveCombo);
-    connect(curveCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot);
+    table->setCellWidget(rowIndex, 5, curveCombo);
 
     auto *rampStepSpin = new QDoubleSpinBox();
     rampStepSpin->setRange(0.1, 100.0);
     rampStepSpin->setDecimals(2);
     rampStepSpin->setSingleStep(0.1);
     rampStepSpin->setValue(1.0);
-    ui->setpointsTable->setCellWidget(row, 5, rampStepSpin);
-    connect(rampStepSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
+    table->setCellWidget(rowIndex, 6, rampStepSpin);
 
-    connect(timeSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-    connect(voltSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-    connect(currSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-    connect(tempSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
+    connect(timeSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+    connect(voltSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+    connect(currSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+    connect(tempSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+    connect(curveCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, updateSlot);
+    connect(rampStepSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
 
-    updatePlot();
+    (this->*updateSlot)();
 }
 
-void ProfileSetupWidget::removeSetpoint()
-{
-    int row = ui->setpointsTable->currentRow();
-    if (row >= 0 && ui->setpointsTable->rowCount() > 0) {
-        ui->setpointsTable->removeRow(row);
-        if (ui->setpointsTable->rowCount() > 0 && row == ui->setpointsTable->rowCount()) {
-            ui->setpointsTable->setCellWidget(row - 1, 4, nullptr);
-        }
-        updatePlot();
-    }
-}
+void ProfileSetupWidget::updatePlot1() { updatePlotForSlot(1, ui->setpointsTable1, m_plotWidget1); }
+void ProfileSetupWidget::updatePlot2() { updatePlotForSlot(2, ui->setpointsTable2, m_plotWidget2); }
+void ProfileSetupWidget::updatePlot3() { updatePlotForSlot(3, ui->setpointsTable3, m_plotWidget3); }
 
-void ProfileSetupWidget::updatePlot()
+void ProfileSetupWidget::updatePlotForSlot(int slotIndex, QTableWidget *table, ProfilePlotWidget *plotWidget)
 {
     std::vector<Setpoint> setpoints;
-    for (int row = 0; row < ui->setpointsTable->rowCount(); ++row) {
+    for (int row = 0; row < table->rowCount(); ++row) {
         Setpoint sp;
-        if (auto *timeSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 0)))
+        if (auto *timeSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 1)))
             sp.time = timeSpin->value();
-        if (auto *voltSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 1)))
+        if (auto *voltSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 2)))
             sp.voltage = voltSpin->value();
-        if (auto *currSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 2)))
+        if (auto *currSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 3)))
             sp.current = currSpin->value();
-        if (auto *tempSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 3)))
+        if (auto *tempSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 4)))
             sp.temperature = tempSpin->value();
-        if (auto *curveCombo = qobject_cast<QComboBox*>(ui->setpointsTable->cellWidget(row, 4)))
+        if (auto *curveCombo = qobject_cast<QComboBox*>(table->cellWidget(row, 5)))
             sp.curveType = curveCombo->currentText();
-        if (auto *rampStepSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 5)))
+        if (auto *rampStepSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 6)))
             sp.rampStep = rampStepSpin->value();
         setpoints.push_back(sp);
     }
 
-    ProfilePlotWidget::DisplayMode mode = ProfilePlotWidget::DisplayMode::All;
-    const int index = ui->controlModeComboBox->currentIndex();
-    switch (index) {
-        case 1: mode = ProfilePlotWidget::DisplayMode::Voltage; break;
-        case 2: mode = ProfilePlotWidget::DisplayMode::Current; break;
-        case 3: mode = ProfilePlotWidget::DisplayMode::Temperature; break;
-        default: mode = ProfilePlotWidget::DisplayMode::All; break;
-    }
-
-    m_plotWidget->setDisplayMode(mode);
-    m_plotWidget->setSetpoints(setpoints);
+    int index = 0;
+    if (slotIndex == 1) index = ui->controlModeComboBox1->currentIndex();
+    else if (slotIndex == 2) index = ui->controlModeComboBox2->currentIndex();
+    else index = ui->controlModeComboBox3->currentIndex();
+    const ProfilePlotWidget::DisplayMode mode = ProfileSetupLogic::displayModeForControlIndex(index);
+    plotWidget->setDisplayMode(mode);
+    plotWidget->setSetpoints(setpoints);
 }
 
 void ProfileSetupWidget::saveProfile()
 {
     const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    const QString filePath = QFileDialog::getSaveFileName(
-        this,
-        "Save Profile",
-        defaultDir + "/profile.json",
-        "JSON Files (*.json);;All Files (*)"
-    );
+    const QString filePath = m_dialogs ? m_dialogs->getSaveFilePath(this, defaultDir) : QString();
 
     if (filePath.isEmpty())
         return;
 
-    QJsonArray setpointsArray;
-    for (int row = 0; row < ui->setpointsTable->rowCount(); ++row) {
-        QJsonObject obj;
-
-        if (auto *timeSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 0)))
-            obj["time"] = timeSpin->value();
-        if (auto *voltSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 1)))
-            obj["voltage"] = voltSpin->value();
-        if (auto *currSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 2)))
-            obj["current"] = currSpin->value();
-        if (auto *tempSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 3)))
-            obj["temperature"] = tempSpin->value();
-        if (auto *curveCombo = qobject_cast<QComboBox*>(ui->setpointsTable->cellWidget(row, 4)))
-            obj["curveType"] = curveCombo->currentText();
-        if (auto *rampStepSpin = qobject_cast<QDoubleSpinBox*>(ui->setpointsTable->cellWidget(row, 5)))
-            obj["rampStep"] = rampStepSpin->value();
-
-        setpointsArray.append(obj);
-    }
-
-    QJsonObject root;
-    root["setpoints"] = setpointsArray;
-    root["displayMode"] = ui->controlModeComboBox->currentIndex();
-
-    QJsonDocument doc(root);
-
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::critical(this, "Error", "Could not open file for writing: " + filePath);
+        showError("Error", "Could not open file for writing: " + filePath);
         return;
     }
-
-    file.write(doc.toJson());
+    file.write(serializeProfileToYaml().toUtf8());
     file.close();
+    showInfo("Success", "Profile saved successfully!");
+}
 
-    QMessageBox::information(this, "Success", "Profile saved successfully!");
+QString ProfileSetupWidget::serializeProfileToYaml() const
+{
+    return ProfileYamlLogic::serialize(profileDocumentFromUi());
+}
+
+ProfileDocument ProfileSetupWidget::profileDocumentFromUi() const
+{
+    ProfileDocument document;
+    document.slotDocuments[0].setpoints = setpointsForTable(ui->setpointsTable1);
+    document.slotDocuments[0].profileName = ui->profileNameEdit1->text();
+    document.slotDocuments[0].displayModeIndex = ui->controlModeComboBox1->currentIndex();
+
+    document.slotDocuments[1].setpoints = setpointsForTable(ui->setpointsTable2);
+    document.slotDocuments[1].profileName = ui->profileNameEdit2->text();
+    document.slotDocuments[1].displayModeIndex = ui->controlModeComboBox2->currentIndex();
+
+    document.slotDocuments[2].setpoints = setpointsForTable(ui->setpointsTable3);
+    document.slotDocuments[2].profileName = ui->profileNameEdit3->text();
+    document.slotDocuments[2].displayModeIndex = ui->controlModeComboBox3->currentIndex();
+    return document;
+}
+
+void ProfileSetupWidget::applySetpointsToTable(QTableWidget *table,
+                                               const std::vector<Setpoint>& setpoints,
+                                               void (ProfileSetupWidget::*updateSlot)())
+{
+    if (!table)
+        return;
+
+    table->setRowCount(0);
+    for (const Setpoint& point : setpoints)
+    {
+        table->insertRow(table->rowCount());
+        const int row = table->rowCount() - 1;
+
+        auto *activeItem = new QTableWidgetItem();
+        activeItem->setFlags(Qt::ItemIsEnabled);
+        activeItem->setTextAlignment(Qt::AlignCenter);
+        table->setItem(row, 0, activeItem);
+
+        auto *timeSpin = new QDoubleSpinBox();
+        timeSpin->setRange(0, 3600);
+        timeSpin->setValue(point.time);
+        table->setCellWidget(row, 1, timeSpin);
+        connect(timeSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+
+        auto *voltSpin = new QDoubleSpinBox();
+        voltSpin->setRange(0, 100);
+        voltSpin->setValue(point.voltage);
+        table->setCellWidget(row, 2, voltSpin);
+        connect(voltSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+
+        auto *currSpin = new QDoubleSpinBox();
+        currSpin->setRange(0, 50);
+        currSpin->setValue(point.current);
+        table->setCellWidget(row, 3, currSpin);
+        connect(currSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+
+        auto *tempSpin = new QDoubleSpinBox();
+        tempSpin->setRange(0, 100);
+        tempSpin->setValue(point.temperature);
+        table->setCellWidget(row, 4, tempSpin);
+        connect(tempSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+
+        auto *curveCombo = new QComboBox();
+        curveCombo->addItems({"Ramp", "Linear", "Exponential", "Step"});
+        curveCombo->setCurrentText(point.curveType.isEmpty() ? "Ramp" : point.curveType);
+        table->setCellWidget(row, 5, curveCombo);
+        connect(curveCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, updateSlot);
+
+        auto *rampStepSpin = new QDoubleSpinBox();
+        rampStepSpin->setRange(0.1, 100.0);
+        rampStepSpin->setDecimals(2);
+        rampStepSpin->setSingleStep(0.1);
+        rampStepSpin->setValue(point.rampStep <= 0.0 ? 1.0 : point.rampStep);
+        table->setCellWidget(row, 6, rampStepSpin);
+        connect(rampStepSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
+    }
+}
+
+void ProfileSetupWidget::applyProfileDocument(const ProfileDocument& document)
+{
+    stopTestForSlot(1);
+    stopTestForSlot(2);
+    stopTestForSlot(3);
+
+    applySetpointsToTable(ui->setpointsTable1, document.slotDocuments[0].setpoints, &ProfileSetupWidget::updatePlot1);
+    applySetpointsToTable(ui->setpointsTable2, document.slotDocuments[1].setpoints, &ProfileSetupWidget::updatePlot2);
+    applySetpointsToTable(ui->setpointsTable3, document.slotDocuments[2].setpoints, &ProfileSetupWidget::updatePlot3);
+
+    ui->profileNameEdit1->setText(document.slotDocuments[0].profileName);
+    ui->profileNameEdit2->setText(document.slotDocuments[1].profileName);
+    ui->profileNameEdit3->setText(document.slotDocuments[2].profileName);
+
+    ui->controlModeComboBox1->setCurrentIndex(document.slotDocuments[0].displayModeIndex);
+    ui->controlModeComboBox2->setCurrentIndex(document.slotDocuments[1].displayModeIndex);
+    ui->controlModeComboBox3->setCurrentIndex(document.slotDocuments[2].displayModeIndex);
+
+    updatePlot1();
+    updatePlot2();
+    updatePlot3();
+}
+
+bool ProfileSetupWidget::deserializeProfileFromYaml(const QString& yamlText, QString *errorMessage)
+{
+    ProfileDocument document;
+    if (!ProfileYamlLogic::deserialize(yamlText, document, errorMessage))
+        return false;
+
+    applyProfileDocument(document);
+    return true;
 }
 
 void ProfileSetupWidget::loadProfile()
 {
     const QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    const QString filePath = QFileDialog::getOpenFileName(
-        this,
-        "Load Profile",
-        defaultDir,
-        "JSON Files (*.json);;All Files (*)"
-    );
+    const QString filePath = m_dialogs ? m_dialogs->getOpenFilePath(this, defaultDir) : QString();
 
     if (filePath.isEmpty())
         return;
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::critical(this, "Error", "Could not open file for reading: " + filePath);
+        showError("Error", "Could not open file for reading: " + filePath);
         return;
     }
 
     QByteArray data = file.readAll();
     file.close();
 
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (!doc.isObject()) {
-        QMessageBox::critical(this, "Error", "Invalid JSON format");
+    QString errorMessage;
+    if (!deserializeProfileFromYaml(QString::fromUtf8(data), &errorMessage)) {
+        showError("Error", "Invalid YAML format: " + errorMessage);
         return;
     }
 
-    QJsonObject root = doc.object();
-    if (!root.contains("setpoints") || !root["setpoints"].isArray()) {
-        QMessageBox::critical(this, "Error", "Invalid profile format: missing or invalid setpoints");
-        return;
-    }
-
-    // Clear existing setpoints
-    ui->setpointsTable->setRowCount(0);
-
-    // Load setpoints
-    const QJsonArray setpointsArray = root["setpoints"].toArray();
-    for (const QJsonValue &value : setpointsArray) {
-        if (!value.isObject())
-            continue;
-
-        const QJsonObject obj = value.toObject();
-
-        ui->setpointsTable->insertRow(ui->setpointsTable->rowCount());
-        int row = ui->setpointsTable->rowCount() - 1;
-
-        // Time
-        auto *timeSpin = new QDoubleSpinBox();
-        timeSpin->setRange(0, 3600);
-        timeSpin->setValue(obj["time"].toDouble(0.0));
-        ui->setpointsTable->setCellWidget(row, 0, timeSpin);
-        connect(timeSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-
-        // Voltage
-        auto *voltSpin = new QDoubleSpinBox();
-        voltSpin->setRange(0, 100);
-        voltSpin->setValue(obj["voltage"].toDouble(0.0));
-        ui->setpointsTable->setCellWidget(row, 1, voltSpin);
-        connect(voltSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-
-        // Current
-        auto *currSpin = new QDoubleSpinBox();
-        currSpin->setRange(0, 50);
-        currSpin->setValue(obj["current"].toDouble(0.0));
-        ui->setpointsTable->setCellWidget(row, 2, currSpin);
-        connect(currSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-
-        // Temperature
-        auto *tempSpin = new QDoubleSpinBox();
-        tempSpin->setRange(0, 100);
-        tempSpin->setValue(obj["temperature"].toDouble(0.0));
-        ui->setpointsTable->setCellWidget(row, 3, tempSpin);
-        connect(tempSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-
-        // Curve Type
-        auto *curveCombo = new QComboBox();
-        curveCombo->addItem("Ramp");
-        curveCombo->addItem("Linear");
-        curveCombo->addItem("Exponential");
-        curveCombo->setCurrentText(obj["curveType"].toString("Ramp"));
-        ui->setpointsTable->setCellWidget(row, 4, curveCombo);
-        connect(curveCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, &ProfileSetupWidget::updatePlot);
-
-        // Ramp Step
-        auto *rampStepSpin = new QDoubleSpinBox();
-        rampStepSpin->setRange(0.1, 100.0);
-        rampStepSpin->setDecimals(2);
-        rampStepSpin->setSingleStep(0.1);
-        rampStepSpin->setValue(obj["rampStep"].toDouble(1.0));
-        ui->setpointsTable->setCellWidget(row, 5, rampStepSpin);
-        connect(rampStepSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &ProfileSetupWidget::updatePlot);
-    }
-
-    // Load display mode
-    if (root.contains("displayMode")) {
-        ui->controlModeComboBox->setCurrentIndex(root["displayMode"].toInt(0));
-    }
-
-    updatePlot();
-    QMessageBox::information(this, "Success", "Profile loaded successfully!");
+    showInfo("Success", "Profile loaded successfully!");
 }
 
-void ProfileSetupWidget::startTest()
+void ProfileSetupWidget::startTest1() { startTestForSlot(1, ui->setpointsTable1); }
+void ProfileSetupWidget::startTest2() { startTestForSlot(2, ui->setpointsTable2); }
+void ProfileSetupWidget::startTest3() { startTestForSlot(3, ui->setpointsTable3); }
+
+void ProfileSetupWidget::startTestForSlot(int slotIndex, QTableWidget *table)
 {
-    if (ui->setpointsTable->rowCount() == 0) {
-        QMessageBox::warning(this, "Warning", "Please add at least one setpoint before starting a test.");
+    if (table->rowCount() == 0) {
+        showWarning("Warning", "Please add at least one setpoint before starting a test.");
         return;
     }
 
-    QMessageBox::information(this, "Test Started", "Profile test initiated with " + QString::number(ui->setpointsTable->rowCount()) + " setpoint(s). Check the charger status panel for results.");
+    stopTestForSlot(slotIndex);
+
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    runtime.elapsedSeconds = 0;
+    runtime.activeRow = -1;
+    updateActiveStepIndicator(slotIndex);
+    if (runtime.timer)
+        runtime.timer->start();
+}
+
+void ProfileSetupWidget::stopTestForSlot(int slotIndex)
+{
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    if (runtime.timer)
+        runtime.timer->stop();
+
+    runtime.elapsedSeconds = 0;
+    runtime.activeRow = -1;
+
+    if (!runtime.table)
+        return;
+
+    for (int row = 0; row < runtime.table->rowCount(); ++row) {
+        if (QTableWidgetItem *item = runtime.table->item(row, 0))
+            item->setIcon(QIcon());
+    }
+
+    if (ProfilePlotWidget *plotWidget = plotWidgetForSlot(slotIndex))
+        plotWidget->setActiveStepMarker(false, 0.0, 0.0);
+}
+
+int ProfileSetupWidget::activeStepRowForElapsedSeconds(QTableWidget *table, int elapsedSeconds) const
+{
+    return ProfileSetupLogic::activeRowForElapsedSeconds(setpointsForTable(table), elapsedSeconds);
+}
+
+ProfilePlotWidget* ProfileSetupWidget::plotWidgetForSlot(int slotIndex) const
+{
+    switch (slotIndex)
+    {
+        case 1:
+            return m_plotWidget1;
+        case 2:
+            return m_plotWidget2;
+        case 3:
+            return m_plotWidget3;
+        default:
+            return nullptr;
+    }
+}
+
+int ProfileSetupWidget::commandModeForSlot(int slotIndex) const
+{
+    QComboBox *controlMode = nullptr;
+    switch (slotIndex)
+    {
+        case 1:
+            controlMode = ui->controlModeComboBox1;
+            break;
+        case 2:
+            controlMode = ui->controlModeComboBox2;
+            break;
+        case 3:
+            controlMode = ui->controlModeComboBox3;
+            break;
+        default:
+            break;
+    }
+
+    if (!controlMode)
+        return 0;
+
+    return ProfileSetupLogic::commandModeForControlIndex(controlMode->currentIndex());
+}
+
+std::vector<Setpoint> ProfileSetupWidget::setpointsForTable(QTableWidget *table) const
+{
+    std::vector<Setpoint> setpoints;
+    if (!table)
+        return setpoints;
+
+    setpoints.reserve(table->rowCount());
+    for (int row = 0; row < table->rowCount(); ++row)
+    {
+        Setpoint sp;
+        if (auto *timeSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 1)))
+            sp.time = timeSpin->value();
+        if (auto *voltSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 2)))
+            sp.voltage = voltSpin->value();
+        if (auto *currSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 3)))
+            sp.current = currSpin->value();
+        if (auto *tempSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 4)))
+            sp.temperature = tempSpin->value();
+        if (auto *curveCombo = qobject_cast<QComboBox*>(table->cellWidget(row, 5)))
+            sp.curveType = curveCombo->currentText();
+        if (auto *rampStepSpin = qobject_cast<QDoubleSpinBox*>(table->cellWidget(row, 6)))
+            sp.rampStep = rampStepSpin->value();
+        setpoints.push_back(sp);
+    }
+
+    return setpoints;
+}
+
+double ProfileSetupWidget::displayValueForMode(const Setpoint& setpoint, ProfilePlotWidget::DisplayMode mode)
+{
+    return ProfileSetupLogic::displayValueForMode(setpoint, mode);
+}
+
+double ProfileSetupWidget::interpolateProfileValue(const std::vector<Setpoint>& setpoints,
+                                                   double timeSeconds,
+                                                   ProfilePlotWidget::DisplayMode mode)
+{
+    return ProfileSetupLogic::interpolateProfileValue(setpoints, timeSeconds, mode);
+}
+
+void ProfileSetupWidget::updateActiveStepIndicator(int slotIndex)
+{
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    if (!runtime.table)
+        return;
+
+    const std::vector<Setpoint> rawSetpoints = setpointsForTable(runtime.table);
+    const ProfileStepState stepState =
+        ProfileSetupLogic::stepStateForElapsedSeconds(rawSetpoints, runtime.elapsedSeconds,
+                                                      slotIndex == 1 ? ui->controlModeComboBox1->currentIndex() :
+                                                      slotIndex == 2 ? ui->controlModeComboBox2->currentIndex() :
+                                                                       ui->controlModeComboBox3->currentIndex());
+    const int row = stepState.activeRow;
+    for (int i = 0; i < runtime.table->rowCount(); ++i) {
+        if (QTableWidgetItem *item = runtime.table->item(i, 0))
+            item->setIcon(i == row ? m_activeStepIcon : QIcon());
+    }
+
+    if (row < 0) {
+        stopTestForSlot(slotIndex);
+        return;
+    }
+
+    runtime.table->selectRow(row);
+    runtime.activeRow = row;
+
+    const auto *timeSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 1));
+    const auto *voltSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 2));
+    const auto *currSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 3));
+    const auto *tempSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 4));
+    const auto *curveCombo = qobject_cast<QComboBox*>(runtime.table->cellWidget(row, 5));
+    const int mode = stepState.commandMode;
+    const double markerTime = stepState.markerTime;
+    const double displayValue = stepState.markerValue;
+    const double setpoint = stepState.setpoint;
+
+    if (ProfilePlotWidget *plotWidget = plotWidgetForSlot(slotIndex))
+    {
+        plotWidget->setActiveStepMarker(
+            true,
+            markerTime,
+            displayValue);
+    }
+
+    const QString message = QString(
+        "PROFILE slot %1 step %2/%3 | t=%4s | V=%5 | I=%6 | T=%7 | curve=%8 | send mode=%9 setpoint=%10")
+        .arg(slotIndex)
+        .arg(row + 1)
+        .arg(runtime.table->rowCount())
+        .arg(QString::number(markerTime, 'f', 1))
+        .arg(voltSpin ? QString::number(voltSpin->value(), 'f', 3) : QString("--"))
+        .arg(currSpin ? QString::number(currSpin->value(), 'f', 3) : QString("--"))
+        .arg(tempSpin ? QString::number(tempSpin->value(), 'f', 1) : QString("--"))
+        .arg(curveCombo ? curveCombo->currentText() : QString("--"))
+        .arg(mode == 1 ? QString("CV") : QString("CC"))
+        .arg(QString::number(setpoint, 'f', 3));
+
+    std::cout << message.toStdString() << std::endl;
+    Logger::instance().logStatus(message);
+    emit commandRequested(static_cast<uint32_t>(slotIndex), mode, true, setpoint);
+
+    if (stepState.finished)
+    {
+        if (runtime.timer)
+            runtime.timer->stop();
+    }
+}
+
+void ProfileSetupWidget::showError(const QString& title, const QString& message)
+{
+    if (m_dialogs)
+        m_dialogs->showError(this, title, message);
+}
+
+void ProfileSetupWidget::showInfo(const QString& title, const QString& message)
+{
+    if (m_dialogs)
+        m_dialogs->showInfo(this, title, message);
+}
+
+void ProfileSetupWidget::showWarning(const QString& title, const QString& message)
+{
+    if (m_dialogs)
+        m_dialogs->showWarning(this, title, message);
 }

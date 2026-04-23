@@ -67,6 +67,8 @@ add_executable(widget_tests
     ${CMAKE_SOURCE_DIR}/ui/charger_status/coms_activity_widget.h
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_history_plot_widget.cpp
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_history_plot_widget.h
+    ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_logic.cpp
+    ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_logic.h
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.cpp
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.h
     ${CMAKE_SOURCE_DIR}/ui/charger_status/charger_status_widget.ui
@@ -95,16 +97,29 @@ set_tests_properties(widget_tests PROPERTIES
 
 add_executable(profile_setup_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/profile_setup_tests.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_plot_logic.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_plot_logic.h
     ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_plot_widget.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_dialogs.h
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_logic.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_logic.h
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_yaml_logic.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_yaml_logic.h
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_widget.cpp
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_widget.h
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup/profile_setup_widget.ui
+    ${CMAKE_SOURCE_DIR}/backend/logger/logger_backend.cpp
 )
 
 target_include_directories(profile_setup_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/ui/profile_setup
+    ${CMAKE_SOURCE_DIR}/backend/logger
 )
 
 target_link_libraries(profile_setup_tests PRIVATE
     Qt6::Test
     Qt6::Widgets
+    yaml-cpp
 )
 
 add_test(NAME profile_setup_tests COMMAND profile_setup_tests)

@@ -1,12 +1,11 @@
 #include "profile_plot_widget.h"
+#include "profile_plot_logic.h"
 
 #include <QPainter>
 #include <QPen>
 #include <QBrush>
 #include <QMouseEvent>
 #include <QWheelEvent>
-#include <algorithm>
-#include <cmath>
 
 ProfilePlotWidget::ProfilePlotWidget(QWidget *parent) : QWidget(parent)
 {
@@ -23,6 +22,14 @@ void ProfilePlotWidget::setSetpoints(const std::vector<Setpoint>& setpoints)
 void ProfilePlotWidget::setDisplayMode(DisplayMode mode)
 {
     m_displayMode = mode;
+    updatePlot();
+}
+
+void ProfilePlotWidget::setActiveStepMarker(bool visible, double time, double value)
+{
+    m_activeStepVisible = visible;
+    m_activeStepTime = time;
+    m_activeStepValue = value;
     updatePlot();
 }
 
@@ -56,29 +63,28 @@ void ProfilePlotWidget::wheelEvent(QWheelEvent *event)
         return;
     }
 
-    const QRect plotRect(70, 20, width() - 70 - 20, height() - 20 - 60);
-    if (!plotRect.contains(event->position().toPoint())) {
+    const QRect plotRect = ProfilePlotLogic::plotRectForSize(width(), height());
+    const std::optional<ProfilePlotViewState> zoomed =
+        ProfilePlotLogic::zoomedViewState(
+            plotRect,
+            event->position(),
+            event->angleDelta().y(),
+            {m_viewMinTime, m_viewMaxTime, m_viewMinValue, m_viewMaxValue});
+    if (!zoomed.has_value()) {
         return;
     }
 
-    const double zoomFactor = std::pow(1.1, event->angleDelta().y() / 120.0);
-    double centerTime = mapToTime(event->position().x(), plotRect);
-    double centerValue = mapToValue(event->position().y(), plotRect);
-
-    double timeRange = (m_viewMaxTime - m_viewMinTime) / zoomFactor;
-    double valueRange = (m_viewMaxValue - m_viewMinValue) / zoomFactor;
-
-    m_viewMinTime = centerTime - (centerTime - m_viewMinTime) / zoomFactor;
-    m_viewMaxTime = m_viewMinTime + timeRange;
-    m_viewMinValue = centerValue - (centerValue - m_viewMinValue) / zoomFactor;
-    m_viewMaxValue = m_viewMinValue + valueRange;
+    m_viewMinTime = zoomed->minTime;
+    m_viewMaxTime = zoomed->maxTime;
+    m_viewMinValue = zoomed->minValue;
+    m_viewMaxValue = zoomed->maxValue;
     m_useCustomView = true;
     update();
 }
 
 void ProfilePlotWidget::mousePressEvent(QMouseEvent *event)
 {
-    const QRect plotRect(70, 20, width() - 70 - 20, height() - 20 - 60);
+    const QRect plotRect = ProfilePlotLogic::plotRectForSize(width(), height());
     if (!plotRect.contains(event->pos())) {
         return;
     }
@@ -101,7 +107,7 @@ void ProfilePlotWidget::mousePressEvent(QMouseEvent *event)
 
 void ProfilePlotWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    const QRect plotRect(70, 20, width() - 70 - 20, height() - 20 - 60);
+    const QRect plotRect = ProfilePlotLogic::plotRectForSize(width(), height());
     if (m_panning) {
         QPoint delta = event->pos() - m_lastPanPos;
         double timeDelta = -delta.x() * (m_viewMaxTime - m_viewMinTime) / double(plotRect.width());
@@ -121,61 +127,26 @@ void ProfilePlotWidget::mouseMoveEvent(QMouseEvent *event)
 
 void ProfilePlotWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    const QRect plotRect(70, 20, width() - 70 - 20, height() - 20 - 60);
+    const QRect plotRect = ProfilePlotLogic::plotRectForSize(width(), height());
     if (m_panning && event->button() == Qt::MiddleButton) {
         m_panning = false;
         unsetCursor();
     } else if (m_selecting && event->button() == Qt::LeftButton) {
         m_selecting = false;
-        QRect normalized = m_selectionRect.normalized();
-        if (normalized.width() > 10 && normalized.height() > 10 && normalized.intersects(plotRect)) {
-            QRect clipped = normalized.intersected(plotRect);
-            double newMinTime = mapToTime(clipped.left(), plotRect);
-            double newMaxTime = mapToTime(clipped.right(), plotRect);
-            double newMaxValue = mapToValue(clipped.top(), plotRect);
-            double newMinValue = mapToValue(clipped.bottom(), plotRect);
-            if (newMaxTime > newMinTime && newMaxValue > newMinValue) {
-                m_viewMinTime = newMinTime;
-                m_viewMaxTime = newMaxTime;
-                m_viewMinValue = newMinValue;
-                m_viewMaxValue = newMaxValue;
-                m_useCustomView = true;
-            }
+        const std::optional<ProfilePlotViewState> selected =
+            ProfilePlotLogic::selectedViewState(
+                plotRect,
+                m_selectionRect,
+                {m_viewMinTime, m_viewMaxTime, m_viewMinValue, m_viewMaxValue});
+        if (selected.has_value()) {
+            m_viewMinTime = selected->minTime;
+            m_viewMaxTime = selected->maxTime;
+            m_viewMinValue = selected->minValue;
+            m_viewMaxValue = selected->maxValue;
+            m_useCustomView = true;
         }
         update();
     }
-}
-
-namespace {
-static double valueForDisplay(const Setpoint& sp, ProfilePlotWidget::DisplayMode mode)
-{
-    switch (mode) {
-        case ProfilePlotWidget::DisplayMode::Voltage:
-            return sp.voltage;
-        case ProfilePlotWidget::DisplayMode::Current:
-            return sp.current;
-        case ProfilePlotWidget::DisplayMode::Temperature:
-            return sp.temperature;
-        case ProfilePlotWidget::DisplayMode::All:
-        default:
-            return sp.voltage;
-    }
-}
-
-static QString displayLabel(ProfilePlotWidget::DisplayMode mode)
-{
-    switch (mode) {
-        case ProfilePlotWidget::DisplayMode::Voltage:
-            return "Voltage (V)";
-        case ProfilePlotWidget::DisplayMode::Current:
-            return "Current (A)";
-        case ProfilePlotWidget::DisplayMode::Temperature:
-            return "Temperature (°C)";
-        case ProfilePlotWidget::DisplayMode::All:
-        default:
-            return "Value";
-    }
-}
 }
 
 void ProfilePlotWidget::paintEvent(QPaintEvent *event)
@@ -190,83 +161,29 @@ void ProfilePlotWidget::paintEvent(QPaintEvent *event)
         return;
     }
 
-    std::vector<Setpoint> plotPoints = m_setpoints;
-    std::sort(plotPoints.begin(), plotPoints.end(), [](const Setpoint &a, const Setpoint &b) {
-        return a.time < b.time;
-    });
-
-    if (plotPoints.front().time > 0.0) {
-        Setpoint baseline;
-        baseline.time = 0.0;
-        baseline.current = 0.0;
-        baseline.voltage = plotPoints.front().voltage;
-        baseline.temperature = 25.0;
-        baseline.curveType = plotPoints.front().curveType;
-        baseline.rampStep = plotPoints.front().rampStep;
-        plotPoints.insert(plotPoints.begin(), baseline);
-    }
-
-    double minTime = plotPoints.front().time;
-    double maxTime = plotPoints.front().time;
-    for (const auto& sp : plotPoints) {
-        minTime = std::min(minTime, sp.time);
-        maxTime = std::max(maxTime, sp.time);
-    }
-
-    if (maxTime <= minTime) {
+    const ProfilePlotBounds bounds = ProfilePlotLogic::computeBounds(m_setpoints, m_displayMode);
+    if (!bounds.hasDistinctTimeRange) {
         painter.drawText(rect(), Qt::AlignCenter, "Set distinct time values for each setpoint.");
         return;
     }
+    const std::vector<Setpoint>& plotPoints = bounds.plotPoints;
 
-    const int leftMargin = 70;
-    const int rightMargin = 20;
-    const int topMargin = 20;
-    const int bottomMargin = 60;
-    QRect plotRect(leftMargin, topMargin, width() - leftMargin - rightMargin, height() - topMargin - bottomMargin);
-
-    QVector<double> displayValues;
-
-    if (m_displayMode == DisplayMode::All) {
-        for (const auto& sp : plotPoints) {
-            displayValues.push_back(sp.voltage);
-            displayValues.push_back(sp.current);
-            displayValues.push_back(sp.temperature);
-        }
-    } else {
-        displayValues.reserve(plotPoints.size());
-        for (const auto& sp : plotPoints)
-            displayValues.push_back(valueForDisplay(sp, m_displayMode));
-    }
-
-    double minValue = *std::min_element(displayValues.begin(), displayValues.end());
-    double maxValue = *std::max_element(displayValues.begin(), displayValues.end());
-
-    if (maxValue <= minValue) {
-        maxValue = minValue + 1.0;
-        minValue = minValue - 1.0;
-    }
-
-    minValue = paddedLowerBound(minValue, maxValue);
-    maxValue = paddedUpperBound(minValue, maxValue);
+    const QRect plotRect = ProfilePlotLogic::plotRectForSize(width(), height());
 
     if (!m_useCustomView) {
-        m_viewMinTime = minTime;
-        m_viewMaxTime = maxTime;
-        m_viewMinValue = minValue;
-        m_viewMaxValue = maxValue;
+        const ProfilePlotViewState defaultView = ProfilePlotLogic::defaultViewState(bounds);
+        m_viewMinTime = defaultView.minTime;
+        m_viewMaxTime = defaultView.maxTime;
+        m_viewMinValue = defaultView.minValue;
+        m_viewMaxValue = defaultView.maxValue;
     }
 
-    double viewMinTime = m_viewMinTime;
-    double viewMaxTime = m_viewMaxTime;
-    double viewMinValue = m_viewMinValue;
-    double viewMaxValue = m_viewMaxValue;
-
-    if (viewMaxTime <= viewMinTime) {
-        viewMaxTime = viewMinTime + 1.0;
-    }
-    if (viewMaxValue <= viewMinValue) {
-        viewMaxValue = viewMinValue + 1.0;
-    }
+    const ProfilePlotViewState viewState =
+        ProfilePlotLogic::normalizedViewState({m_viewMinTime, m_viewMaxTime, m_viewMinValue, m_viewMaxValue});
+    const double viewMinTime = viewState.minTime;
+    const double viewMaxTime = viewState.maxTime;
+    const double viewMinValue = viewState.minValue;
+    const double viewMaxValue = viewState.maxValue;
 
     painter.setPen(QPen(Qt::black, 2));
     painter.drawLine(plotRect.left(), plotRect.bottom(), plotRect.right(), plotRect.bottom());
@@ -295,7 +212,7 @@ void ProfilePlotWidget::paintEvent(QPaintEvent *event)
     painter.save();
     painter.translate(plotRect.left() - 55, plotRect.center().y());
     painter.rotate(-90);
-    painter.drawText(0, 0, displayLabel(m_displayMode));
+    painter.drawText(0, 0, ProfilePlotLogic::displayLabel(m_displayMode));
     painter.restore();
 
     painter.save();
@@ -309,8 +226,8 @@ void ProfilePlotWidget::paintEvent(QPaintEvent *event)
         for (size_t i = 0; i < plotPoints.size() - 1; ++i) {
             const auto& sp0 = plotPoints[i];
             const auto& sp1 = plotPoints[i + 1];
-            double value0 = valueForDisplay(sp0, mode);
-            double value1 = valueForDisplay(sp1, mode);
+            double value0 = ProfilePlotLogic::valueForDisplay(sp0, mode);
+            double value1 = ProfilePlotLogic::valueForDisplay(sp1, mode);
             for (int step = 0; step <= 50; ++step) {
                 double t = sp0.time + (sp1.time - sp0.time) * step / 50.0;
                 double value = interpolate(sp0.time, value0, sp1.time, value1, t, sp1.curveType, sp1.rampStep);
@@ -343,8 +260,16 @@ void ProfilePlotWidget::paintEvent(QPaintEvent *event)
     painter.setBrush(Qt::red);
     for (const auto& sp : plotPoints) {
         double x = plotRect.left() + (sp.time - viewMinTime) / (viewMaxTime - viewMinTime) * plotRect.width();
-        double y = plotRect.bottom() - (valueForDisplay(sp, m_displayMode) - viewMinValue) / (viewMaxValue - viewMinValue) * plotRect.height();
+        double y = plotRect.bottom() - (ProfilePlotLogic::valueForDisplay(sp, m_displayMode) - viewMinValue) / (viewMaxValue - viewMinValue) * plotRect.height();
         painter.drawEllipse(QPointF(x, y), 4, 4);
+    }
+
+    if (m_activeStepVisible) {
+        const double x = plotRect.left() + (m_activeStepTime - viewMinTime) / (viewMaxTime - viewMinTime) * plotRect.width();
+        const double y = plotRect.bottom() - (m_activeStepValue - viewMinValue) / (viewMaxValue - viewMinValue) * plotRect.height();
+        painter.setPen(QPen(QColor("#1d4ed8"), 2));
+        painter.setBrush(QColor("#1d4ed8"));
+        painter.drawEllipse(QPointF(x, y), 6, 6);
     }
     painter.restore();
 

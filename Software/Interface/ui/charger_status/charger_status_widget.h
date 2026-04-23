@@ -11,7 +11,6 @@ class ChargerStatusWidget;
 
 class ComsActivityWidget;
 class ChargerHistoryPlotWidget;
-class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
 class QTimer;
@@ -45,6 +44,7 @@ private:
     void setupTabWidget();
     void setupCommandButtons();
     void setupDetailedControls();
+    uint32_t selectedDetailedChargerId() const;
     void updateDetailedSetpointLabel();
     void clearSlots();
     void applySlotState(int slotIndex, bool active);
@@ -65,7 +65,7 @@ private:
     Ui::ChargerStatusWidget *ui = nullptr;
     QTabWidget *m_tabWidget = nullptr;
     ComsActivityWidget *m_activityWidget = nullptr;
-    ChargerHistoryPlotWidget *m_historyPlot = nullptr;
+    std::array<ChargerHistoryPlotWidget*, 3> m_historyPlots = {};
     QElapsedTimer m_historyTimer;
     std::array<SlotWidgets, 3> m_slots;
 };

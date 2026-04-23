@@ -1,17 +1,16 @@
 #include "charger_status_widget.h"
 
 #include "charger_history_plot_widget.h"
+#include "charger_status_logic.h"
 #include "coms_activity_widget.h"
 #include "logger_backend.h"
 #include "ui_charger_status_widget.h"
 
 #include <QButtonGroup>
-#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFrame>
 #include <QLabel>
 #include <QPushButton>
-#include <QRegularExpression>
 #include <QString>
 #include <QStyle>
 #include <QTabBar>
@@ -21,83 +20,6 @@
 namespace
 {
 constexpr int kFreshTimeoutMs = 500;
-
-bool parseNumericSignal(const QMap<QString, QString>& signalValues,
-                        const QString& signalName,
-                        double& value)
-{
-    if (!signalValues.contains(signalName))
-        return false;
-
-    bool ok = false;
-    value = signalValues.value(signalName).toDouble(&ok);
-    return ok;
-}
-
-QString signalDisplay(const QMap<QString, QString>& signalValues,
-                      const QString& primaryName,
-                      const QString& fallbackName = QString(),
-                      const QString& secondFallbackName = QString())
-{
-    if (signalValues.contains(primaryName))
-        return signalValues.value(primaryName);
-
-    if (!fallbackName.isEmpty() && signalValues.contains(fallbackName))
-        return signalValues.value(fallbackName);
-
-    if (!secondFallbackName.isEmpty() && signalValues.contains(secondFallbackName))
-        return signalValues.value(secondFallbackName);
-
-    return "--";
-}
-
-QString overviewMarkup(const QString& voltText,
-                       const QString& currentText,
-                       const QString& tempText,
-                       const QString& statusText)
-{
-    return QString(
-               "<span style='color:#486581;'>Voltage</span><br><b>%1 V</b><br>"
-               "<span style='color:#486581;'>Current</span><br><b>%2 A</b><br>"
-               "<span style='color:#486581;'>Temp</span><br><b>%3 C</b><br>"
-               "<span style='color:#486581;'>Status</span><br><b>%4</b>")
-        .arg(voltText)
-        .arg(currentText)
-        .arg(tempText)
-        .arg(statusText);
-}
-
-QString formattedStatusText(const QMap<QString, QString>& signalValues)
-{
-    QString statusValue;
-    if (signalValues.contains("status"))
-        statusValue = signalValues.value("status");
-    else if (signalValues.contains("state"))
-        statusValue = signalValues.value("state");
-    else
-        return "--";
-
-    bool ok = false;
-    const int statusCode = statusValue.toInt(&ok);
-    if (!ok)
-        return statusValue;
-
-    switch (statusCode)
-    {
-        case 0:
-            return "Idle";
-        case 1:
-            return "Charging";
-        case 2:
-        {
-            bool faultOk = false;
-            const int faultCode = signalValues.value("fault_code", "0").toInt(&faultOk);
-            return faultOk ? QString("Fault %1").arg(faultCode) : QString("Fault");
-        }
-        default:
-            return QString::number(statusCode);
-    }
-}
 }
 
 ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
@@ -133,21 +55,19 @@ ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
         "QWidget#detailedTab {"
         "  background-color: palette(window);"
         "}"
-        "QFrame#detailedTopBarFrame, QFrame#detailedControlsFrame {"
+        "QFrame#detailedControlsFrame {"
         "  background-color: palette(base);"
         "  border: 1px solid #c8c8c8;"
         "}"
-        "QComboBox#detailedChargerComboBox, QDoubleSpinBox#detailedSetpointSpinBox {"
+        "QTabWidget#detailedChargerTabWidget::pane {"
+        "  border: 1px solid #c8c8c8;"
+        "  background-color: palette(base);"
+        "}"
+        "QDoubleSpinBox#detailedSetpointSpinBox {"
         "  min-height: 30px;"
         "  background-color: white;"
         "  border: 1px solid #b8b8b8;"
         "  padding: 2px 8px;"
-        "}"
-        "QComboBox#detailedChargerComboBox QAbstractItemView {"
-        "  background-color: white;"
-        "  color: black;"
-        "  selection-background-color: #dcdcdc;"
-        "  selection-color: black;"
         "}"
         "QPushButton#detailedSetpointMinusButton, QPushButton#detailedSetpointPlusButton {"
         "  min-height: 30px;"
@@ -286,13 +206,22 @@ void ChargerStatusWidget::setupCommandButtons()
 
 void ChargerStatusWidget::setupDetailedControls()
 {
-    m_historyPlot = new ChargerHistoryPlotWidget(ui->detailedPlotHost);
-    m_historyPlot->setObjectName("detailedHistoryPlot");
-    ui->detailedPlotHostLayout->addWidget(m_historyPlot);
+    m_historyPlots[0] = new ChargerHistoryPlotWidget(ui->detailedPlotHost1);
+    m_historyPlots[0]->setObjectName("detailedHistoryPlot");
+    m_historyPlots[0]->setSelectedCharger(1);
+    ui->detailedPlotHostLayout1->addWidget(m_historyPlots[0]);
 
-    ui->detailedChargerComboBox->addItem("Charger 1", 1);
-    ui->detailedChargerComboBox->addItem("Charger 2", 2);
-    ui->detailedChargerComboBox->addItem("Charger 3", 3);
+    m_historyPlots[1] = new ChargerHistoryPlotWidget(ui->detailedPlotHost2);
+    m_historyPlots[1]->setObjectName("detailedHistoryPlot2");
+    m_historyPlots[1]->setSelectedCharger(2);
+    ui->detailedPlotHostLayout2->addWidget(m_historyPlots[1]);
+
+    m_historyPlots[2] = new ChargerHistoryPlotWidget(ui->detailedPlotHost3);
+    m_historyPlots[2]->setObjectName("detailedHistoryPlot3");
+    m_historyPlots[2]->setSelectedCharger(3);
+    ui->detailedPlotHostLayout3->addWidget(m_historyPlots[2]);
+
+    ui->detailedChargerTabWidget->tabBar()->setExpanding(false);
 
     auto *modeGroup = new QButtonGroup(this);
     modeGroup->setExclusive(true);
@@ -308,16 +237,6 @@ void ChargerStatusWidget::setupDetailedControls()
     ui->detailedSetpointSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
     updateDetailedSetpointLabel();
 
-    connect(ui->detailedChargerComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            [this](int index)
-            {
-                if (!m_historyPlot || index < 0)
-                    return;
-
-                const uint32_t chargerId =
-                    ui->detailedChargerComboBox->itemData(index).toUInt();
-                m_historyPlot->setSelectedCharger(chargerId);
-            });
     connect(ui->detailedModeCcButton, &QPushButton::toggled, this,
             [this](bool checked)
             {
@@ -353,6 +272,18 @@ void ChargerStatusWidget::setupDetailedControls()
             [this]() { emitDetailedCommand(false); });
 }
 
+uint32_t ChargerStatusWidget::selectedDetailedChargerId() const
+{
+    if (!ui->detailedChargerTabWidget)
+        return 1;
+
+    const int index = ui->detailedChargerTabWidget->currentIndex();
+    if (index < 0 || index >= static_cast<int>(m_historyPlots.size()))
+        return 1;
+
+    return static_cast<uint32_t>(index + 1);
+}
+
 void ChargerStatusWidget::updateDetailedSetpointLabel()
 {
     if (!ui->detailedSetpointLabel || !ui->detailedModeCcButton || !ui->detailedModeCvButton)
@@ -375,7 +306,7 @@ void ChargerStatusWidget::clearSlots()
         slot.deviceId = 0;
         if (slot.overviewLabel)
         {
-            slot.overviewLabel->setText(overviewMarkup("--", "--", "--", "--"));
+            slot.overviewLabel->setText(ChargerStatusLogic::overviewMarkup("--", "--", "--", "--"));
         }
         if (slot.generalTitleLabel)
             slot.generalTitleLabel->setText(QString("Charger %1").arg(i + 1));
@@ -390,8 +321,11 @@ void ChargerStatusWidget::clearSlots()
         applySlotState(i, false);
     }
 
-    if (m_historyPlot)
-        m_historyPlot->clearHistory();
+    for (ChargerHistoryPlotWidget *plot : m_historyPlots)
+    {
+        if (plot)
+            plot->clearHistory();
+    }
     m_historyTimer.restart();
 }
 
@@ -450,7 +384,8 @@ void ChargerStatusWidget::updateSlotLabel(int slotIndex,
 
     SlotWidgets& slot = m_slots[static_cast<size_t>(slotIndex)];
     if (slot.overviewLabel)
-        slot.overviewLabel->setText(overviewMarkup(voltText, currentText, tempText, statusText));
+        slot.overviewLabel->setText(
+            ChargerStatusLogic::overviewMarkup(voltText, currentText, tempText, statusText));
 
     if (slot.generalTitleLabel)
     {
@@ -484,101 +419,64 @@ void ChargerStatusWidget::emitCommandForSlot(int slotIndex, int mode, bool start
         return;
 
     const SlotWidgets& slot = m_slots[static_cast<size_t>(slotIndex)];
-    const uint32_t chargerId = slot.assigned ? slot.deviceId : static_cast<uint32_t>(slotIndex + 1);
-    const double setpoint = start ? 4.2 : 0.0;
-    emit commandRequested(chargerId, mode, start, setpoint);
+    const ChargerStatusCommand command =
+        ChargerStatusLogic::generalCommandForSlot(slotIndex, slot.assigned, slot.deviceId, mode, start);
+    emit commandRequested(command.chargerId, command.mode, command.start, command.setpoint);
 }
 
 void ChargerStatusWidget::emitDetailedCommand(bool start)
 {
-    if (!ui->detailedChargerComboBox || !ui->detailedSetpointSpinBox ||
-        !ui->detailedModeCcButton || !ui->detailedModeCvButton)
+    if (!ui->detailedSetpointSpinBox || !ui->detailedModeCcButton ||
+        !ui->detailedModeCvButton)
         return;
 
-    const int chargerIndex = ui->detailedChargerComboBox->currentIndex();
-    if (chargerIndex < 0)
-        return;
-
-    const uint32_t chargerId = ui->detailedChargerComboBox->itemData(chargerIndex).toUInt();
-    const int mode = ui->detailedModeCvButton->isChecked() ? 1 : 0;
-    const double setpoint = ui->detailedSetpointSpinBox->value();
-    emit commandRequested(chargerId, mode, start, setpoint);
+    const ChargerStatusCommand command =
+        ChargerStatusLogic::detailedCommand(
+            selectedDetailedChargerId(),
+            ui->detailedModeCvButton->isChecked(),
+            ui->detailedSetpointSpinBox->value(),
+            start);
+    emit commandRequested(command.chargerId, command.mode, command.start, command.setpoint);
 }
 
 void ChargerStatusWidget::appendHistorySample(uint32_t chargerId,
                                               const QMap<QString, QString>& signalValues)
 {
-    if (!m_historyPlot)
-        return;
-
     double voltage = 0.0;
     double current = 0.0;
-    if (!parseNumericSignal(signalValues, "voltage", voltage) &&
-        !parseNumericSignal(signalValues, "volt", voltage))
+    if (!ChargerStatusLogic::parseNumericSignal(signalValues, "voltage", voltage) &&
+        !ChargerStatusLogic::parseNumericSignal(signalValues, "volt", voltage))
     {
         return;
     }
 
-    if (!parseNumericSignal(signalValues, "current", current))
+    if (!ChargerStatusLogic::parseNumericSignal(signalValues, "current", current))
         return;
 
     const double elapsedSeconds = static_cast<double>(m_historyTimer.elapsed()) / 1000.0;
-    m_historyPlot->appendSample(chargerId, elapsedSeconds, voltage, current);
+    for (ChargerHistoryPlotWidget *plot : m_historyPlots)
+    {
+        if (plot)
+            plot->appendSample(chargerId, elapsedSeconds, voltage, current);
+    }
 }
 
 void ChargerStatusWidget::processDecodedMessage(const QString& message)
 {
-    const QStringList lines = message.split('\n', Qt::SkipEmptyParts);
-    if (lines.isEmpty())
+    const ParsedChargerStatusMessage parsed = ChargerStatusLogic::parseDecodedStatusMessage(message);
+    if (!parsed.valid)
         return;
 
-    static const QRegularExpression headerRegex(
-        "PCP\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\|\\s+DEV=(\\d+)");
-    const QRegularExpressionMatch headerMatch = headerRegex.match(lines.first());
-    if (!headerMatch.hasMatch())
-        return;
-
-    const QString messageName = headerMatch.captured(1).toLower();
-    if (messageName != "status")
-        return;
-
-    bool ok = false;
-    const uint32_t headerDeviceId = headerMatch.captured(2).toUInt(&ok);
-    if (!ok)
-        return;
-
-    QMap<QString, QString> signalValues;
-    static const QRegularExpression signalRegex("^\\s*([A-Za-z0-9_]+)\\s*=\\s*([^\\s]+)");
-    for (const QString& line : lines)
-    {
-        const QRegularExpressionMatch match = signalRegex.match(line);
-        if (!match.hasMatch())
-            continue;
-
-        signalValues.insert(match.captured(1).toLower(), match.captured(2));
-    }
-
-    uint32_t chargerId = headerDeviceId;
-    if (messageName == "status" && signalValues.contains("charger_id"))
-        chargerId = signalValues.value("charger_id").toUInt(&ok);
-    else if (messageName == "cell_info" && signalValues.contains("slot_id"))
-        chargerId = signalValues.value("slot_id").toUInt(&ok);
-    else
-        ok = true;
-
-    if (!ok)
-        return;
-
-    const int slotIndex = slotIndexForDevice(chargerId);
+    const int slotIndex = slotIndexForDevice(parsed.chargerId);
     if (slotIndex < 0)
         return;
 
-    appendHistorySample(chargerId, signalValues);
+    appendHistorySample(parsed.chargerId, parsed.signalValues);
     updateSlotLabel(
         slotIndex,
-        signalDisplay(signalValues, "volt", "voltage"),
-        signalDisplay(signalValues, "current"),
-        signalDisplay(signalValues, "temp", "temperature"),
-        formattedStatusText(signalValues));
+        parsed.voltageText,
+        parsed.currentText,
+        parsed.tempText,
+        parsed.statusText);
     markSlotFresh(slotIndex);
 }

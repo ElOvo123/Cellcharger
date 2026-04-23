@@ -1,17 +1,22 @@
 #include <QtTest>
 
+#define protected public
+#define private public
 #include "coms_activity_widget.h"
 #include "charger_history_plot_widget.h"
+#include "charger_status_logic.h"
 #include "charger_status_widget.h"
 #include "help_dialog.h"
 #include "logger_backend.h"
 #include "log_widget.h"
 #include "panel_container.h"
+#undef private
+#undef protected
 
-#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QLabel>
+#include <QPaintEvent>
 #include <QPixmap>
 #include <QPushButton>
 #include <QSignalSpy>
@@ -27,7 +32,11 @@ private slots:
     void comsActivityWidget_turnsGreenOnFreshActivityAndRedAfterTimeout();
     void comsActivityWidget_ignoresInvalidIndexesAndOnlyEmitsOnStateChanges();
     void comsActivityWidget_exposesExpectedSizeHintsAndPaints();
+    void chargerHistoryPlotWidget_capsSamplesSwitchesSelectionAndPaints();
+    void chargerStatusLogic_parsesMessagesAndBuildsCommands();
+    void chargerStatusLogic_coversFallbackAndInvalidBranches();
     void chargerStatusWidget_hasOverviewGeneralAndDetailedTabs();
+    void chargerStatusWidget_generalButtonsEmitCommandsForAllSlots();
     void chargerStatusWidget_detailedControlsEmitSelectedCommandAndCollectHistory();
     void chargerStatusWidget_updatesFromLoggerTraffic();
     void chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevices();
@@ -109,6 +118,155 @@ void WidgetTests::comsActivityWidget_exposesExpectedSizeHintsAndPaints()
     QVERIFY(!rendered.isNull());
 }
 
+void WidgetTests::chargerHistoryPlotWidget_capsSamplesSwitchesSelectionAndPaints()
+{
+    ChargerHistoryPlotWidget widget;
+    widget.resize(640, 360);
+
+    QCOMPARE(widget.selectedCharger(), 1u);
+    QCOMPARE(widget.sampleCountForCharger(0), 0);
+    QCOMPARE(widget.sampleCountForCharger(4), 0);
+    QVERIFY(widget.samplesForCharger(0).empty());
+
+    QPixmap emptyPixmap(widget.size());
+    emptyPixmap.fill(Qt::transparent);
+    widget.render(&emptyPixmap);
+    QVERIFY(!emptyPixmap.isNull());
+
+    for (int i = 0; i < 200; ++i)
+        widget.appendSample(1, static_cast<double>(i), 4.0 + (i * 0.01), 1.0 + (i * 0.02));
+    QCOMPARE(widget.sampleCountForCharger(1), 180);
+    QCOMPARE(widget.samplesForCharger(1).front().timeSeconds, 20.0);
+    QCOMPARE(widget.samplesForCharger(1).back().timeSeconds, 199.0);
+
+    widget.appendSample(0, 1.0, 1.0, 1.0);
+    widget.appendSample(4, 1.0, 1.0, 1.0);
+    QCOMPARE(widget.sampleCountForCharger(1), 180);
+
+    widget.setSelectedCharger(2);
+    QCOMPARE(widget.selectedCharger(), 2u);
+    widget.setSelectedCharger(2);
+    QCOMPARE(widget.selectedCharger(), 2u);
+    widget.setSelectedCharger(4);
+    QCOMPARE(widget.selectedCharger(), 2u);
+    widget.appendSample(2, 10.0, 4.2, 1.5);
+    widget.appendSample(2, 10.0, 4.2, 1.5);
+    QCOMPARE(widget.sampleCountForCharger(2), 2);
+
+    QPixmap dataPixmap(widget.size());
+    dataPixmap.fill(Qt::transparent);
+    widget.render(&dataPixmap);
+    QVERIFY(!dataPixmap.isNull());
+
+    QCOMPARE(ChargerHistoryPlotWidget::paddedLowerBound(5.0, 5.0), 4.99);
+    QCOMPARE(ChargerHistoryPlotWidget::paddedUpperBound(5.0, 5.0), 5.01);
+
+    widget.clearHistory();
+    QCOMPARE(widget.sampleCountForCharger(1), 0);
+    QCOMPARE(widget.sampleCountForCharger(2), 0);
+    QCOMPARE(widget.sampleCountForCharger(3), 0);
+}
+
+void WidgetTests::chargerStatusLogic_parsesMessagesAndBuildsCommands()
+{
+    QMap<QString, QString> values;
+    values.insert("voltage", "4.20");
+    values.insert("temp", "25");
+    values.insert("status", "2");
+    values.insert("fault_code", "7");
+
+    double numeric = 0.0;
+    QVERIFY(ChargerStatusLogic::parseNumericSignal(values, "voltage", numeric));
+    QCOMPARE(numeric, 4.2);
+    QVERIFY(!ChargerStatusLogic::parseNumericSignal(values, "missing", numeric));
+    QCOMPARE(ChargerStatusLogic::signalDisplay(values, "voltage"), QString("4.20"));
+    QCOMPARE(ChargerStatusLogic::signalDisplay(values, "current", "temp"), QString("25"));
+    QCOMPARE(ChargerStatusLogic::formattedStatusText(values), QString("Fault 7"));
+    QVERIFY(ChargerStatusLogic::overviewMarkup("4.2", "1.0", "25", "Idle").contains("Voltage"));
+
+    const ParsedChargerStatusMessage invalid = ChargerStatusLogic::parseDecodedStatusMessage("garbage");
+    QVERIFY(!invalid.valid);
+
+    const ParsedChargerStatusMessage parsed =
+        ChargerStatusLogic::parseDecodedStatusMessage(
+            "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+            "  charger_id = 3 (raw=3)\n"
+            "  voltage = 4.12 (raw=4120)\n"
+            "  current = 1.50 (raw=1500)\n"
+            "  temperature = 26 (raw=260)\n"
+            "  status = 1 (raw=1)");
+    QVERIFY(parsed.valid);
+    QCOMPARE(parsed.chargerId, 3u);
+    QCOMPARE(parsed.voltageText, QString("4.12"));
+    QCOMPARE(parsed.currentText, QString("1.50"));
+    QCOMPARE(parsed.tempText, QString("26"));
+    QCOMPARE(parsed.statusText, QString("Charging"));
+
+    const ChargerStatusCommand general =
+        ChargerStatusLogic::generalCommandForSlot(1, false, 9u, 2, true);
+    QCOMPARE(general.chargerId, 2u);
+    QCOMPARE(general.mode, 2);
+    QVERIFY(general.start);
+    QCOMPARE(general.setpoint, 4.2);
+
+    const ChargerStatusCommand assigned =
+        ChargerStatusLogic::generalCommandForSlot(1, true, 9u, 0, false);
+    QCOMPARE(assigned.chargerId, 9u);
+    QVERIFY(!assigned.start);
+    QCOMPARE(assigned.setpoint, 0.0);
+
+    const ChargerStatusCommand detailed =
+        ChargerStatusLogic::detailedCommand(3u, true, 4.175, true);
+    QCOMPARE(detailed.chargerId, 3u);
+    QCOMPARE(detailed.mode, 1);
+    QVERIFY(detailed.start);
+    QCOMPARE(detailed.setpoint, 4.175);
+}
+
+void WidgetTests::chargerStatusLogic_coversFallbackAndInvalidBranches()
+{
+    QMap<QString, QString> values;
+    values.insert("state", "2");
+    values.insert("fault_code", "abc");
+    values.insert("temperature", "hot");
+    values.insert("alt_voltage", "4.18");
+
+    double numeric = 9.0;
+    QVERIFY(!ChargerStatusLogic::parseNumericSignal(values, "temperature", numeric));
+    QCOMPARE(numeric, 0.0);
+    QCOMPARE(ChargerStatusLogic::signalDisplay(values, "voltage", "missing", "alt_voltage"), QString("4.18"));
+    QCOMPARE(ChargerStatusLogic::signalDisplay(values, "missing"), QString("--"));
+    QCOMPARE(ChargerStatusLogic::formattedStatusText(values), QString("Fault"));
+
+    values.insert("state", "text");
+    QCOMPARE(ChargerStatusLogic::formattedStatusText(values), QString("text"));
+
+    const ParsedChargerStatusMessage wrongMessage =
+        ChargerStatusLogic::parseDecodedStatusMessage("PCP metrics | DEV=1\n  voltage = 4.1");
+    QVERIFY(!wrongMessage.valid);
+
+    const ParsedChargerStatusMessage badDevice =
+        ChargerStatusLogic::parseDecodedStatusMessage(
+            "PCP status | DEV=1 | NAME=Bus\n"
+            "  charger_id = nope\n"
+            "  current = 1.0\n"
+            "  voltage = 4.1");
+    QVERIFY(!badDevice.valid);
+
+    const ParsedChargerStatusMessage fallbackParsed =
+        ChargerStatusLogic::parseDecodedStatusMessage(
+            "PCP status | DEV=2 | NAME=Bus\n"
+            "  volt = 4.05\n"
+            "  current = 0.80\n"
+            "  temp = 24\n"
+            "  state = 0");
+    QVERIFY(fallbackParsed.valid);
+    QCOMPARE(fallbackParsed.chargerId, 2u);
+    QCOMPARE(fallbackParsed.voltageText, QString("4.05"));
+    QCOMPARE(fallbackParsed.tempText, QString("24"));
+    QCOMPARE(fallbackParsed.statusText, QString("Idle"));
+}
+
 void WidgetTests::chargerStatusWidget_hasOverviewGeneralAndDetailedTabs()
 {
     auto* widget = new ChargerStatusWidget;
@@ -121,20 +279,23 @@ void WidgetTests::chargerStatusWidget_hasOverviewGeneralAndDetailedTabs()
     QCOMPARE(tabWidget->tabText(2), QString("Detailed"));
 
     auto* detailedPlot = widget->findChild<ChargerHistoryPlotWidget*>("detailedHistoryPlot");
-    auto* detailedChargerCombo = widget->findChild<QComboBox*>("detailedChargerComboBox");
+    auto* detailedChargerTabs = widget->findChild<QTabWidget*>("detailedChargerTabWidget");
     auto* detailedModeCcButton = widget->findChild<QPushButton*>("detailedModeCcButton");
     auto* detailedModeCvButton = widget->findChild<QPushButton*>("detailedModeCvButton");
     auto* detailedSetpointSpin = widget->findChild<QDoubleSpinBox*>("detailedSetpointSpinBox");
     auto* detailedStartButton = widget->findChild<QPushButton*>("detailedStartButton");
     auto* detailedStopButton = widget->findChild<QPushButton*>("detailedStopButton");
     QVERIFY(detailedPlot != nullptr);
-    QVERIFY(detailedChargerCombo != nullptr);
+    QVERIFY(detailedChargerTabs != nullptr);
     QVERIFY(detailedModeCcButton != nullptr);
     QVERIFY(detailedModeCvButton != nullptr);
     QVERIFY(detailedSetpointSpin != nullptr);
     QVERIFY(detailedStartButton != nullptr);
     QVERIFY(detailedStopButton != nullptr);
-    QCOMPARE(detailedChargerCombo->count(), 3);
+    QCOMPARE(detailedChargerTabs->count(), 3);
+    QCOMPARE(detailedChargerTabs->tabText(0), QString("Charger 1"));
+    QCOMPARE(detailedChargerTabs->tabText(1), QString("Charger 2"));
+    QCOMPARE(detailedChargerTabs->tabText(2), QString("Charger 3"));
     QCOMPARE(detailedModeCcButton->text(), QString("CC"));
     QCOMPARE(detailedModeCvButton->text(), QString("CV"));
     QVERIFY(detailedModeCcButton->isChecked());
@@ -169,13 +330,46 @@ void WidgetTests::chargerStatusWidget_hasOverviewGeneralAndDetailedTabs()
     delete widget;
 }
 
+void WidgetTests::chargerStatusWidget_generalButtonsEmitCommandsForAllSlots()
+{
+    ChargerStatusWidget widget;
+    QSignalSpy commandSpy(&widget, &ChargerStatusWidget::commandRequested);
+
+    auto* startButton1 = widget.findChild<QPushButton*>("startButton1");
+    auto* stopButton2 = widget.findChild<QPushButton*>("stopButton2");
+    auto* irButton3 = widget.findChild<QPushButton*>("irButton3");
+    QVERIFY(startButton1 != nullptr);
+    QVERIFY(stopButton2 != nullptr);
+    QVERIFY(irButton3 != nullptr);
+
+    QTest::mouseClick(startButton1, Qt::LeftButton);
+    QTest::mouseClick(stopButton2, Qt::LeftButton);
+    QTest::mouseClick(irButton3, Qt::LeftButton);
+
+    QCOMPARE(commandSpy.count(), 3);
+    QCOMPARE(commandSpy.at(0).at(0).toUInt(), 1u);
+    QCOMPARE(commandSpy.at(0).at(1).toInt(), 0);
+    QCOMPARE(commandSpy.at(0).at(2).toBool(), true);
+    QCOMPARE(commandSpy.at(0).at(3).toDouble(), 4.2);
+
+    QCOMPARE(commandSpy.at(1).at(0).toUInt(), 2u);
+    QCOMPARE(commandSpy.at(1).at(1).toInt(), 0);
+    QCOMPARE(commandSpy.at(1).at(2).toBool(), false);
+    QCOMPARE(commandSpy.at(1).at(3).toDouble(), 0.0);
+
+    QCOMPARE(commandSpy.at(2).at(0).toUInt(), 3u);
+    QCOMPARE(commandSpy.at(2).at(1).toInt(), 2);
+    QCOMPARE(commandSpy.at(2).at(2).toBool(), true);
+    QCOMPARE(commandSpy.at(2).at(3).toDouble(), 4.2);
+}
+
 void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndCollectHistory()
 {
     ChargerStatusWidget widget;
     QSignalSpy commandSpy(&widget, &ChargerStatusWidget::commandRequested);
 
-    auto* detailedPlot = widget.findChild<ChargerHistoryPlotWidget*>("detailedHistoryPlot");
-    auto* chargerCombo = widget.findChild<QComboBox*>("detailedChargerComboBox");
+    auto* detailedPlot = widget.findChild<ChargerHistoryPlotWidget*>("detailedHistoryPlot2");
+    auto* chargerTabs = widget.findChild<QTabWidget*>("detailedChargerTabWidget");
     auto* modeCcButton = widget.findChild<QPushButton*>("detailedModeCcButton");
     auto* modeCvButton = widget.findChild<QPushButton*>("detailedModeCvButton");
     auto* setpointSpin = widget.findChild<QDoubleSpinBox*>("detailedSetpointSpinBox");
@@ -183,14 +377,14 @@ void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndColl
     auto* stopButton = widget.findChild<QPushButton*>("detailedStopButton");
 
     QVERIFY(detailedPlot != nullptr);
-    QVERIFY(chargerCombo != nullptr);
+    QVERIFY(chargerTabs != nullptr);
     QVERIFY(modeCcButton != nullptr);
     QVERIFY(modeCvButton != nullptr);
     QVERIFY(setpointSpin != nullptr);
     QVERIFY(startButton != nullptr);
     QVERIFY(stopButton != nullptr);
 
-    chargerCombo->setCurrentIndex(1);
+    chargerTabs->setCurrentIndex(1);
     QTest::mouseClick(modeCvButton, Qt::LeftButton);
     setpointSpin->setValue(4.175);
     QTest::mouseClick(startButton, Qt::LeftButton);
