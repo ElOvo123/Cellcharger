@@ -54,6 +54,40 @@ set_tests_properties(core_tests PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
 
+add_executable(backend_coms_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/backend_coms_tests.cpp
+    ${CMAKE_SOURCE_DIR}/backend/coms/coms_backend.cpp
+    ${CMAKE_SOURCE_DIR}/backend/coms/coms_backend.h
+    ${CMAKE_SOURCE_DIR}/backend/coms/icomms_backend.h
+    ${CMAKE_SOURCE_DIR}/backend/coms/coms_types.h
+    ${CMAKE_SOURCE_DIR}/backend/logger/logger_backend.cpp
+    ${CMAKE_SOURCE_DIR}/backend/logger/logger_backend.h
+    ${CMAKE_SOURCE_DIR}/backend/pcp/pcp_database.cpp
+    ${CMAKE_SOURCE_DIR}/backend/pcp/pcp_database.h
+    ${CMAKE_SOURCE_DIR}/backend/pcp/pcp_formatter.cpp
+    ${CMAKE_SOURCE_DIR}/backend/pcp/pcp_formatter.h
+)
+
+target_include_directories(backend_coms_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/backend/coms
+    ${CMAKE_SOURCE_DIR}/backend/logger
+    ${CMAKE_SOURCE_DIR}/backend/pcp
+)
+
+target_link_libraries(backend_coms_tests PRIVATE
+    Qt6::Test
+    Qt6::Core
+    Qt6::Network
+    Qt6::SerialPort
+    yaml-cpp
+)
+
+add_test(NAME backend_coms_tests COMMAND backend_coms_tests)
+set_tests_properties(backend_coms_tests PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
 add_executable(widget_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/widget_tests.cpp
     ${CMAKE_SOURCE_DIR}/backend/logger/logger_backend.cpp

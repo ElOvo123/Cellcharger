@@ -26,6 +26,12 @@ private:
     bool initSocketCAN();
     bool initUDP();
     bool initTCP();
+    void handleSerialReadyRead();
+    void handleTcpReadyRead();
+    void handleUdpReadyRead();
+    void handleTcpDisconnected();
+    void publishReceivedPayload(const QByteArray& payload);
+    void handleReceiveFailure(const QString& reason);
     void cleanup();
     void setState(State state);
 

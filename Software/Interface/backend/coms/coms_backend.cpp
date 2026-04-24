@@ -3,6 +3,7 @@
 #include "../pcp/pcp_formatter.h"
 
 #include <iostream>
+#include <QAbstractSocket>
 #include <QHostAddress>
 #include <QSerialPortInfo>
 
@@ -156,6 +157,21 @@ bool ComsBackend::initSerial()
     if (!m_serial->open(QIODevice::ReadWrite))
         return false;
 
+    connect(m_serial, &QSerialPort::readyRead,
+            this, &ComsBackend::handleSerialReadyRead);
+    connect(m_serial, &QSerialPort::errorOccurred,
+            this,
+            [this](QSerialPort::SerialPortError error)
+            {
+                if (error == QSerialPort::NoError)
+                    return;
+
+                const QString reason = m_serial
+                    ? m_serial->errorString()
+                    : QString("serial receive error");
+                handleReceiveFailure(reason);
+            });
+
     std::cout << "Serial initialized on " << m_config.serialPort.toStdString() << std::endl;
 
     Logger::instance().logStatus(QString("COMS: serial initialized on %1").arg(m_config.serialPort));
@@ -223,6 +239,18 @@ bool ComsBackend::initUDP()
         return false;
     }
 
+    connect(m_udp, &QUdpSocket::readyRead,
+            this, &ComsBackend::handleUdpReadyRead);
+    connect(m_udp, &QUdpSocket::errorOccurred,
+            this,
+            [this](QAbstractSocket::SocketError)
+            {
+                const QString reason = m_udp
+                    ? m_udp->errorString()
+                    : QString("UDP receive error");
+                handleReceiveFailure(reason);
+            });
+
     std::cout << "UDP initialized on port 5000" << std::endl;
     Logger::instance().logStatus("COMS: UDP initialized on port 5000");
 
@@ -232,6 +260,20 @@ bool ComsBackend::initUDP()
 bool ComsBackend::initTCP()
 {
     m_tcp = new QTcpSocket(this);
+
+    connect(m_tcp, &QTcpSocket::readyRead,
+            this, &ComsBackend::handleTcpReadyRead);
+    connect(m_tcp, &QTcpSocket::disconnected,
+            this, &ComsBackend::handleTcpDisconnected);
+    connect(m_tcp, &QTcpSocket::errorOccurred,
+            this,
+            [this](QAbstractSocket::SocketError)
+            {
+                const QString reason = m_tcp
+                    ? m_tcp->errorString()
+                    : QString("TCP receive error");
+                handleReceiveFailure(reason);
+            });
 
     m_tcp->connectToHost(m_config.ip, m_config.port);
 
@@ -247,10 +289,83 @@ bool ComsBackend::initTCP()
     return true;
 }
 
+void ComsBackend::handleSerialReadyRead()
+{
+    if (!m_serial)
+        return;
+
+    publishReceivedPayload(m_serial->readAll());
+}
+
+void ComsBackend::handleTcpReadyRead()
+{
+    if (!m_tcp)
+        return;
+
+    publishReceivedPayload(m_tcp->readAll());
+}
+
+void ComsBackend::handleUdpReadyRead()
+{
+    if (!m_udp)
+        return;
+
+    while (m_udp->hasPendingDatagrams())
+    {
+        QByteArray datagram;
+        datagram.resize(static_cast<int>(m_udp->pendingDatagramSize()));
+        m_udp->readDatagram(datagram.data(), datagram.size());
+        publishReceivedPayload(datagram);
+    }
+}
+
+void ComsBackend::handleTcpDisconnected()
+{
+    if (m_state == State::Connected)
+        handleReceiveFailure("remote host closed the connection");
+}
+
+void ComsBackend::publishReceivedPayload(const QByteArray& payload)
+{
+    const QString text = QString::fromUtf8(payload).trimmed();
+    if (text.isEmpty())
+        return;
+
+    const QStringList messages = text.split('\n', Qt::SkipEmptyParts);
+    for (const QString& message : messages)
+    {
+        const QString cleanMessage = message.trimmed();
+        if (cleanMessage.isEmpty())
+            continue;
+
+        std::cout << cleanMessage.toStdString() << std::endl;
+        emit messageReceived(cleanMessage);
+        Logger::instance().logComs(cleanMessage);
+    }
+}
+
+void ComsBackend::handleReceiveFailure(const QString& reason)
+{
+    if (m_state == State::Disconnected || m_state == State::Error)
+        return;
+
+    const QString cleanReason = reason.isEmpty()
+        ? QString("unknown receive failure")
+        : reason;
+    const QString message =
+        QString("COMS: receive failure: %1").arg(cleanReason);
+
+    setState(State::Error);
+    emit errorOccurred(message);
+    emit statusMessage(message);
+    Logger::instance().logStatus(message);
+}
+
 void ComsBackend::cleanup()
 {
     if (m_serial)
     {
+        disconnect(m_serial, nullptr, this, nullptr);
         if (m_serial->isOpen())
             m_serial->close();
 
@@ -260,6 +375,7 @@ void ComsBackend::cleanup()
 
     if (m_tcp)
     {
+        disconnect(m_tcp, nullptr, this, nullptr);
         if (m_tcp->isOpen())
             m_tcp->disconnectFromHost();
 
@@ -269,6 +385,7 @@ void ComsBackend::cleanup()
 
     if (m_udp)
     {
+        disconnect(m_udp, nullptr, this, nullptr);
         m_udp->close();
         delete m_udp;
         m_udp = nullptr;
