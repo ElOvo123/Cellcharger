@@ -3,12 +3,19 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QSizePolicy>
+#include <QtMath>
+
+#include <cmath>
 
 namespace
 {
 const QColor kCenterColor("#8e99a5");
 const QColor kCenterDarkColor("#556270");
 const QColor kFrameColor("#314252");
+const QColor kFreshSlotColor("#35b56a");
+const QColor kFreshSlotBorderColor("#1f7a45");
+const QColor kIdleSlotColor("#d95c5c");
+const QColor kIdleSlotBorderColor("#7b1f1f");
 }
 
 ComsActivityWidget::ComsActivityWidget(QWidget *parent)
@@ -96,6 +103,40 @@ void ComsActivityWidget::paintEvent(QPaintEvent *event)
     {
         const qreal y = centerInner.top() + centerInner.height() * (0.28 + i * 0.18);
         painter.drawLine(QPointF(ventLeft, y), QPointF(ventRight, y));
+    }
+
+    const qreal orbitRadius = side * 0.72;
+    const qreal slotRadius = side * 0.12;
+    const std::array<qreal, 3> slotAngles = {-150.0, -30.0, 90.0};
+    for (size_t i = 0; i < m_slotFresh.size(); ++i)
+    {
+        const qreal angleRadians = qDegreesToRadians(slotAngles[i]);
+        const QPointF slotCenter(center.x() + std::cos(angleRadians) * orbitRadius,
+                                 center.y() + std::sin(angleRadians) * orbitRadius);
+        const QRectF slotRect(slotCenter.x() - slotRadius,
+                              slotCenter.y() - slotRadius,
+                              slotRadius * 2.0,
+                              slotRadius * 2.0);
+        const bool fresh = m_slotFresh[i];
+        const QColor fillColor = fresh ? kFreshSlotColor : kIdleSlotColor;
+        const QColor borderColor = fresh ? kFreshSlotBorderColor : kIdleSlotBorderColor;
+
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0, 0, 0, 36));
+        painter.drawEllipse(slotRect.translated(slotRadius * 0.12, slotRadius * 0.18));
+
+        painter.setPen(QPen(borderColor, 1.6));
+        painter.setBrush(fillColor);
+        painter.drawEllipse(slotRect);
+
+        painter.setPen(QPen(QColor(255, 255, 255, fresh ? 170 : 110), 1.0));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawArc(slotRect.adjusted(slotRadius * 0.25,
+                                          slotRadius * 0.25,
+                                          -slotRadius * 0.25,
+                                          -slotRadius * 0.25),
+                        35 * 16,
+                        120 * 16);
     }
 }
 

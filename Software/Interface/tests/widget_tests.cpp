@@ -24,6 +24,18 @@
 #include <QTimer>
 #include <QTextEdit>
 
+namespace
+{
+QImage renderWidgetImage(QWidget& widget)
+{
+    widget.resize(widget.sizeHint());
+    QPixmap rendered(widget.size());
+    rendered.fill(Qt::transparent);
+    widget.render(&rendered);
+    return rendered.toImage();
+}
+}
+
 class WidgetTests : public QObject
 {
     Q_OBJECT
@@ -111,11 +123,20 @@ void WidgetTests::comsActivityWidget_exposesExpectedSizeHintsAndPaints()
     QCOMPARE(widget.minimumSizeHint(), QSize(290, 290));
     QCOMPARE(widget.sizeHint(), QSize(290, 290));
 
-    widget.resize(widget.sizeHint());
-    QPixmap rendered(widget.size());
-    rendered.fill(Qt::transparent);
-    widget.render(&rendered);
-    QVERIFY(!rendered.isNull());
+    const QImage idleImage = renderWidgetImage(widget);
+    QVERIFY(!idleImage.isNull());
+
+    widget.setSlotFresh(0, true);
+    const QImage slot0FreshImage = renderWidgetImage(widget);
+    QVERIFY(slot0FreshImage != idleImage);
+
+    widget.setSlotFresh(2, true);
+    const QImage slot0And2FreshImage = renderWidgetImage(widget);
+    QVERIFY(slot0And2FreshImage != slot0FreshImage);
+
+    widget.clearSlots();
+    const QImage clearedImage = renderWidgetImage(widget);
+    QCOMPARE(clearedImage, idleImage);
 }
 
 void WidgetTests::chargerHistoryPlotWidget_capsSamplesSwitchesSelectionAndPaints()
