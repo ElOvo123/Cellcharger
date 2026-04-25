@@ -33,7 +33,7 @@ jobs:
             clang-format \
             cmake \
             qt6-base-dev \
-            qt6-serialport-dev \
+            libqt6serialport6-dev \
             libyaml-cpp-dev \
             lcov \
             gcovr
