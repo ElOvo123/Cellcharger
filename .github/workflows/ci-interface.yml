@@ -35,6 +35,8 @@ jobs:
             qt6-base-dev \
             libqt6serialport6-dev \
             libyaml-cpp-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
             lcov \
             gcovr
 
