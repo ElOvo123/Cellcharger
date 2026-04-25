@@ -365,6 +365,28 @@ void WidgetTests::chargerStatusWidget_generalButtonsEmitCommandsForAllSlots()
     QVERIFY(stopButton2 != nullptr);
     QVERIFY(irButton3 != nullptr);
 
+    QVERIFY(!startButton1->isEnabled());
+    QVERIFY(!irButton3->isEnabled());
+
+    QTest::mouseClick(startButton1, Qt::LeftButton);
+    QCOMPARE(commandSpy.count(), 0);
+
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 1 (raw=1)\n"
+                                  "  current = 1.5 (raw=1500)\n"
+                                  "  status = 1 (raw=1)\n"
+                                  "  temperature = 26 (raw=260)\n"
+                                  "  voltage = 4.12 (raw=4120)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 3 (raw=3)\n"
+                                  "  current = 1.5 (raw=1500)\n"
+                                  "  status = 1 (raw=1)\n"
+                                  "  temperature = 26 (raw=260)\n"
+                                  "  voltage = 4.12 (raw=4120)");
+    QCoreApplication::processEvents();
+    QVERIFY(startButton1->isEnabled());
+    QVERIFY(irButton3->isEnabled());
+
     QTest::mouseClick(startButton1, Qt::LeftButton);
     QTest::mouseClick(stopButton2, Qt::LeftButton);
     QTest::mouseClick(irButton3, Qt::LeftButton);
@@ -410,14 +432,9 @@ void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndColl
     chargerTabs->setCurrentIndex(1);
     QTest::mouseClick(modeCvButton, Qt::LeftButton);
     setpointSpin->setValue(4.175);
+    QVERIFY(!startButton->isEnabled());
     QTest::mouseClick(startButton, Qt::LeftButton);
-
-    QCOMPARE(commandSpy.count(), 1);
-    const QList<QVariant> startCommand = commandSpy.takeFirst();
-    QCOMPARE(startCommand.at(0).toUInt(), 2u);
-    QCOMPARE(startCommand.at(1).toInt(), 1);
-    QCOMPARE(startCommand.at(2).toBool(), true);
-    QCOMPARE(startCommand.at(3).toDouble(), 4.175);
+    QCOMPARE(commandSpy.count(), 0);
 
     Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
                                   "  charger_id = 2 (raw=2)\n"
@@ -428,6 +445,15 @@ void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndColl
     QCoreApplication::processEvents();
     QVERIFY(detailedPlot->sampleCountForCharger(2) >= 1);
     QCOMPARE(detailedPlot->selectedCharger(), 2u);
+    QVERIFY(startButton->isEnabled());
+
+    QTest::mouseClick(startButton, Qt::LeftButton);
+    QCOMPARE(commandSpy.count(), 1);
+    const QList<QVariant> startCommand = commandSpy.takeFirst();
+    QCOMPARE(startCommand.at(0).toUInt(), 2u);
+    QCOMPARE(startCommand.at(1).toInt(), 1);
+    QCOMPARE(startCommand.at(2).toBool(), true);
+    QCOMPARE(startCommand.at(3).toDouble(), 4.175);
 
     QTest::mouseClick(stopButton, Qt::LeftButton);
     QCOMPARE(commandSpy.count(), 1);

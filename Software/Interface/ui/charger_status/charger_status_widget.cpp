@@ -109,18 +109,33 @@ ChargerStatusWidget::ChargerStatusWidget(QWidget* parent) : QWidget(parent), ui(
     m_slots[0].generalVoltageLabel = ui->generalVoltageLabel1;
     m_slots[0].generalCurrentLabel = ui->generalCurrentLabel1;
     m_slots[0].generalTempLabel = ui->generalTempLabel1;
+    m_slots[0].startButton = ui->startButton1;
+    m_slots[0].irButton = ui->irButton1;
+    m_slots[0].ecmButton = ui->ecmButton1;
+    m_slots[0].capacityButton = ui->capacityButton1;
+    m_slots[0].enduranceButton = ui->enduranceTestButton1;
     m_slots[1].led = ui->slotLed2;
     m_slots[1].overviewLabel = ui->slotStatusLabel2;
     m_slots[1].generalTitleLabel = ui->generalTitleLabel2;
     m_slots[1].generalVoltageLabel = ui->generalVoltageLabel2;
     m_slots[1].generalCurrentLabel = ui->generalCurrentLabel2;
     m_slots[1].generalTempLabel = ui->generalTempLabel2;
+    m_slots[1].startButton = ui->startButton2;
+    m_slots[1].irButton = ui->irButton2;
+    m_slots[1].ecmButton = ui->ecmButton2;
+    m_slots[1].capacityButton = ui->capacityButton2;
+    m_slots[1].enduranceButton = ui->enduranceTestButton2;
     m_slots[2].led = ui->slotLed3;
     m_slots[2].overviewLabel = ui->slotStatusLabel3;
     m_slots[2].generalTitleLabel = ui->generalTitleLabel3;
     m_slots[2].generalVoltageLabel = ui->generalVoltageLabel3;
     m_slots[2].generalCurrentLabel = ui->generalCurrentLabel3;
     m_slots[2].generalTempLabel = ui->generalTempLabel3;
+    m_slots[2].startButton = ui->startButton3;
+    m_slots[2].irButton = ui->irButton3;
+    m_slots[2].ecmButton = ui->ecmButton3;
+    m_slots[2].capacityButton = ui->capacityButton3;
+    m_slots[2].enduranceButton = ui->enduranceTestButton3;
 
     for (int i = 0; i < static_cast<int>(m_slots.size()); ++i)
     {
@@ -251,6 +266,8 @@ void ChargerStatusWidget::setupDetailedControls()
     connect(ui->detailedSetSetpointButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(true); });
     connect(ui->detailedStartButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(true); });
     connect(ui->detailedStopButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(false); });
+    connect(ui->detailedChargerTabWidget, &QTabWidget::currentChanged, this,
+            [this](int) { updateCommandEnablement(); });
 }
 
 uint32_t ChargerStatusWidget::selectedDetailedChargerId() const
@@ -285,6 +302,7 @@ void ChargerStatusWidget::clearSlots()
         SlotWidgets& slot = m_slots[static_cast<size_t>(i)];
         slot.assigned = false;
         slot.deviceId = 0;
+        slot.fresh = false;
         if (slot.overviewLabel)
         {
             slot.overviewLabel->setText(ChargerStatusLogic::overviewMarkup("--", "--", "--", "--"));
@@ -308,6 +326,7 @@ void ChargerStatusWidget::clearSlots()
             plot->clearHistory();
     }
     m_historyTimer.restart();
+    updateCommandEnablement();
 }
 
 void ChargerStatusWidget::applySlotState(int slotIndex, bool active)
@@ -327,6 +346,41 @@ void ChargerStatusWidget::applySlotState(int slotIndex, bool active)
     }
 
     m_activityWidget->setSlotFresh(slotIndex, active);
+    m_slots[static_cast<size_t>(slotIndex)].fresh = active;
+    updateCommandEnablement();
+}
+
+bool ChargerStatusWidget::isSlotFresh(int slotIndex) const
+{
+    if (slotIndex < 0 || slotIndex >= static_cast<int>(m_slots.size()))
+        return false;
+
+    return m_slots[static_cast<size_t>(slotIndex)].fresh;
+}
+
+void ChargerStatusWidget::updateCommandEnablement()
+{
+    for (int i = 0; i < static_cast<int>(m_slots.size()); ++i)
+    {
+        const bool fresh = isSlotFresh(i);
+        const SlotWidgets& slot = m_slots[static_cast<size_t>(i)];
+        if (slot.startButton)
+            slot.startButton->setEnabled(fresh);
+        if (slot.irButton)
+            slot.irButton->setEnabled(fresh);
+        if (slot.ecmButton)
+            slot.ecmButton->setEnabled(fresh);
+        if (slot.capacityButton)
+            slot.capacityButton->setEnabled(fresh);
+        if (slot.enduranceButton)
+            slot.enduranceButton->setEnabled(fresh);
+    }
+
+    const bool detailedFresh = isSlotFresh(static_cast<int>(selectedDetailedChargerId()) - 1);
+    if (ui->detailedSetSetpointButton)
+        ui->detailedSetSetpointButton->setEnabled(detailedFresh);
+    if (ui->detailedStartButton)
+        ui->detailedStartButton->setEnabled(detailedFresh);
 }
 
 int ChargerStatusWidget::slotIndexForDevice(uint32_t deviceId)
@@ -336,6 +390,18 @@ int ChargerStatusWidget::slotIndexForDevice(uint32_t deviceId)
         const SlotWidgets& slot = m_slots[static_cast<size_t>(i)];
         if (slot.assigned && slot.deviceId == deviceId)
             return i;
+    }
+
+    if (deviceId >= 1 && deviceId <= m_slots.size())
+    {
+        const int preferredIndex = static_cast<int>(deviceId - 1);
+        SlotWidgets& preferredSlot = m_slots[static_cast<size_t>(preferredIndex)];
+        if (!preferredSlot.assigned || preferredSlot.deviceId == deviceId)
+        {
+            preferredSlot.assigned = true;
+            preferredSlot.deviceId = deviceId;
+            return preferredIndex;
+        }
     }
 
     for (int i = 0; i < static_cast<int>(m_slots.size()); ++i)
@@ -393,6 +459,13 @@ void ChargerStatusWidget::emitCommandForSlot(int slotIndex, int mode, bool start
     if (slotIndex < 0 || slotIndex >= static_cast<int>(m_slots.size()))
         return;
 
+    if (start && !isSlotFresh(slotIndex))
+    {
+        Logger::instance().logStatus(
+            QString("COMS: blocked charger %1 command because telemetry is stale").arg(slotIndex + 1));
+        return;
+    }
+
     const SlotWidgets& slot = m_slots[static_cast<size_t>(slotIndex)];
     const ChargerStatusCommand command =
         ChargerStatusLogic::generalCommandForSlot(slotIndex, slot.assigned, slot.deviceId, mode, start);
@@ -403,6 +476,14 @@ void ChargerStatusWidget::emitDetailedCommand(bool start)
 {
     if (!ui->detailedSetpointSpinBox || !ui->detailedModeCcButton || !ui->detailedModeCvButton)
         return;
+
+    const int slotIndex = static_cast<int>(selectedDetailedChargerId()) - 1;
+    if (start && !isSlotFresh(slotIndex))
+    {
+        Logger::instance().logStatus(
+            QString("COMS: blocked charger %1 command because telemetry is stale").arg(slotIndex + 1));
+        return;
+    }
 
     const ChargerStatusCommand command =
         ChargerStatusLogic::detailedCommand(selectedDetailedChargerId(), ui->detailedModeCvButton->isChecked(),

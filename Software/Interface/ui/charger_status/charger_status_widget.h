@@ -14,6 +14,7 @@ class ComsActivityWidget;
 class ChargerHistoryPlotWidget;
 class QDoubleSpinBox;
 class QLabel;
+class QPushButton;
 class QTimer;
 class QTabWidget;
 
@@ -37,9 +38,15 @@ private:
         QLabel* generalVoltageLabel = nullptr;
         QLabel* generalCurrentLabel = nullptr;
         QLabel* generalTempLabel = nullptr;
+        QPushButton* startButton = nullptr;
+        QPushButton* irButton = nullptr;
+        QPushButton* ecmButton = nullptr;
+        QPushButton* capacityButton = nullptr;
+        QPushButton* enduranceButton = nullptr;
         QTimer* timer = nullptr;
         uint32_t deviceId = 0;
         bool assigned = false;
+        bool fresh = false;
     };
 
     void setupTabWidget();
@@ -49,6 +56,8 @@ private:
     void updateDetailedSetpointLabel();
     void clearSlots();
     void applySlotState(int slotIndex, bool active);
+    void updateCommandEnablement();
+    bool isSlotFresh(int slotIndex) const;
     int slotIndexForDevice(uint32_t deviceId);
     void updateSlotLabel(int slotIndex, const QString& voltText, const QString& currentText, const QString& tempText,
                          const QString& statusText);

@@ -15,6 +15,8 @@
 #include <QTableWidget>
 #include <QDoubleSpinBox>
 
+#include <limits>
+
 class IntegrationTests : public QObject
 {
     Q_OBJECT
@@ -47,6 +49,7 @@ void IntegrationTests::comsController_simulatedBackendReceivesAndSendsPcpFrames(
     QTRY_VERIFY(statusSpy.count() > 0);
     QTRY_VERIFY(comsSpy.count() > 0);
     QTRY_VERIFY(decodedSpy.count() > 0);
+    QTRY_VERIFY(controller.hasFreshTelemetry());
 
     QVERIFY(controller.sendChargerCommand(1, 1, true, 4.2));
     QTRY_VERIFY(Logger::instance().comsHistory().join('\n').contains("TX"));
@@ -67,6 +70,7 @@ void IntegrationTests::profileSetupCommandCanBeSentThroughConnectedComsControlle
     controller.onAddConnectionRequested();
     controller.onConnectConnectionRequested(0);
     QTRY_COMPARE(controller.m_connections.front().state, IComsBackend::State::Connected);
+    QTRY_VERIFY(controller.hasFreshTelemetry());
 
     ProfileSetupWidget profile;
     QSignalSpy commandSpy(&profile, &ProfileSetupWidget::commandRequested);
@@ -101,6 +105,12 @@ void IntegrationTests::comsController_handlesInvalidRowsAndUnavailableCommandPat
     QVERIFY(!nullDbController.sendChargerCommand(1, 1, true, 4.2));
     QTRY_VERIFY(statusSpy.count() > 0);
     QVERIFY(Logger::instance().statusHistory().last().contains("no PCP database"));
+    QString validationError;
+    QVERIFY(!nullDbController.validateChargerCommand(1, 1, true, 4.2, &validationError));
+    QVERIFY(validationError.contains("no PCP database"));
+    PCPFrame invalidFrame;
+    QVERIFY(!nullDbController.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("no PCP database"));
 
     PCPDatabase database;
     QVERIFY(database.loadFromFile("pcp.yaml"));
@@ -118,6 +128,69 @@ void IntegrationTests::comsController_handlesInvalidRowsAndUnavailableCommandPat
     QVERIFY(!controller.sendChargerCommand(1, 1, true, 4.2));
     QVERIFY(Logger::instance().statusHistory().last().contains("no connected backend"));
 
+    QVERIFY(!controller.sendChargerCommand(1, 1, true, std::numeric_limits<double>::quiet_NaN()));
+    QVERIFY(Logger::instance().statusHistory().last().contains("setpoint must be finite"));
+    QVERIFY(!controller.sendChargerCommand(1, 99, true, 4.2));
+    QVERIFY(Logger::instance().statusHistory().last().contains("mode"));
+    QVERIFY(!controller.sendChargerCommand(1, 1, true, 1000.0));
+    QVERIFY(Logger::instance().statusHistory().last().contains("setpoint"));
+
+    invalidFrame.id = (99u << database.idLayout().messageIdBits) | 20u;
+    invalidFrame.dlc = 4;
+    QVERIFY(!controller.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("unknown device"));
+
+    invalidFrame.id = (1u << database.idLayout().messageIdBits) | 99u;
+    QVERIFY(!controller.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("unknown message"));
+
+    invalidFrame.id = (1u << database.idLayout().messageIdBits) | 20u;
+    invalidFrame.dlc = 8;
+    QVERIFY(!controller.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("DLC"));
+
+    invalidFrame.dlc = 9;
+    QVERIFY(!controller.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("payload storage"));
+
+    PCPDatabase invalidLayoutDatabase = database;
+    invalidLayoutDatabase.m_idLayout.messageIdBits = 31;
+    Coms invalidLayoutView;
+    ComsController invalidLayoutController(&invalidLayoutView, &invalidLayoutDatabase);
+    invalidFrame.dlc = 4;
+    QVERIFY(!invalidLayoutController.validateEncodedFrame(invalidFrame, &validationError));
+    QVERIFY(validationError.contains("id layout"));
+
+    PCPDatabase missingCommandDatabase = database;
+    missingCommandDatabase.m_devices[1].messagesByName.erase("command");
+    Coms missingCommandView;
+    ComsController missingCommandController(&missingCommandView, &missingCommandDatabase);
+    QVERIFY(!missingCommandController.validateChargerCommand(1, 1, true, 4.2, &validationError));
+    QVERIFY(validationError.contains("command message"));
+
+    PCPDatabase missingSignalDatabase = database;
+    missingSignalDatabase.m_devices[1].messagesByName["command"].signalDefinitions.erase("start");
+    Coms missingSignalView;
+    ComsController missingSignalController(&missingSignalView, &missingSignalDatabase);
+    QVERIFY(!missingSignalController.validateChargerCommand(1, 1, true, 4.2, &validationError));
+    QVERIFY(validationError.contains("start"));
+
+    PCPDatabase invalidSignalDatabase = database;
+    invalidSignalDatabase.m_devices[1].messagesByName["command"].signalDefinitions["setpoint"].scale =
+        std::numeric_limits<double>::infinity();
+    Coms invalidSignalView;
+    ComsController invalidSignalController(&invalidSignalView, &invalidSignalDatabase);
+    QVERIFY(!invalidSignalController.validateChargerCommand(1, 1, true, 4.2, &validationError));
+    QVERIFY(validationError.contains("setpoint"));
+
+    PCPDatabase signedSignalDatabase = database;
+    signedSignalDatabase.m_devices[1].messagesByName["command"].signalDefinitions["setpoint"].isSigned = true;
+    Coms signedSignalView;
+    ComsController signedSignalController(&signedSignalView, &signedSignalDatabase);
+    QVERIFY(signedSignalController.validateChargerCommand(1, 1, true, 4.2, &validationError));
+    QVERIFY(!signedSignalController.validateChargerCommand(1, 1, true, 40.0, &validationError));
+    QVERIFY(validationError.contains("setpoint"));
+
     QCOMPARE(controller.transportName(ComsType::Serial), QString("Serial"));
     QCOMPARE(controller.transportName(ComsType::Socket_vcan), QString("Socket vcan"));
     QCOMPARE(controller.transportName(ComsType::Socket_UDP), QString("Socket UDP"));
@@ -133,6 +206,18 @@ void IntegrationTests::comsController_handlesInvalidRowsAndUnavailableCommandPat
 
     controller.onRemoveConnectionRequested(0);
     QCOMPARE(controller.m_connections.size(), 0);
+
+    Coms connectedView;
+    ComsController connectedController(&connectedView, &database);
+    connectedController.onAddConnectionRequested();
+    connectedController.onConnectConnectionRequested(0);
+    QTRY_COMPARE(connectedController.m_connections.front().state, IComsBackend::State::Connected);
+    connectedController.m_hasReceivedTelemetry = false;
+    QVERIFY(!connectedController.hasFreshTelemetry());
+    QVERIFY(!connectedController.sendChargerCommand(1, 1, true, 4.2));
+    QVERIFY(Logger::instance().statusHistory().last().contains("telemetry is stale"));
+    QVERIFY(connectedController.sendChargerCommand(1, 1, false, 0.0));
+    connectedController.onRemoveConnectionRequested(0);
 }
 
 void IntegrationTests::simulatedBackend_coversEdgeCasesAndSignalValueGeneration()
