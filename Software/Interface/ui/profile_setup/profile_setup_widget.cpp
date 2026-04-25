@@ -10,6 +10,7 @@
 #include <QDoubleSpinBox>
 #include <QHeaderView>
 #include <QPainter>
+#include <QPushButton>
 #include <QStandardPaths>
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
@@ -84,10 +85,14 @@ void ProfileSetupWidget::setupSlot(int slotIndex)
     void (ProfileSetupWidget::*removeSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::removeSetpoint1 : (slotIndex == 2) ? &ProfileSetupWidget::removeSetpoint2 : &ProfileSetupWidget::removeSetpoint3;
     void (ProfileSetupWidget::*updateSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::updatePlot1 : (slotIndex == 2) ? &ProfileSetupWidget::updatePlot2 : &ProfileSetupWidget::updatePlot3;
     void (ProfileSetupWidget::*startSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::startTest1 : (slotIndex == 2) ? &ProfileSetupWidget::startTest2 : &ProfileSetupWidget::startTest3;
+    void (ProfileSetupWidget::*pauseSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::pauseTest1 : (slotIndex == 2) ? &ProfileSetupWidget::pauseTest2 : &ProfileSetupWidget::pauseTest3;
+    void (ProfileSetupWidget::*resetSlot)() = (slotIndex == 1) ? &ProfileSetupWidget::resetTest1 : (slotIndex == 2) ? &ProfileSetupWidget::resetTest2 : &ProfileSetupWidget::resetTest3;
     QPushButton *addButton = (slotIndex == 1) ? ui->addSetpointButton1 : (slotIndex == 2) ? ui->addSetpointButton2 : ui->addSetpointButton3;
     QPushButton *removeButton = (slotIndex == 1) ? ui->removeSetpointButton1 : (slotIndex == 2) ? ui->removeSetpointButton2 : ui->removeSetpointButton3;
     QPushButton *updateButton = (slotIndex == 1) ? ui->updatePlotButton1 : (slotIndex == 2) ? ui->updatePlotButton2 : ui->updatePlotButton3;
     QPushButton *startButton = (slotIndex == 1) ? ui->startTestButton1 : (slotIndex == 2) ? ui->startTestButton2 : ui->startTestButton3;
+    QPushButton *pauseButton = (slotIndex == 1) ? ui->pauseTestButton1 : (slotIndex == 2) ? ui->pauseTestButton2 : ui->pauseTestButton3;
+    QPushButton *resetButton = (slotIndex == 1) ? ui->resetTestButton1 : (slotIndex == 2) ? ui->resetTestButton2 : ui->resetTestButton3;
 
     if (slotIndex == 1) {
         table = ui->setpointsTable1;
@@ -115,6 +120,7 @@ void ProfileSetupWidget::setupSlot(int slotIndex)
     runtime.table = table;
     runtime.activeRow = -1;
     runtime.elapsedSeconds = 0;
+    runtime.paused = false;
     runtime.timer = new QTimer(this);
     runtime.timer->setInterval(1000);
     connect(runtime.timer, &QTimer::timeout, this,
@@ -135,6 +141,8 @@ void ProfileSetupWidget::setupSlot(int slotIndex)
     connect(removeButton, &QPushButton::clicked, this, removeSlot);
     connect(updateButton, &QPushButton::clicked, this, updateSlot);
     connect(startButton, &QPushButton::clicked, this, startSlot);
+    connect(pauseButton, &QPushButton::clicked, this, pauseSlot);
+    connect(resetButton, &QPushButton::clicked, this, resetSlot);
 
     // Call updatePlot for initial display
     (this->*updateSlot)();
@@ -448,6 +456,12 @@ void ProfileSetupWidget::loadProfile()
 void ProfileSetupWidget::startTest1() { startTestForSlot(1, ui->setpointsTable1); }
 void ProfileSetupWidget::startTest2() { startTestForSlot(2, ui->setpointsTable2); }
 void ProfileSetupWidget::startTest3() { startTestForSlot(3, ui->setpointsTable3); }
+void ProfileSetupWidget::pauseTest1() { pauseTestForSlot(1); }
+void ProfileSetupWidget::pauseTest2() { pauseTestForSlot(2); }
+void ProfileSetupWidget::pauseTest3() { pauseTestForSlot(3); }
+void ProfileSetupWidget::resetTest1() { resetTestForSlot(1); }
+void ProfileSetupWidget::resetTest2() { resetTestForSlot(2); }
+void ProfileSetupWidget::resetTest3() { resetTestForSlot(3); }
 
 void ProfileSetupWidget::startTestForSlot(int slotIndex, QTableWidget *table)
 {
@@ -461,9 +475,47 @@ void ProfileSetupWidget::startTestForSlot(int slotIndex, QTableWidget *table)
     SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
     runtime.elapsedSeconds = 0;
     runtime.activeRow = -1;
+    runtime.paused = false;
+    if (QPushButton *pauseButton = findChild<QPushButton*>(QString("pauseTestButton%1").arg(slotIndex)))
+        pauseButton->setText("Pause");
     updateActiveStepIndicator(slotIndex);
     if (runtime.timer)
         runtime.timer->start();
+}
+
+void ProfileSetupWidget::pauseTestForSlot(int slotIndex)
+{
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    if (!runtime.timer || runtime.activeRow < 0)
+        return;
+
+    runtime.paused = !runtime.paused;
+    if (runtime.paused)
+        runtime.timer->stop();
+    else
+        runtime.timer->start();
+
+    if (QPushButton *pauseButton = findChild<QPushButton*>(QString("pauseTestButton%1").arg(slotIndex)))
+        pauseButton->setText(runtime.paused ? "Resume" : "Pause");
+}
+
+void ProfileSetupWidget::resetTestForSlot(int slotIndex)
+{
+    SlotRuntime& runtime = m_slotRuntimes[static_cast<size_t>(slotIndex - 1)];
+    if (!runtime.table || runtime.table->rowCount() == 0) {
+        showWarning("Warning", "Please add at least one setpoint before resetting a test.");
+        return;
+    }
+
+    runtime.elapsedSeconds = 0;
+    runtime.activeRow = -1;
+    runtime.paused = false;
+    if (QPushButton *pauseButton = findChild<QPushButton*>(QString("pauseTestButton%1").arg(slotIndex)))
+        pauseButton->setText("Pause");
+
+    updateActiveStepIndicator(slotIndex);
+    if (runtime.timer)
+        runtime.timer->stop();
 }
 
 void ProfileSetupWidget::stopTestForSlot(int slotIndex)
@@ -474,6 +526,10 @@ void ProfileSetupWidget::stopTestForSlot(int slotIndex)
 
     runtime.elapsedSeconds = 0;
     runtime.activeRow = -1;
+    runtime.paused = false;
+
+    if (QPushButton *pauseButton = findChild<QPushButton*>(QString("pauseTestButton%1").arg(slotIndex)))
+        pauseButton->setText("Pause");
 
     if (!runtime.table)
         return;
@@ -604,15 +660,23 @@ void ProfileSetupWidget::updateActiveStepIndicator(int slotIndex)
     const auto *curveCombo = qobject_cast<QComboBox*>(runtime.table->cellWidget(row, 5));
     const int mode = stepState.commandMode;
     const double markerTime = stepState.markerTime;
-    const double displayValue = stepState.markerValue;
     const double setpoint = stepState.setpoint;
+    const std::vector<Setpoint> normalizedSetpoints = ProfileSetupLogic::normalizedSetpoints(rawSetpoints);
+    const double markerVoltage =
+        ProfileSetupLogic::interpolateProfileValue(normalizedSetpoints, markerTime, ProfilePlotWidget::DisplayMode::Voltage);
+    const double markerCurrent =
+        ProfileSetupLogic::interpolateProfileValue(normalizedSetpoints, markerTime, ProfilePlotWidget::DisplayMode::Current);
+    const double markerTemperature =
+        ProfileSetupLogic::interpolateProfileValue(normalizedSetpoints, markerTime, ProfilePlotWidget::DisplayMode::Temperature);
 
     if (ProfilePlotWidget *plotWidget = plotWidgetForSlot(slotIndex))
     {
-        plotWidget->setActiveStepMarker(
+        plotWidget->setActiveStepMarkerValues(
             true,
             markerTime,
-            displayValue);
+            markerVoltage,
+            markerCurrent,
+            markerTemperature);
     }
 
     const QString message = QString(

@@ -30,6 +30,26 @@ void ProfilePlotWidget::setActiveStepMarker(bool visible, double time, double va
     m_activeStepVisible = visible;
     m_activeStepTime = time;
     m_activeStepValue = value;
+    m_activeStepVoltage = value;
+    m_activeStepCurrent = value;
+    m_activeStepTemperature = value;
+    updatePlot();
+}
+
+void ProfilePlotWidget::setActiveStepMarkerValues(bool visible,
+                                                  double time,
+                                                  double voltage,
+                                                  double current,
+                                                  double temperature)
+{
+    m_activeStepVisible = visible;
+    m_activeStepTime = time;
+    m_activeStepVoltage = voltage;
+    m_activeStepCurrent = current;
+    m_activeStepTemperature = temperature;
+    m_activeStepValue = ProfilePlotLogic::valueForDisplay(
+        {time, voltage, current, temperature, "Linear", 1.0},
+        m_displayMode);
     updatePlot();
 }
 
@@ -264,12 +284,28 @@ void ProfilePlotWidget::paintEvent(QPaintEvent *event)
         painter.drawEllipse(QPointF(x, y), 4, 4);
     }
 
-    if (m_activeStepVisible) {
+    auto drawActiveMarker = [&](double value) {
         const double x = plotRect.left() + (m_activeStepTime - viewMinTime) / (viewMaxTime - viewMinTime) * plotRect.width();
-        const double y = plotRect.bottom() - (m_activeStepValue - viewMinValue) / (viewMaxValue - viewMinValue) * plotRect.height();
+        const double y = plotRect.bottom() - (value - viewMinValue) / (viewMaxValue - viewMinValue) * plotRect.height();
         painter.setPen(QPen(QColor("#1d4ed8"), 2));
         painter.setBrush(QColor("#1d4ed8"));
         painter.drawEllipse(QPointF(x, y), 6, 6);
+    };
+
+    if (m_activeStepVisible) {
+        if (m_displayMode == DisplayMode::All) {
+            drawActiveMarker(m_activeStepVoltage);
+            drawActiveMarker(m_activeStepCurrent);
+            drawActiveMarker(m_activeStepTemperature);
+        } else {
+            const Setpoint markerPoint{m_activeStepTime,
+                                       m_activeStepVoltage,
+                                       m_activeStepCurrent,
+                                       m_activeStepTemperature,
+                                       "Linear",
+                                       1.0};
+            drawActiveMarker(ProfilePlotLogic::valueForDisplay(markerPoint, m_displayMode));
+        }
     }
     painter.restore();
 

@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QPixmap>
+#include <QPushButton>
 #include <QSignalSpy>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -37,6 +38,7 @@ private slots:
     void plotWidget_ignoresInputAndHandlesZeroRangeRendering();
     void profileSetupWidget_serializesAndLoadsYaml();
     void profileSetupWidget_tracksActiveStepAndLogsProgress();
+    void profileSetupWidget_pauseAndResetControls();
     void profileSetupWidget_helpersCoverInvalidYamlAndFallbacks();
     void profileSetupWidget_exercisesAdditionalSlotBranches();
     void profileSetupLogic_coversNormalizedExecutionBranches();
@@ -210,6 +212,14 @@ void ProfileSetupTests::plotWidget_handlesDisplayModesMarkersZoomAndSelection()
     widget.setSetpoints(setpoints);
     widget.setDisplayMode(ProfilePlotWidget::DisplayMode::All);
     widget.setActiveStepMarker(true, 2.0, 4.1);
+    QCOMPARE(widget.m_activeStepVoltage, 4.1);
+    QCOMPARE(widget.m_activeStepCurrent, 4.1);
+    QCOMPARE(widget.m_activeStepTemperature, 4.1);
+
+    widget.setActiveStepMarkerValues(true, 2.0, 4.1, 1.8, 27.0);
+    QCOMPARE(widget.m_activeStepVoltage, 4.1);
+    QCOMPARE(widget.m_activeStepCurrent, 1.8);
+    QCOMPARE(widget.m_activeStepTemperature, 27.0);
 
     QPixmap pix(widget.size());
     pix.fill(Qt::transparent);
@@ -426,6 +436,9 @@ void ProfileSetupTests::profileSetupWidget_tracksActiveStepAndLogsProgress()
     QVERIFY(plot1->m_activeStepVisible);
     QCOMPARE(plot1->m_activeStepTime, 1.0);
     QCOMPARE(plot1->m_activeStepValue, 1.25);
+    QCOMPARE(plot1->m_activeStepVoltage, 4.2);
+    QCOMPARE(plot1->m_activeStepCurrent, 1.25);
+    QCOMPARE(plot1->m_activeStepTemperature, 25.0);
     QVERIFY(commandSpy.count() >= 2);
     QCOMPARE(commandSpy.at(1).at(0).toUInt(), 1u);
     QCOMPARE(commandSpy.at(1).at(1).toInt(), 0);
@@ -439,6 +452,7 @@ void ProfileSetupTests::profileSetupWidget_tracksActiveStepAndLogsProgress()
     QVERIFY(plot1->m_activeStepVisible);
     QCOMPARE(plot1->m_activeStepTime, 2.0);
     QCOMPARE(plot1->m_activeStepValue, 2.50);
+    QCOMPARE(plot1->m_activeStepCurrent, 2.50);
     QVERIFY(commandSpy.count() >= 3);
     QCOMPARE(commandSpy.at(2).at(0).toUInt(), 1u);
     QCOMPARE(commandSpy.at(2).at(1).toInt(), 0);
@@ -458,6 +472,66 @@ void ProfileSetupTests::profileSetupWidget_tracksActiveStepAndLogsProgress()
 
     QVERIFY(sawStep1);
     QVERIFY(sawStep2);
+}
+
+void ProfileSetupTests::profileSetupWidget_pauseAndResetControls()
+{
+    ProfileSetupWidget widget;
+    QSignalSpy commandSpy(&widget, &ProfileSetupWidget::commandRequested);
+    widget.addSetpoint1();
+    widget.addSetpoint1();
+
+    auto* table1 = widget.findChild<QTableWidget*>("setpointsTable1");
+    auto* pauseButton = widget.findChild<QPushButton*>("pauseTestButton1");
+    auto* resetButton = widget.findChild<QPushButton*>("resetTestButton1");
+    QVERIFY(table1 != nullptr);
+    QVERIFY(pauseButton != nullptr);
+    QVERIFY(resetButton != nullptr);
+
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 1))->setValue(2.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 1))->setValue(5.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 2))->setValue(4.2);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 2))->setValue(4.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 3))->setValue(1.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 3))->setValue(2.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 4))->setValue(25.0);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 4))->setValue(35.0);
+
+    widget.startTestForSlot(1, table1);
+    QVERIFY(widget.m_slotRuntimes[0].timer->isActive());
+    QCOMPARE(widget.m_slotRuntimes[0].elapsedSeconds, 0);
+    QCOMPARE(widget.m_slotRuntimes[0].activeRow, 0);
+    QCOMPARE(pauseButton->text(), QString("Pause"));
+
+    pauseButton->click();
+    QVERIFY(widget.m_slotRuntimes[0].paused);
+    QVERIFY(!widget.m_slotRuntimes[0].timer->isActive());
+    QCOMPARE(pauseButton->text(), QString("Resume"));
+    QTest::qWait(1100);
+    QCOMPARE(widget.m_slotRuntimes[0].elapsedSeconds, 0);
+    QCOMPARE(commandSpy.count(), 1);
+
+    resetButton->click();
+    QVERIFY(!widget.m_slotRuntimes[0].paused);
+    QVERIFY(!widget.m_slotRuntimes[0].timer->isActive());
+    QCOMPARE(widget.m_slotRuntimes[0].elapsedSeconds, 0);
+    QCOMPARE(widget.m_slotRuntimes[0].activeRow, 0);
+    QCOMPARE(pauseButton->text(), QString("Pause"));
+    QVERIFY(widget.m_plotWidget1->m_activeStepVisible);
+    QCOMPARE(widget.m_plotWidget1->m_activeStepTime, 0.0);
+    QCOMPARE(widget.m_plotWidget1->m_activeStepVoltage, 4.2);
+    QCOMPARE(widget.m_plotWidget1->m_activeStepCurrent, 0.0);
+    QCOMPARE(widget.m_plotWidget1->m_activeStepTemperature, 25.0);
+    QCOMPARE(commandSpy.count(), 2);
+
+    QTest::qWait(1100);
+    QCOMPARE(widget.m_slotRuntimes[0].elapsedSeconds, 0);
+    QCOMPARE(commandSpy.count(), 2);
+
+    widget.stopTestForSlot(1);
+    QVERIFY(!widget.m_slotRuntimes[0].timer->isActive());
+    QVERIFY(!widget.m_slotRuntimes[0].paused);
+    QCOMPARE(pauseButton->text(), QString("Pause"));
 }
 
 void ProfileSetupTests::profileSetupWidget_helpersCoverInvalidYamlAndFallbacks()
@@ -699,6 +773,12 @@ void ProfileSetupTests::profileSetupWidget_usesInjectedDialogsForIoAndMessages()
     auto* table1 = widget.findChild<QTableWidget*>("setpointsTable1");
     QVERIFY(table1 != nullptr);
     widget.startTestForSlot(1, table1);
+    QCOMPARE(dialogs.lastKind, QString("warning"));
+    QVERIFY(dialogs.lastMessage.contains("Please add at least one setpoint"));
+
+    dialogs.lastKind.clear();
+    dialogs.lastMessage.clear();
+    widget.resetTestForSlot(1);
     QCOMPARE(dialogs.lastKind, QString("warning"));
     QVERIFY(dialogs.lastMessage.contains("Please add at least one setpoint"));
 

@@ -32,6 +32,7 @@ private:
         QTableWidget *table = nullptr;
         int activeRow = -1;
         int elapsedSeconds = 0;
+        bool paused = false;
     };
 
     Ui::ProfileSetupWidget *ui;
@@ -54,6 +55,8 @@ private:
     QString serializeProfileToYaml() const;
     bool deserializeProfileFromYaml(const QString& yamlText, QString *errorMessage = nullptr);
     void startTestForSlot(int slotIndex, QTableWidget *table);
+    void pauseTestForSlot(int slotIndex);
+    void resetTestForSlot(int slotIndex);
     void stopTestForSlot(int slotIndex);
     void updateActiveStepIndicator(int slotIndex);
     int activeStepRowForElapsedSeconds(QTableWidget *table, int elapsedSeconds) const;
@@ -83,4 +86,10 @@ private slots:
     void startTest1();
     void startTest2();
     void startTest3();
+    void pauseTest1();
+    void pauseTest2();
+    void pauseTest3();
+    void resetTest1();
+    void resetTest2();
+    void resetTest3();
 };

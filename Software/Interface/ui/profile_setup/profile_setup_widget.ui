@@ -196,6 +196,20 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="pauseTestButton1">
+           <property name="text">
+            <string>Pause</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetTestButton1">
+           <property name="text">
+            <string>Reset Test</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -367,6 +381,20 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="pauseTestButton2">
+           <property name="text">
+            <string>Pause</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetTestButton2">
+           <property name="text">
+            <string>Reset Test</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -535,6 +563,20 @@
           <widget class="QPushButton" name="startTestButton3">
            <property name="text">
             <string>Start Test</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pauseTestButton3">
+           <property name="text">
+            <string>Pause</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetTestButton3">
+           <property name="text">
+            <string>Reset Test</string>
            </property>
           </widget>
          </item>

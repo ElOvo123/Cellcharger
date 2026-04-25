@@ -6,14 +6,17 @@
 #include "charger_history_plot_widget.h"
 #include "charger_status_logic.h"
 #include "charger_status_widget.h"
+#include "console_widget.h"
 #include "help_dialog.h"
 #include "logger_backend.h"
 #include "log_widget.h"
 #include "panel_container.h"
+#include "pcp_database.h"
 #undef private
 #undef protected
 
 #include <QDoubleSpinBox>
+#include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
 #include <QPaintEvent>
@@ -21,6 +24,8 @@
 #include <QPushButton>
 #include <QSignalSpy>
 #include <QTabWidget>
+#include <QTableView>
+#include <QTableWidget>
 #include <QTimer>
 #include <QTextEdit>
 
@@ -54,6 +59,9 @@ private slots:
     void chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevices();
     void helpDialog_initializesExpectedWindowState();
     void helpDialog_populatesProjectMetadata();
+    void consoleWidget_appendsPausesFiltersAndClearsMessages();
+    void consoleWidget_watchesDecodedSignalsAndManagesFilters();
+    void consoleWidget_sendsManualAndPeriodicTxMessages();
     void logWidget_appendsFiltersPausesAndClearsMessages();
     void logWidget_startsWithPausedButtonUnchecked();
     void logWidget_loadsExistingLoggerHistoryOnConstruction();
@@ -699,6 +707,181 @@ void WidgetTests::helpDialog_populatesProjectMetadata()
     QCOMPARE(versionLabel->text(), QString("1.0"));
     QVERIFY(!buildLabel->text().isEmpty());
     QVERIFY(buildLabel->text() != QString("--"));
+}
+
+void WidgetTests::consoleWidget_appendsPausesFiltersAndClearsMessages()
+{
+    PCPDatabase database;
+    QVERIFY(database.loadFromFile("pcp.yaml"));
+    ConsoleWidget widget(&database);
+
+    auto* pauseButton = widget.findChild<QPushButton*>("pauseButton");
+    auto* clearButton = widget.findChild<QPushButton*>("clearButton");
+    auto* consoleTable = widget.findChild<QTableView*>("consoleTableView");
+    QVERIFY(pauseButton != nullptr);
+    QVERIFY(clearButton != nullptr);
+    QVERIFY(consoleTable != nullptr);
+
+    const QString statusLine =
+        "[12:00:00] RX | Charger Bus (1) | status | Message 18 | DLC 8 | 01 02";
+    const QString cellLine =
+        "[12:00:01] TX | Charger Bus (1) | cell_info | Message 19 | DLC 8 | 03 04";
+
+    widget.appendMessage("not a formatted PCP line");
+    QCOMPARE(widget.m_messageRecords.size(), 0);
+    QCOMPARE(widget.m_allMessages.size(), 1);
+
+    widget.appendMessage(statusLine);
+    QCOMPARE(widget.m_messageRecords.size(), 1);
+    QCOMPARE(widget.extractDeviceName(statusLine), QString("Charger Bus (1)"));
+    QCOMPARE(widget.extractMessageName(statusLine), QString("status"));
+    QCOMPARE(widget.extractMessageId(statusLine), QString("18"));
+
+    pauseButton->click();
+    QVERIFY(widget.m_paused);
+    QCOMPARE(pauseButton->text(), QString("Resume"));
+    widget.appendMessage(cellLine);
+    QCOMPARE(widget.m_messageRecords.size(), 2);
+    QCOMPARE(widget.m_pausedBuffer.size(), 1);
+
+    pauseButton->click();
+    QVERIFY(!widget.m_paused);
+    QCOMPARE(widget.m_pausedBuffer.size(), 0);
+    QCOMPARE(pauseButton->text(), QString("Pause"));
+
+    clearButton->click();
+    QCOMPARE(widget.m_messageRecords.size(), 0);
+    QCOMPARE(widget.m_allMessages.size(), 0);
+    QCOMPARE(widget.m_messageModel->rowCount(), 0);
+}
+
+void WidgetTests::consoleWidget_watchesDecodedSignalsAndManagesFilters()
+{
+    PCPDatabase database;
+    QVERIFY(database.loadFromFile("pcp.yaml"));
+    ConsoleWidget widget(&database);
+
+    auto* deviceCombo = widget.findChild<QComboBox*>("deviceComboBox");
+    auto* messageCombo = widget.findChild<QComboBox*>("messageComboBox");
+    auto* signalCombo = widget.findChild<QComboBox*>("signalComboBox");
+    auto* signalsTable = widget.findChild<QTableWidget*>("signalsTable");
+    auto* filterTypeCombo = widget.findChild<QComboBox*>("filterTypeComboBox");
+    auto* filterValueEdit = widget.findChild<QLineEdit*>("filterValueEdit");
+    auto* addFilterButton = widget.findChild<QPushButton*>("addFilterButton");
+    auto* removeFilterButton = widget.findChild<QPushButton*>("removeFilterButton");
+    auto* filtersTable = widget.findChild<QTableWidget*>("filtersTable");
+    QVERIFY(deviceCombo != nullptr);
+    QVERIFY(messageCombo != nullptr);
+    QVERIFY(signalCombo != nullptr);
+    QVERIFY(signalsTable != nullptr);
+    QVERIFY(filterTypeCombo != nullptr);
+    QVERIFY(filterValueEdit != nullptr);
+    QVERIFY(addFilterButton != nullptr);
+    QVERIFY(removeFilterButton != nullptr);
+    QVERIFY(filtersTable != nullptr);
+
+    deviceCombo->setCurrentIndex(deviceCombo->findText("Charger Bus (1)"));
+    messageCombo->setCurrentIndex(messageCombo->findText("status"));
+    signalCombo->setCurrentIndex(signalCombo->findText("voltage"));
+    widget.onAddSignalClicked();
+    QCOMPARE(signalsTable->rowCount(), 1);
+    QCOMPARE(signalsTable->item(0, 3)->text(), QString("-"));
+
+    widget.onStatusMessage(
+        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+        "  voltage = 4.200 (raw=4200)\n"
+        "  current = 1.500 (raw=1500)");
+    QCOMPARE(signalsTable->item(0, 3)->text(), QString("4.200"));
+
+    widget.onAddSignalClicked();
+    QCOMPARE(signalsTable->rowCount(), 1);
+    signalsTable->selectRow(0);
+    widget.onRemoveSignalClicked();
+    QCOMPARE(signalsTable->rowCount(), 0);
+
+    filterTypeCombo->setCurrentText("Text");
+    filterValueEdit->setText("status");
+    addFilterButton->click();
+    QCOMPARE(filtersTable->rowCount(), 1);
+    QVERIFY(widget.m_textFilters.contains("status"));
+
+    filterValueEdit->setText("status");
+    addFilterButton->click();
+    QCOMPARE(filtersTable->rowCount(), 1);
+
+    filtersTable->selectRow(0);
+    removeFilterButton->click();
+    QCOMPARE(filtersTable->rowCount(), 0);
+    QVERIFY(widget.m_textFilters.isEmpty());
+}
+
+void WidgetTests::consoleWidget_sendsManualAndPeriodicTxMessages()
+{
+    PCPDatabase database;
+    QVERIFY(database.loadFromFile("pcp.yaml"));
+    ConsoleWidget widget(&database);
+
+    auto* txDeviceCombo = widget.findChild<QComboBox*>("txDeviceComboBox");
+    auto* txMessageCombo = widget.findChild<QComboBox*>("txMessageComboBox");
+    auto* txSignalsTable = widget.findChild<QTableWidget*>("txSignalsTable");
+    auto* txPeriodicTable = widget.findChild<QTableWidget*>("txPeriodicTable");
+    auto* txIntervalSpin = widget.findChild<QSpinBox*>("txIntervalSpinBox");
+    auto* txStatusLabel = widget.findChild<QLabel*>("txStatusLabel");
+    auto* sendButton = widget.findChild<QPushButton*>("sendTxButton");
+    auto* addPeriodicButton = widget.findChild<QPushButton*>("addPeriodicTxButton");
+    auto* startPeriodicButton = widget.findChild<QPushButton*>("startPeriodicTxButton");
+    auto* stopPeriodicButton = widget.findChild<QPushButton*>("stopPeriodicTxButton");
+    auto* removePeriodicButton = widget.findChild<QPushButton*>("removePeriodicTxButton");
+    QVERIFY(txDeviceCombo != nullptr);
+    QVERIFY(txMessageCombo != nullptr);
+    QVERIFY(txSignalsTable != nullptr);
+    QVERIFY(txPeriodicTable != nullptr);
+    QVERIFY(txIntervalSpin != nullptr);
+    QVERIFY(txStatusLabel != nullptr);
+    QVERIFY(sendButton != nullptr);
+    QVERIFY(addPeriodicButton != nullptr);
+    QVERIFY(startPeriodicButton != nullptr);
+    QVERIFY(stopPeriodicButton != nullptr);
+    QVERIFY(removePeriodicButton != nullptr);
+
+    sendButton->click();
+    QVERIFY(txStatusLabel->text().contains("Select a device and message"));
+
+    txDeviceCombo->setCurrentIndex(txDeviceCombo->findText("Charger Bus (1)"));
+    txMessageCombo->setCurrentIndex(txMessageCombo->findText("command"));
+    QVERIFY(txSignalsTable->rowCount() > 0);
+    txIntervalSpin->setValue(100);
+
+    const int comsHistoryBefore = Logger::instance().comsHistory().size();
+    sendButton->click();
+    QVERIFY(txStatusLabel->text().contains("Message sent"));
+    QVERIFY(Logger::instance().comsHistory().size() > comsHistoryBefore);
+    QVERIFY(Logger::instance().comsHistory().last().contains("TX"));
+
+    addPeriodicButton->click();
+    QCOMPARE(txPeriodicTable->rowCount(), 1);
+    QCOMPARE(widget.m_periodicTxMessages.size(), 1);
+
+    txPeriodicTable->selectRow(0);
+    startPeriodicButton->click();
+    QVERIFY(widget.m_periodicTxMessages.front().periodicEnabled);
+    QVERIFY(widget.m_txTimer.isActive());
+
+    widget.onTxTimerTimeout();
+    QVERIFY(txStatusLabel->text().contains("Periodic message sent"));
+
+    txPeriodicTable->selectRow(0);
+    stopPeriodicButton->click();
+    QVERIFY(!widget.m_periodicTxMessages.front().periodicEnabled);
+    QVERIFY(!widget.m_txTimer.isActive());
+
+    widget.onPeriodicTxRowDoubleClicked(0, 0);
+    QVERIFY(txStatusLabel->text().contains("Loaded periodic message"));
+
+    txPeriodicTable->selectRow(0);
+    removePeriodicButton->click();
+    QCOMPARE(txPeriodicTable->rowCount(), 0);
+    QCOMPARE(widget.m_periodicTxMessages.size(), 0);
 }
 
 void WidgetTests::logWidget_appendsFiltersPausesAndClearsMessages()
