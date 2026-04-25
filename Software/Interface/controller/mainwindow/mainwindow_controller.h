@@ -4,11 +4,12 @@
 #include "interface_backend.h"
 #include "console_widget.h"
 
-class MainWindowController : public MainWindowView {
+class MainWindowController : public MainWindowView
+{
     Q_OBJECT
 
 public:
-    explicit MainWindowController(QWidget *parent = nullptr);
+    explicit MainWindowController(QWidget* parent = nullptr);
 
 private slots:
     void onHelpWindow();

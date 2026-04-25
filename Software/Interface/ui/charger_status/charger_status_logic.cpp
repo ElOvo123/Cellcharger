@@ -2,8 +2,7 @@
 
 #include <QRegularExpression>
 
-bool ChargerStatusLogic::parseNumericSignal(const QMap<QString, QString>& signalValues,
-                                            const QString& signalName,
+bool ChargerStatusLogic::parseNumericSignal(const QMap<QString, QString>& signalValues, const QString& signalName,
                                             double& value)
 {
     if (!signalValues.contains(signalName))
@@ -14,10 +13,8 @@ bool ChargerStatusLogic::parseNumericSignal(const QMap<QString, QString>& signal
     return ok;
 }
 
-QString ChargerStatusLogic::signalDisplay(const QMap<QString, QString>& signalValues,
-                                          const QString& primaryName,
-                                          const QString& fallbackName,
-                                          const QString& secondFallbackName)
+QString ChargerStatusLogic::signalDisplay(const QMap<QString, QString>& signalValues, const QString& primaryName,
+                                          const QString& fallbackName, const QString& secondFallbackName)
 {
     if (signalValues.contains(primaryName))
         return signalValues.value(primaryName);
@@ -31,16 +28,13 @@ QString ChargerStatusLogic::signalDisplay(const QMap<QString, QString>& signalVa
     return "--";
 }
 
-QString ChargerStatusLogic::overviewMarkup(const QString& voltText,
-                                           const QString& currentText,
-                                           const QString& tempText,
+QString ChargerStatusLogic::overviewMarkup(const QString& voltText, const QString& currentText, const QString& tempText,
                                            const QString& statusText)
 {
-    return QString(
-               "<span style='color:#486581;'>Voltage</span><br><b>%1 V</b><br>"
-               "<span style='color:#486581;'>Current</span><br><b>%2 A</b><br>"
-               "<span style='color:#486581;'>Temp</span><br><b>%3 C</b><br>"
-               "<span style='color:#486581;'>Status</span><br><b>%4</b>")
+    return QString("<span style='color:#486581;'>Voltage</span><br><b>%1 V</b><br>"
+                   "<span style='color:#486581;'>Current</span><br><b>%2 A</b><br>"
+                   "<span style='color:#486581;'>Temp</span><br><b>%3 C</b><br>"
+                   "<span style='color:#486581;'>Status</span><br><b>%4</b>")
         .arg(voltText)
         .arg(currentText)
         .arg(tempText)
@@ -86,8 +80,7 @@ ParsedChargerStatusMessage ChargerStatusLogic::parseDecodedStatusMessage(const Q
     if (lines.isEmpty())
         return parsed;
 
-    static const QRegularExpression headerRegex(
-        "PCP\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\|\\s+DEV=(\\d+)");
+    static const QRegularExpression headerRegex("PCP\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\|\\s+DEV=(\\d+)");
     const QRegularExpressionMatch headerMatch = headerRegex.match(lines.first());
     if (!headerMatch.hasMatch())
         return parsed;
@@ -129,11 +122,8 @@ ParsedChargerStatusMessage ChargerStatusLogic::parseDecodedStatusMessage(const Q
     return parsed;
 }
 
-ChargerStatusCommand ChargerStatusLogic::generalCommandForSlot(int slotIndex,
-                                                               bool assigned,
-                                                               uint32_t deviceId,
-                                                               int mode,
-                                                               bool start)
+ChargerStatusCommand ChargerStatusLogic::generalCommandForSlot(int slotIndex, bool assigned, uint32_t deviceId,
+                                                               int mode, bool start)
 {
     ChargerStatusCommand command;
     command.chargerId = assigned ? deviceId : static_cast<uint32_t>(slotIndex + 1);
@@ -143,10 +133,7 @@ ChargerStatusCommand ChargerStatusLogic::generalCommandForSlot(int slotIndex,
     return command;
 }
 
-ChargerStatusCommand ChargerStatusLogic::detailedCommand(uint32_t chargerId,
-                                                         bool cvMode,
-                                                         double setpoint,
-                                                         bool start)
+ChargerStatusCommand ChargerStatusLogic::detailedCommand(uint32_t chargerId, bool cvMode, double setpoint, bool start)
 {
     ChargerStatusCommand command;
     command.chargerId = chargerId;

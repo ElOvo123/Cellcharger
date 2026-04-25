@@ -5,7 +5,8 @@
 
 #include <array>
 
-namespace Ui {
+namespace Ui
+{
 class ChargerStatusWidget;
 }
 
@@ -21,7 +22,7 @@ class ChargerStatusWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ChargerStatusWidget(QWidget *parent = nullptr);
+    explicit ChargerStatusWidget(QWidget* parent = nullptr);
     ~ChargerStatusWidget();
 
 signals:
@@ -30,13 +31,13 @@ signals:
 private:
     struct SlotWidgets
     {
-        QWidget *led = nullptr;
-        QLabel *overviewLabel = nullptr;
-        QLabel *generalTitleLabel = nullptr;
-        QLabel *generalVoltageLabel = nullptr;
-        QLabel *generalCurrentLabel = nullptr;
-        QLabel *generalTempLabel = nullptr;
-        QTimer *timer = nullptr;
+        QWidget* led = nullptr;
+        QLabel* overviewLabel = nullptr;
+        QLabel* generalTitleLabel = nullptr;
+        QLabel* generalVoltageLabel = nullptr;
+        QLabel* generalCurrentLabel = nullptr;
+        QLabel* generalTempLabel = nullptr;
+        QTimer* timer = nullptr;
         uint32_t deviceId = 0;
         bool assigned = false;
     };
@@ -49,22 +50,18 @@ private:
     void clearSlots();
     void applySlotState(int slotIndex, bool active);
     int slotIndexForDevice(uint32_t deviceId);
-    void updateSlotLabel(int slotIndex,
-                         const QString& voltText,
-                         const QString& currentText,
-                         const QString& tempText,
+    void updateSlotLabel(int slotIndex, const QString& voltText, const QString& currentText, const QString& tempText,
                          const QString& statusText);
     void markSlotFresh(int slotIndex);
     void processDecodedMessage(const QString& message);
     void emitCommandForSlot(int slotIndex, int mode, bool start);
     void emitDetailedCommand(bool start);
-    void appendHistorySample(uint32_t chargerId,
-                             const QMap<QString, QString>& signalValues);
+    void appendHistorySample(uint32_t chargerId, const QMap<QString, QString>& signalValues);
 
 private:
-    Ui::ChargerStatusWidget *ui = nullptr;
-    QTabWidget *m_tabWidget = nullptr;
-    ComsActivityWidget *m_activityWidget = nullptr;
+    Ui::ChargerStatusWidget* ui = nullptr;
+    QTabWidget* m_tabWidget = nullptr;
+    ComsActivityWidget* m_activityWidget = nullptr;
     std::array<ChargerHistoryPlotWidget*, 3> m_historyPlots = {};
     QElapsedTimer m_historyTimer;
     std::array<SlotWidgets, 3> m_slots;

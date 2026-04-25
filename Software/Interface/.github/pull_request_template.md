@@ -4,6 +4,7 @@
 
 ## Testing
 
+- [ ] `make format-check`
 - [ ] `make test`
 - [ ] `make coverage`
 

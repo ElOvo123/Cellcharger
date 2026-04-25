@@ -102,8 +102,7 @@ std::vector<uint32_t> PCPDatabase::deviceIds() const
     return ids;
 }
 
-const PCPMessageDefinition* PCPDatabase::messageByName(uint32_t deviceId,
-                                                       const std::string& messageName) const
+const PCPMessageDefinition* PCPDatabase::messageByName(uint32_t deviceId, const std::string& messageName) const
 {
     auto devIt = m_devices.find(deviceId);
     if (devIt == m_devices.end())
@@ -116,8 +115,7 @@ const PCPMessageDefinition* PCPDatabase::messageByName(uint32_t deviceId,
     return &msgIt->second;
 }
 
-const PCPMessageDefinition* PCPDatabase::messageById(uint32_t deviceId,
-                                                     uint32_t messageId) const
+const PCPMessageDefinition* PCPDatabase::messageById(uint32_t deviceId, uint32_t messageId) const
 {
     auto devIt = m_devices.find(deviceId);
     if (devIt == m_devices.end())
@@ -132,8 +130,7 @@ const PCPMessageDefinition* PCPDatabase::messageById(uint32_t deviceId,
     return nullptr;
 }
 
-std::vector<std::string> PCPDatabase::signalNames(uint32_t deviceId,
-                                                  const std::string& messageName) const
+std::vector<std::string> PCPDatabase::signalNames(uint32_t deviceId, const std::string& messageName) const
 {
     std::vector<std::string> names;
 

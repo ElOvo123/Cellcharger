@@ -15,6 +15,6 @@ enum class PanelType
 class PanelFactory
 {
 public:
-    static QWidget* createPanelWidget(PanelType type, QWidget *parent = nullptr);
+    static QWidget* createPanelWidget(PanelType type, QWidget* parent = nullptr);
     static QString panelTitle(PanelType type);
 };

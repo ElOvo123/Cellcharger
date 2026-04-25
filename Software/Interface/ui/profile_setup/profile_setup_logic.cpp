@@ -27,10 +27,7 @@ std::vector<Setpoint> ProfileSetupLogic::normalizedSetpoints(const std::vector<S
 {
     std::vector<Setpoint> normalized = setpoints;
     std::sort(normalized.begin(), normalized.end(),
-              [](const Setpoint& lhs, const Setpoint& rhs)
-              {
-                  return lhs.time < rhs.time;
-              });
+              [](const Setpoint& lhs, const Setpoint& rhs) { return lhs.time < rhs.time; });
 
     if (!normalized.empty() && normalized.front().time > 0.0)
     {
@@ -76,8 +73,7 @@ double ProfileSetupLogic::displayValueForMode(const Setpoint& setpoint, ProfileP
     }
 }
 
-double ProfileSetupLogic::interpolateProfileValue(const std::vector<Setpoint>& setpoints,
-                                                  double timeSeconds,
+double ProfileSetupLogic::interpolateProfileValue(const std::vector<Setpoint>& setpoints, double timeSeconds,
                                                   ProfilePlotWidget::DisplayMode mode)
 {
     if (setpoints.empty())
@@ -108,7 +104,8 @@ double ProfileSetupLogic::interpolateProfileValue(const std::vector<Setpoint>& s
             const double absDelta = std::abs(delta);
             const int steps = std::max(1, static_cast<int>(std::ceil(absDelta / end.rampStep)));
             const double stepDuration = (end.time - start.time) / steps;
-            const int stepIndex = std::min(steps, static_cast<int>(std::floor((timeSeconds - start.time) / stepDuration)));
+            const int stepIndex =
+                std::min(steps, static_cast<int>(std::floor((timeSeconds - start.time) / stepDuration)));
             const double value = v0 + (delta >= 0 ? 1.0 : -1.0) * end.rampStep * stepIndex;
             return delta >= 0 ? std::min(value, v1) : std::max(value, v1);
         }
@@ -128,8 +125,7 @@ double ProfileSetupLogic::interpolateProfileValue(const std::vector<Setpoint>& s
 }
 
 ProfileStepState ProfileSetupLogic::stepStateForElapsedSeconds(const std::vector<Setpoint>& rawSetpoints,
-                                                               int elapsedSeconds,
-                                                               int controlModeIndex)
+                                                               int elapsedSeconds, int controlModeIndex)
 {
     ProfileStepState state;
     if (rawSetpoints.empty())

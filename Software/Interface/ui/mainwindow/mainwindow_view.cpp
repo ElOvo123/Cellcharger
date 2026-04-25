@@ -17,7 +17,8 @@
 #include <QMenu>
 #include <QSplitter>
 
-MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), m_panelSplitter(new QSplitter(Qt::Horizontal, this))
+MainWindowView::MainWindowView(QWidget* parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_panelSplitter(new QSplitter(Qt::Horizontal, this))
 {
     ui->setupUi(this);
 
@@ -25,7 +26,7 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     ui->mainToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
     m_centralContainer = new QWidget(this);
-    auto *centralLayout = new QVBoxLayout(m_centralContainer);
+    auto* centralLayout = new QVBoxLayout(m_centralContainer);
     centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(m_panelSplitter);
@@ -36,8 +37,8 @@ MainWindowView::MainWindowView(QWidget *parent) : QMainWindow(parent), ui(new Ui
     m_panelSplitter->setMinimumWidth(0);
     m_panelSplitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(ui->menuHelp,&QMenu::aboutToShow, this, &MainWindowView::helpClicked);
-    connect(ui->actionComs,&QAction::triggered, this, &MainWindowView::comsClicked);
+    connect(ui->menuHelp, &QMenu::aboutToShow, this, &MainWindowView::helpClicked);
+    connect(ui->actionComs, &QAction::triggered, this, &MainWindowView::comsClicked);
     connect(ui->actionConsole, &QAction::triggered, this, &MainWindowView::consoleClicked);
     connect(ui->actionLog, &QAction::triggered, this, &MainWindowView::logClicked);
     connect(ui->actionComsStatus, &QAction::triggered, this, &MainWindowView::comsStatusClicked);
@@ -58,7 +59,8 @@ MainWindowView::~MainWindowView()
 
 void MainWindowView::centerWindow(QWidget* child)
 {
-    if (!child) return;
+    if (!child)
+        return;
 
     child->adjustSize();
 
@@ -88,9 +90,9 @@ void MainWindowView::showComsWindow()
 
 void MainWindowView::openPanel(PanelType type)
 {
-    QWidget *contentWidget = PanelFactory::createPanelWidget(type, this);
-    
-    if (!contentWidget) 
+    QWidget* contentWidget = PanelFactory::createPanelWidget(type, this);
+
+    if (!contentWidget)
     {
         Logger::instance().logStatus("Failed to create panel");
         return;
@@ -100,14 +102,14 @@ void MainWindowView::openPanel(PanelType type)
     Logger::instance().logStatus(PanelFactory::panelTitle(type) + " opened");
 }
 
-void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
+void MainWindowView::addPanel(QWidget* contentWidget, const QString& title)
 {
-    if (!contentWidget) 
+    if (!contentWidget)
     {
         return;
     }
 
-    auto *panel = new PanelContainer(title, this);
+    auto* panel = new PanelContainer(title, this);
     panel->setContentWidget(contentWidget);
     panel->setMinimumWidth(0);
 
@@ -115,18 +117,14 @@ void MainWindowView::addPanel(QWidget *contentWidget, const QString& title)
     {
         connect(chargerStatusWidget, &ChargerStatusWidget::commandRequested, this,
                 [this](uint32_t chargerId, int mode, bool start, double setpoint)
-                {
-                    dispatchChargerCommand(chargerId, mode, start, setpoint);
-                });
+                { dispatchChargerCommand(chargerId, mode, start, setpoint); });
     }
 
     if (auto* profileSetupWidget = qobject_cast<ProfileSetupWidget*>(contentWidget))
     {
         connect(profileSetupWidget, &ProfileSetupWidget::commandRequested, this,
                 [this](uint32_t chargerId, int mode, bool start, double setpoint)
-                {
-                    dispatchChargerCommand(chargerId, mode, start, setpoint);
-                });
+                { dispatchChargerCommand(chargerId, mode, start, setpoint); });
     }
 
     m_panelSplitter->addWidget(panel);
@@ -149,9 +147,9 @@ void MainWindowView::ensureComsController()
         m_comsController = new ComsController(m_comsWindow, &m_pcpDatabase, this);
 }
 
-void MainWindowView::removePanel(PanelContainer *panel)
+void MainWindowView::removePanel(PanelContainer* panel)
 {
-    if (!panel) 
+    if (!panel)
     {
         return;
     }
@@ -167,15 +165,15 @@ void MainWindowView::removePanel(PanelContainer *panel)
 void MainWindowView::rebalancePanels()
 {
     const int count = m_panelSplitter->count();
-    
-    if (count <= 0) 
+
+    if (count <= 0)
     {
         return;
     }
 
     QList<int> sizes;
     const int splitterWidth = qMax(1, m_panelSplitter->size().width());
-    for (int i = 0; i < count; ++i) 
+    for (int i = 0; i < count; ++i)
     {
         sizes.append(splitterWidth / count);
     }

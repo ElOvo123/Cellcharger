@@ -26,10 +26,9 @@ QString valueText(double value)
 {
     return QString::number(value, 'f', 2);
 }
-}
+} // namespace
 
-ChargerHistoryPlotWidget::ChargerHistoryPlotWidget(QWidget *parent)
-    : QWidget(parent)
+ChargerHistoryPlotWidget::ChargerHistoryPlotWidget(QWidget* parent) : QWidget(parent)
 {
     setMinimumHeight(340);
     setAutoFillBackground(true);
@@ -79,7 +78,7 @@ int ChargerHistoryPlotWidget::sampleCountForCharger(uint32_t chargerId) const
     return static_cast<int>(m_history[static_cast<size_t>(chargerId - 1)].size());
 }
 
-void ChargerHistoryPlotWidget::paintEvent(QPaintEvent *event)
+void ChargerHistoryPlotWidget::paintEvent(QPaintEvent* event)
 {
     QWidget::paintEvent(event);
 
@@ -107,14 +106,13 @@ void ChargerHistoryPlotWidget::paintEvent(QPaintEvent *event)
     if (samples.empty())
     {
         painter.setPen(kAxisColor);
-        painter.drawText(QRect(plotRect.left(), 20, plotRect.width() / 2, 22),
-                         Qt::AlignLeft | Qt::AlignVCenter, "Voltage (V)");
-        painter.drawText(QRect(plotRect.center().x(), 20, plotRect.width() / 2, 22),
-                         Qt::AlignRight | Qt::AlignVCenter, "Current (A)");
-        painter.drawText(plotRect, Qt::AlignCenter,
-                         QString("Waiting for Charger %1 data").arg(m_selectedCharger));
-        painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, plotRect.width(), 20),
-                         Qt::AlignCenter, "Time (s)");
+        painter.drawText(QRect(plotRect.left(), 20, plotRect.width() / 2, 22), Qt::AlignLeft | Qt::AlignVCenter,
+                         "Voltage (V)");
+        painter.drawText(QRect(plotRect.center().x(), 20, plotRect.width() / 2, 22), Qt::AlignRight | Qt::AlignVCenter,
+                         "Current (A)");
+        painter.drawText(plotRect, Qt::AlignCenter, QString("Waiting for Charger %1 data").arg(m_selectedCharger));
+        painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, plotRect.width(), 20), Qt::AlignCenter,
+                         "Time (s)");
         painter.drawText(QRect(2, plotRect.top(), kLeftMargin - 8, 20), Qt::AlignLeft, "V");
         painter.drawText(QRect(plotRect.right() + 8, plotRect.top(), kRightMargin - 10, 20), Qt::AlignRight, "A");
         return;
@@ -147,17 +145,11 @@ void ChargerHistoryPlotWidget::paintEvent(QPaintEvent *event)
     maxCurrent = paddedUpperBound(rawMinCurrent, rawMaxCurrent);
 
     auto xForTime = [&](double timeSeconds)
-    {
-        return plotRect.left() + ((timeSeconds - minTime) / (maxTime - minTime)) * plotRect.width();
-    };
+    { return plotRect.left() + ((timeSeconds - minTime) / (maxTime - minTime)) * plotRect.width(); };
     auto yForVoltage = [&](double voltage)
-    {
-        return plotRect.bottom() - ((voltage - minVoltage) / (maxVoltage - minVoltage)) * plotRect.height();
-    };
+    { return plotRect.bottom() - ((voltage - minVoltage) / (maxVoltage - minVoltage)) * plotRect.height(); };
     auto yForCurrent = [&](double current)
-    {
-        return plotRect.bottom() - ((current - minCurrent) / (maxCurrent - minCurrent)) * plotRect.height();
-    };
+    { return plotRect.bottom() - ((current - minCurrent) / (maxCurrent - minCurrent)) * plotRect.height(); };
 
     QPainterPath voltagePath;
     QPainterPath currentPath;
@@ -183,42 +175,35 @@ void ChargerHistoryPlotWidget::paintEvent(QPaintEvent *event)
     painter.drawPath(currentPath);
 
     painter.setPen(QPen(kVoltageColor, 1));
-    painter.drawText(QRect(plotRect.left(), 20, plotRect.width() / 2, 22),
-                     Qt::AlignLeft | Qt::AlignVCenter, "Voltage (V)");
+    painter.drawText(QRect(plotRect.left(), 20, plotRect.width() / 2, 22), Qt::AlignLeft | Qt::AlignVCenter,
+                     "Voltage (V)");
     painter.setPen(QPen(kCurrentColor, 1));
-    painter.drawText(QRect(plotRect.center().x(), 20, plotRect.width() / 2, 22),
-                     Qt::AlignRight | Qt::AlignVCenter, "Current (A)");
+    painter.drawText(QRect(plotRect.center().x(), 20, plotRect.width() / 2, 22), Qt::AlignRight | Qt::AlignVCenter,
+                     "Current (A)");
 
     painter.setPen(kVoltageColor);
-    painter.drawText(QRect(2, plotRect.top() + 8, kLeftMargin - 8, 20),
-                     Qt::AlignLeft | Qt::AlignTop,
+    painter.drawText(QRect(2, plotRect.top() + 8, kLeftMargin - 8, 20), Qt::AlignLeft | Qt::AlignTop,
                      valueText(maxVoltage));
     painter.drawText(QRect(2, plotRect.top() + (plotRect.height() / 2) - 10, kLeftMargin - 8, 20),
-                     Qt::AlignLeft | Qt::AlignVCenter,
-                     valueText((minVoltage + maxVoltage) / 2.0));
-    painter.drawText(QRect(2, plotRect.bottom() - 20, kLeftMargin - 8, 20),
-                     Qt::AlignLeft | Qt::AlignBottom,
+                     Qt::AlignLeft | Qt::AlignVCenter, valueText((minVoltage + maxVoltage) / 2.0));
+    painter.drawText(QRect(2, plotRect.bottom() - 20, kLeftMargin - 8, 20), Qt::AlignLeft | Qt::AlignBottom,
                      valueText(minVoltage));
 
     painter.setPen(kCurrentColor);
     painter.drawText(QRect(plotRect.right() + 8, plotRect.top() + 8, kRightMargin - 10, 20),
-                     Qt::AlignRight | Qt::AlignTop,
-                     valueText(maxCurrent));
+                     Qt::AlignRight | Qt::AlignTop, valueText(maxCurrent));
     painter.drawText(QRect(plotRect.right() + 8, plotRect.top() + (plotRect.height() / 2) - 10, kRightMargin - 10, 20),
-                     Qt::AlignRight | Qt::AlignVCenter,
-                     valueText((minCurrent + maxCurrent) / 2.0));
+                     Qt::AlignRight | Qt::AlignVCenter, valueText((minCurrent + maxCurrent) / 2.0));
     painter.drawText(QRect(plotRect.right() + 8, plotRect.bottom() - 20, kRightMargin - 10, 20),
-                     Qt::AlignRight | Qt::AlignBottom,
-                     valueText(minCurrent));
+                     Qt::AlignRight | Qt::AlignBottom, valueText(minCurrent));
 
     painter.setPen(Qt::black);
-    painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, plotRect.width(), 20),
-                     Qt::AlignCenter, "Time (s)");
+    painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, plotRect.width(), 20), Qt::AlignCenter, "Time (s)");
     painter.setPen(kAxisColor);
-    painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, 80, 20),
-                     Qt::AlignLeft, QString::number(minTime, 'f', 1));
-    painter.drawText(QRect(plotRect.right() - 80, plotRect.bottom() + 8, 80, 20),
-                     Qt::AlignRight, QString::number(maxTime, 'f', 1));
+    painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, 80, 20), Qt::AlignLeft,
+                     QString::number(minTime, 'f', 1));
+    painter.drawText(QRect(plotRect.right() - 80, plotRect.bottom() + 8, 80, 20), Qt::AlignRight,
+                     QString::number(maxTime, 'f', 1));
 }
 
 const std::vector<ChargerHistoryPlotWidget::Sample>&

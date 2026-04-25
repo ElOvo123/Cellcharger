@@ -16,10 +16,9 @@ const QColor kFreshSlotColor("#35b56a");
 const QColor kFreshSlotBorderColor("#1f7a45");
 const QColor kIdleSlotColor("#d95c5c");
 const QColor kIdleSlotBorderColor("#7b1f1f");
-}
+} // namespace
 
-ComsActivityWidget::ComsActivityWidget(QWidget *parent)
-    : QWidget(parent)
+ComsActivityWidget::ComsActivityWidget(QWidget* parent) : QWidget(parent)
 {
     setObjectName("comsActivityWidget");
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -65,7 +64,7 @@ bool ComsActivityWidget::isSlotFresh(int slotIndex) const
     return m_slotFresh[static_cast<size_t>(slotIndex)];
 }
 
-void ComsActivityWidget::paintEvent(QPaintEvent *event)
+void ComsActivityWidget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event);
 
@@ -75,14 +74,8 @@ void ComsActivityWidget::paintEvent(QPaintEvent *event)
     const QRectF bounds = rect().adjusted(4, 4, -4, -4);
     const QPointF center = bounds.center();
     const qreal side = qMin(bounds.height() * 0.82, bounds.width() * 0.82);
-    const QRectF centerSquare(center.x() - side / 2.0,
-                              center.y() - side / 2.0,
-                              side,
-                              side);
-    const QRectF centerInner = centerSquare.adjusted(side * 0.08,
-                                                     side * 0.08,
-                                                     -side * 0.08,
-                                                     -side * 0.08);
+    const QRectF centerSquare(center.x() - side / 2.0, center.y() - side / 2.0, side, side);
+    const QRectF centerInner = centerSquare.adjusted(side * 0.08, side * 0.08, -side * 0.08, -side * 0.08);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(0, 0, 0, 28));
@@ -113,9 +106,7 @@ void ComsActivityWidget::paintEvent(QPaintEvent *event)
         const qreal angleRadians = qDegreesToRadians(slotAngles[i]);
         const QPointF slotCenter(center.x() + std::cos(angleRadians) * orbitRadius,
                                  center.y() + std::sin(angleRadians) * orbitRadius);
-        const QRectF slotRect(slotCenter.x() - slotRadius,
-                              slotCenter.y() - slotRadius,
-                              slotRadius * 2.0,
+        const QRectF slotRect(slotCenter.x() - slotRadius, slotCenter.y() - slotRadius, slotRadius * 2.0,
                               slotRadius * 2.0);
         const bool fresh = m_slotFresh[i];
         const QColor fillColor = fresh ? kFreshSlotColor : kIdleSlotColor;
@@ -131,12 +122,8 @@ void ComsActivityWidget::paintEvent(QPaintEvent *event)
 
         painter.setPen(QPen(QColor(255, 255, 255, fresh ? 170 : 110), 1.0));
         painter.setBrush(Qt::NoBrush);
-        painter.drawArc(slotRect.adjusted(slotRadius * 0.25,
-                                          slotRadius * 0.25,
-                                          -slotRadius * 0.25,
-                                          -slotRadius * 0.25),
-                        35 * 16,
-                        120 * 16);
+        painter.drawArc(slotRect.adjusted(slotRadius * 0.25, slotRadius * 0.25, -slotRadius * 0.25, -slotRadius * 0.25),
+                        35 * 16, 120 * 16);
     }
 }
 

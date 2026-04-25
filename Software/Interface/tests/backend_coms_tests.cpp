@@ -9,6 +9,11 @@
 #include <QSignalSpy>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUdpSocket>
+
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 class BackendComsTests : public QObject
 {
@@ -19,6 +24,10 @@ private slots:
     void backend_receiveFailureTransitionsToErrorOnce();
     void backend_sendFrameLogsAndFailsWhenNoTransportIsOpen();
     void backend_setTypeDisconnectsConnectedTransport();
+    void backend_serialPublishesPseudoTerminalTraffic();
+    void backend_udpPublishesDatagramsAndSendsFrames();
+    void backend_connectionFailuresReportErrors();
+    void backend_cleanupClosesOwnedTransports();
     void tcpBackend_publishesReceivedPayloadsToSignalsAndLogger();
     void tcpBackend_reportsCriticalReceiveFailureWhenPeerDropsConnection();
 };
@@ -84,11 +93,27 @@ void BackendComsTests::backend_sendFrameLogsAndFailsWhenNoTransportIsOpen()
     QVERIFY(!backend.sendFrame(frame, database));
     backend.setType(ComsType::Socket_TCP);
     QVERIFY(!backend.sendFrame(frame, database));
+    backend.setType(ComsType::Socket_UDP);
+    QVERIFY(!backend.sendFrame(frame, database));
     backend.setType(ComsType::Socket_vcan);
     QVERIFY(!backend.sendFrame(frame, database));
 
-    QCOMPARE(sentSpy.count(), 3);
-    QVERIFY(loggerSpy.count() >= 3);
+    int pipeFds[2] = {-1, -1};
+    QVERIFY(pipe(pipeFds) == 0);
+    backend.m_can_socket = pipeFds[1];
+    QVERIFY(backend.sendFrame(frame, database));
+    backend.m_can_socket = -1;
+    close(pipeFds[0]);
+    close(pipeFds[1]);
+
+    backend.setType(ComsType::Socket_UDP);
+    backend.m_udp = new QUdpSocket(&backend);
+    (void)backend.sendFrame(frame, database);
+    delete backend.m_udp;
+    backend.m_udp = nullptr;
+
+    QCOMPARE(sentSpy.count(), 6);
+    QVERIFY(loggerSpy.count() >= 6);
     QVERIFY(sentSpy.at(0).at(0).toString().contains("TX"));
 }
 
@@ -110,14 +135,174 @@ void BackendComsTests::backend_setTypeDisconnectsConnectedTransport()
     QVERIFY(stateSpy.count() >= 1);
 }
 
+void BackendComsTests::backend_serialPublishesPseudoTerminalTraffic()
+{
+    const int masterFd = posix_openpt(O_RDWR | O_NOCTTY);
+    if (masterFd < 0)
+        QSKIP("Pseudo-terminal support is unavailable");
+
+    QVERIFY(grantpt(masterFd) == 0);
+    QVERIFY(unlockpt(masterFd) == 0);
+    char* slaveName = ptsname(masterFd);
+    QVERIFY(slaveName != nullptr);
+
+    ComsBackend backend;
+    ComsConfig config;
+    config.serialPort = QString::fromLocal8Bit(slaveName);
+    config.baudrate = 115200;
+    backend.setType(ComsType::Serial);
+    backend.setConfig(config);
+
+    QSignalSpy connectedSpy(&backend, &ComsBackend::connected);
+    QSignalSpy receivedSpy(&backend, &ComsBackend::messageReceived);
+
+    backend.connectTransport();
+    QCOMPARE(connectedSpy.count(), 1);
+    QCOMPARE(backend.m_state, IComsBackend::State::Connected);
+    QVERIFY(backend.m_serial != nullptr);
+    QVERIFY(backend.m_serial->isOpen());
+
+    const QByteArray inbound("RX serial line\n");
+    QCOMPARE(write(masterFd, inbound.constData(), static_cast<size_t>(inbound.size())),
+             static_cast<ssize_t>(inbound.size()));
+    QVERIFY(receivedSpy.wait(1000));
+    QCOMPARE(receivedSpy.at(0).at(0).toString(), QString("RX serial line"));
+
+    backend.disconnectTransport();
+    close(masterFd);
+}
+
+void BackendComsTests::backend_udpPublishesDatagramsAndSendsFrames()
+{
+    PCPDatabase database;
+    QVERIFY(database.loadFromFile("pcp.yaml"));
+
+    ComsBackend backend;
+    backend.setType(ComsType::Socket_UDP);
+    ComsConfig bindConfig;
+    bindConfig.port = 0;
+    backend.setConfig(bindConfig);
+
+    QSignalSpy connectedSpy(&backend, &ComsBackend::connected);
+    backend.connectTransport();
+    if (connectedSpy.count() != 1)
+        QSKIP("UDP sockets are unavailable in this test environment");
+
+    QCOMPARE(backend.m_state, IComsBackend::State::Connected);
+    QVERIFY(backend.m_udp != nullptr);
+    QVERIFY(backend.m_udp->localPort() > 0);
+
+    QSignalSpy receivedSpy(&backend, &ComsBackend::messageReceived);
+    QSignalSpy loggerSpy(&Logger::instance(), &Logger::newComsMessage);
+
+    QUdpSocket sender;
+    const QByteArray inbound("RX udp one\nRX udp two\n");
+    QCOMPARE(sender.writeDatagram(inbound, QHostAddress::LocalHost, backend.m_udp->localPort()),
+             static_cast<qint64>(inbound.size()));
+    QVERIFY(receivedSpy.wait(1000));
+    if (receivedSpy.count() < 2)
+        QVERIFY(receivedSpy.wait(1000));
+
+    QCOMPARE(receivedSpy.count(), 2);
+    QCOMPARE(receivedSpy.at(0).at(0).toString(), QString("RX udp one"));
+    QCOMPARE(receivedSpy.at(1).at(0).toString(), QString("RX udp two"));
+    QVERIFY(loggerSpy.count() >= 2);
+
+    QUdpSocket receiver;
+    QVERIFY(receiver.bind(QHostAddress::LocalHost, 0));
+
+    ComsConfig config;
+    config.ip = QHostAddress(QHostAddress::LocalHost).toString();
+    config.port = static_cast<int>(receiver.localPort());
+    backend.setConfig(config);
+
+    PCPFrame frame;
+    frame.id = (1u << database.idLayout().messageIdBits) | 20u;
+    frame.dlc = 4;
+    frame.data = {1, 1, 0x10, 0x80, 0, 0, 0, 0};
+
+    QVERIFY(backend.sendFrame(frame, database));
+    QVERIFY(receiver.waitForReadyRead(1000));
+    QVERIFY(receiver.hasPendingDatagrams());
+
+    QByteArray datagram;
+    datagram.resize(static_cast<int>(receiver.pendingDatagramSize()));
+    receiver.readDatagram(datagram.data(), datagram.size());
+    QVERIFY(QString::fromUtf8(datagram).contains("TX"));
+
+    backend.disconnectTransport();
+}
+
+void BackendComsTests::backend_connectionFailuresReportErrors()
+{
+    ComsBackend guardBackend;
+    guardBackend.handleSerialReadyRead();
+    guardBackend.handleTcpReadyRead();
+    guardBackend.handleUdpReadyRead();
+    guardBackend.handleTcpDisconnected();
+    guardBackend.setState(IComsBackend::State::Disconnected);
+
+    ComsBackend serialBackend;
+    serialBackend.setType(ComsType::Serial);
+    ComsConfig serialConfig;
+    serialConfig.serialPort = "definitely-not-a-real-serial-port";
+    serialBackend.setConfig(serialConfig);
+
+    QSignalSpy serialStateSpy(&serialBackend, &ComsBackend::stateChanged);
+    QSignalSpy serialErrorSpy(&serialBackend, &ComsBackend::errorOccurred);
+    serialBackend.connectTransport();
+
+    QCOMPARE(serialBackend.m_state, IComsBackend::State::Error);
+    QCOMPARE(serialErrorSpy.count(), 1);
+    QVERIFY(serialStateSpy.count() >= 2);
+
+    ComsBackend canBackend;
+    canBackend.setType(ComsType::Socket_vcan);
+    ComsConfig canConfig;
+    canConfig.canInterface = "definitely-not-a-real-can-interface";
+    canBackend.setConfig(canConfig);
+
+    QSignalSpy canErrorSpy(&canBackend, &ComsBackend::errorOccurred);
+    canBackend.connectTransport();
+
+    QCOMPARE(canBackend.m_state, IComsBackend::State::Error);
+    QCOMPARE(canErrorSpy.count(), 1);
+    QCOMPARE(canBackend.m_can_socket, -1);
+
+    canBackend.connectTransport();
+    QCOMPARE(canErrorSpy.count(), 1);
+
+    serialBackend.publishReceivedPayload("RX keep\n   \nTX keep");
+}
+
+void BackendComsTests::backend_cleanupClosesOwnedTransports()
+{
+    ComsBackend backend;
+    backend.m_serial = new QSerialPort(&backend);
+    backend.m_tcp = new QTcpSocket(&backend);
+    backend.m_udp = new QUdpSocket(&backend);
+
+    int pipeFds[2] = {-1, -1};
+    QVERIFY(pipe(pipeFds) == 0);
+    backend.m_can_socket = pipeFds[1];
+
+    backend.cleanup();
+
+    QVERIFY(backend.m_serial == nullptr);
+    QVERIFY(backend.m_tcp == nullptr);
+    QVERIFY(backend.m_udp == nullptr);
+    QCOMPARE(backend.m_can_socket, -1);
+    close(pipeFds[0]);
+}
+
 void BackendComsTests::tcpBackend_publishesReceivedPayloadsToSignalsAndLogger()
 {
     QTcpServer server;
-    if (!server.listen(QHostAddress::LocalHost, 0)) {
-        const QByteArray reason =
-            QString("Loopback TCP server unavailable for integration-style backend test: %1")
-                .arg(server.errorString())
-                .toUtf8();
+    if (!server.listen(QHostAddress::LocalHost, 0))
+    {
+        const QByteArray reason = QString("Loopback TCP server unavailable for integration-style backend test: %1")
+                                      .arg(server.errorString())
+                                      .toUtf8();
         QSKIP(reason.constData());
     }
 
@@ -153,8 +338,7 @@ void BackendComsTests::tcpBackend_publishesReceivedPayloadsToSignalsAndLogger()
         QVERIFY(receivedSpy.wait(1000));
 
     QCOMPARE(receivedSpy.count(), 2);
-    QCOMPARE(receivedSpy.at(0).at(0).toString(),
-             QString("RX | Charger Bus (1) | status | Message 18 | DLC 8 | 01 02"));
+    QCOMPARE(receivedSpy.at(0).at(0).toString(), QString("RX | Charger Bus (1) | status | Message 18 | DLC 8 | 01 02"));
     QCOMPARE(receivedSpy.at(1).at(0).toString(),
              QString("RX | Charger Bus (1) | cell_info | Message 19 | DLC 8 | 03 04"));
     QVERIFY(loggerSpy.count() >= 2);
@@ -166,11 +350,11 @@ void BackendComsTests::tcpBackend_publishesReceivedPayloadsToSignalsAndLogger()
 void BackendComsTests::tcpBackend_reportsCriticalReceiveFailureWhenPeerDropsConnection()
 {
     QTcpServer server;
-    if (!server.listen(QHostAddress::LocalHost, 0)) {
-        const QByteArray reason =
-            QString("Loopback TCP server unavailable for integration-style backend test: %1")
-                .arg(server.errorString())
-                .toUtf8();
+    if (!server.listen(QHostAddress::LocalHost, 0))
+    {
+        const QByteArray reason = QString("Loopback TCP server unavailable for integration-style backend test: %1")
+                                      .arg(server.errorString())
+                                      .toUtf8();
         QSKIP(reason.constData());
     }
 
@@ -204,8 +388,7 @@ void BackendComsTests::tcpBackend_reportsCriticalReceiveFailureWhenPeerDropsConn
     QVERIFY(Logger::instance().statusHistory().last().contains("receive failure"));
 
     QVERIFY(stateSpy.count() >= 2);
-    QCOMPARE(stateSpy.last().at(0).value<IComsBackend::State>(),
-             IComsBackend::State::Error);
+    QCOMPARE(stateSpy.last().at(0).value<IComsBackend::State>(), IComsBackend::State::Error);
 }
 
 QTEST_MAIN(BackendComsTests)

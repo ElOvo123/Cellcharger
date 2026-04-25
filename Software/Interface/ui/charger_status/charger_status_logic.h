@@ -27,26 +27,16 @@ struct ParsedChargerStatusMessage
 class ChargerStatusLogic
 {
 public:
-    static bool parseNumericSignal(const QMap<QString, QString>& signalValues,
-                                   const QString& signalName,
+    static bool parseNumericSignal(const QMap<QString, QString>& signalValues, const QString& signalName,
                                    double& value);
-    static QString signalDisplay(const QMap<QString, QString>& signalValues,
-                                 const QString& primaryName,
+    static QString signalDisplay(const QMap<QString, QString>& signalValues, const QString& primaryName,
                                  const QString& fallbackName = QString(),
                                  const QString& secondFallbackName = QString());
-    static QString overviewMarkup(const QString& voltText,
-                                  const QString& currentText,
-                                  const QString& tempText,
+    static QString overviewMarkup(const QString& voltText, const QString& currentText, const QString& tempText,
                                   const QString& statusText);
     static QString formattedStatusText(const QMap<QString, QString>& signalValues);
     static ParsedChargerStatusMessage parseDecodedStatusMessage(const QString& message);
-    static ChargerStatusCommand generalCommandForSlot(int slotIndex,
-                                                      bool assigned,
-                                                      uint32_t deviceId,
-                                                      int mode,
+    static ChargerStatusCommand generalCommandForSlot(int slotIndex, bool assigned, uint32_t deviceId, int mode,
                                                       bool start);
-    static ChargerStatusCommand detailedCommand(uint32_t chargerId,
-                                                bool cvMode,
-                                                double setpoint,
-                                                bool start);
+    static ChargerStatusCommand detailedCommand(uint32_t chargerId, bool cvMode, double setpoint, bool start);
 };

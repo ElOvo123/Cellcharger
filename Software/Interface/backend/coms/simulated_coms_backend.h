@@ -14,10 +14,10 @@ class SimulatedComsBackend : public IComsBackend
     Q_OBJECT
 
 public:
-    explicit SimulatedComsBackend(const PCPDatabase* db, QObject *parent = nullptr);
+    explicit SimulatedComsBackend(const PCPDatabase* db, QObject* parent = nullptr);
 
     void setType(ComsType type) override;
-    void setConfig(const ComsConfig &config) override;
+    void setConfig(const ComsConfig& config) override;
     void connectTransport() override;
     void disconnectTransport() override;
     bool sendFrame(const PCPFrame& frame, const PCPDatabase& database) override;
@@ -27,13 +27,9 @@ private slots:
 
 private:
     void setState(State state);
-    void publishFrame(const PCPFrame& frame,
-                      const QString& direction,
-                      bool decodeFrame);
+    void publishFrame(const PCPFrame& frame, const QString& direction, bool decodeFrame);
 
-    double fakeValueForSignal(const std::string& signalName,
-                              uint32_t deviceId,
-                              int counter) const;
+    double fakeValueForSignal(const std::string& signalName, uint32_t deviceId, int counter) const;
 
 private:
     const PCPDatabase* m_pcpDatabase = nullptr;

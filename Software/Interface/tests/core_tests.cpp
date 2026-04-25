@@ -75,12 +75,10 @@ void CoreTests::pcpDatabase_loadsExpectedDevicesAndMessages()
     QVERIFY(device.has_value());
     QCOMPARE(QString::fromStdString(device->name), QString("Charger Bus"));
 
-    const PCPMessageDefinition* message =
-        database.messageByName(1, "status");
+    const PCPMessageDefinition* message = database.messageByName(1, "status");
     QVERIFY(message != nullptr);
     QCOMPARE(message->messageId, 18u);
-    QVERIFY(message->signalDefinitions.find("voltage") !=
-            message->signalDefinitions.end());
+    QVERIFY(message->signalDefinitions.find("voltage") != message->signalDefinitions.end());
 
     const auto signalNames = database.signalNames(1, "status");
     QVERIFY(std::find(signalNames.begin(), signalNames.end(), "voltage") != signalNames.end());
@@ -102,17 +100,14 @@ void CoreTests::pcpDatabase_returnsFallbacksForUnknownItems()
     QVERIFY(database.messageNames(99).empty());
 
     const auto knownMessageNames = database.messageNames(1);
-    QVERIFY(std::find(knownMessageNames.begin(), knownMessageNames.end(), "status") !=
-            knownMessageNames.end());
+    QVERIFY(std::find(knownMessageNames.begin(), knownMessageNames.end(), "status") != knownMessageNames.end());
 }
 
 void CoreTests::pcpDatabase_throwsForMissingFile()
 {
     PCPDatabase database;
 
-    QVERIFY_EXCEPTION_THROWN(
-        database.loadFromFile("/definitely/missing/pcp.yaml"),
-        YAML::BadFile);
+    QVERIFY_EXCEPTION_THROWN(database.loadFromFile("/definitely/missing/pcp.yaml"), YAML::BadFile);
 }
 
 void CoreTests::pcpDatabase_throwsForInvalidYaml()
@@ -128,9 +123,7 @@ void CoreTests::pcpDatabase_throwsForInvalidYaml()
     file.close();
 
     PCPDatabase database;
-    QVERIFY_EXCEPTION_THROWN(
-        database.loadFromFile(file.fileName().toStdString()),
-        YAML::ParserException);
+    QVERIFY_EXCEPTION_THROWN(database.loadFromFile(file.fileName().toStdString()), YAML::ParserException);
 }
 
 void CoreTests::pcpDatabase_handlesYamlWithoutDevices()
@@ -196,14 +189,8 @@ void CoreTests::pcpEncoderAndDecoder_roundTripConfiguredSignals()
     PCPEncoder encoder(&database);
     PCPDecoder decoder(&database);
 
-    const std::map<std::string, double> signalValues = {
-        {"charger_id", 1.0},
-        {"status", 1.0},
-        {"fault_code", 0.0},
-        {"voltage", 12.5},
-        {"current", -1.0},
-        {"temperature", 30.0}
-    };
+    const std::map<std::string, double> signalValues = {{"charger_id", 1.0}, {"status", 1.0},   {"fault_code", 0.0},
+                                                        {"voltage", 12.5},   {"current", -1.0}, {"temperature", 30.0}};
 
     const PCPFrame frame = encoder.encode(1, "status", signalValues);
     QCOMPARE(frame.dlc, 8);
@@ -228,38 +215,26 @@ void CoreTests::pcpEncoder_throwsWhenSignalMissingFromDefinition()
 
     PCPEncoder encoder(&database);
 
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "status", {{"not_real", 1.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "status", {{"not_real", 1.0}}), std::runtime_error);
 }
 
 void CoreTests::pcpEncoder_throwsOnInvalidConfiguration()
 {
     PCPEncoder encoder;
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "status", {{"voltage", 1.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "status", {{"voltage", 1.0}}), std::runtime_error);
 
     PCPDatabase database;
     QVERIFY(database.loadFromFile("pcp.yaml"));
     encoder.setDatabase(&database);
     QCOMPARE(encoder.database(), &database);
 
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(99, "status", {{"voltage", 1.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(99, "status", {{"voltage", 1.0}}), std::runtime_error);
 
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "status", {{"current", -100.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "status", {{"current", -100.0}}), std::runtime_error);
 
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "status", {{"temperature", -1000.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "status", {{"temperature", -1000.0}}), std::runtime_error);
 
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "status", {{"voltage", 100.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "status", {{"voltage", 100.0}}), std::runtime_error);
 }
 
 void CoreTests::pcpEncoder_throwsWhenDeviceIdIsOutOfRange()
@@ -294,9 +269,7 @@ void CoreTests::pcpEncoder_throwsWhenDeviceIdIsOutOfRange()
     QVERIFY(database.loadFromFile(file.fileName().toStdString()));
 
     PCPEncoder encoder(&database);
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(2, "ok", {{"state", 1.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(2, "ok", {{"state", 1.0}}), std::runtime_error);
 }
 
 void CoreTests::pcpEncoder_throwsWhenMessageIdIsOutOfRange()
@@ -331,9 +304,7 @@ void CoreTests::pcpEncoder_throwsWhenMessageIdIsOutOfRange()
     QVERIFY(database.loadFromFile(file.fileName().toStdString()));
 
     PCPEncoder encoder(&database);
-    QVERIFY_EXCEPTION_THROWN(
-        encoder.encode(1, "bad", {{"state", 1.0}}),
-        std::runtime_error);
+    QVERIFY_EXCEPTION_THROWN(encoder.encode(1, "bad", {{"state", 1.0}}), std::runtime_error);
 }
 
 void CoreTests::pcpEncoder_acceptsSignedAndUnsignedBoundaryValues()
@@ -376,10 +347,7 @@ void CoreTests::pcpEncoder_acceptsSignedAndUnsignedBoundaryValues()
     PCPEncoder encoder(&database);
     PCPDecoder decoder(&database);
 
-    const PCPFrame minFrame = encoder.encode(1, "edge", {
-        {"unsigned_value", 0.0},
-        {"signed_value", -128.0}
-    });
+    const PCPFrame minFrame = encoder.encode(1, "edge", {{"unsigned_value", 0.0}, {"signed_value", -128.0}});
     QCOMPARE(minFrame.data[0], static_cast<uint8_t>(0x00));
     QCOMPARE(minFrame.data[1], static_cast<uint8_t>(0x80));
 
@@ -388,10 +356,7 @@ void CoreTests::pcpEncoder_acceptsSignedAndUnsignedBoundaryValues()
     QCOMPARE(minDecoded->decodedSignals.at("unsigned_value").rawValue, 0);
     QCOMPARE(minDecoded->decodedSignals.at("signed_value").rawValue, -128);
 
-    const PCPFrame maxFrame = encoder.encode(1, "edge", {
-        {"unsigned_value", 255.0},
-        {"signed_value", 127.0}
-    });
+    const PCPFrame maxFrame = encoder.encode(1, "edge", {{"unsigned_value", 255.0}, {"signed_value", 127.0}});
     QCOMPARE(maxFrame.data[0], static_cast<uint8_t>(0xFF));
     QCOMPARE(maxFrame.data[1], static_cast<uint8_t>(0x7F));
 
@@ -483,14 +448,13 @@ void CoreTests::pcpDecoder_decodesPositiveSignedSignals()
     PCPEncoder encoder(&database);
     PCPDecoder decoder(&database);
 
-    const PCPFrame frame = encoder.encode(1, "status", {
-        {"charger_id", 1.0},
-        {"status", 1.0},
-        {"fault_code", 0.0},
-        {"voltage", 12.5},
-        {"current", 1.0},
-        {"temperature", 30.0}
-    });
+    const PCPFrame frame = encoder.encode(1, "status",
+                                          {{"charger_id", 1.0},
+                                           {"status", 1.0},
+                                           {"fault_code", 0.0},
+                                           {"voltage", 12.5},
+                                           {"current", 1.0},
+                                           {"temperature", 30.0}});
 
     const auto decoded = decoder.decode(frame.id, frame.dlc, frame.data);
     QVERIFY(decoded.has_value());
@@ -550,12 +514,8 @@ void CoreTests::pcpDecoder_handlesBoundaryIdsAndNegativeSignals()
     PCPEncoder encoder(&database);
     PCPDecoder decoder(&database);
 
-    const PCPFrame frame = encoder.encode(15, "status", {
-        {"voltage", 14.0},
-        {"current", -2.0},
-        {"temperature", 60.0},
-        {"state", 4.0}
-    });
+    const PCPFrame frame =
+        encoder.encode(15, "status", {{"voltage", 14.0}, {"current", -2.0}, {"temperature", 60.0}, {"state", 4.0}});
 
     const auto decoded = decoder.decode(frame.id, frame.dlc, frame.data);
     QVERIFY(decoded.has_value());
@@ -572,14 +532,13 @@ void CoreTests::pcpFormatter_formatsKnownFrames()
     QVERIFY(database.loadFromFile("pcp.yaml"));
 
     PCPEncoder encoder(&database);
-    const PCPFrame frame = encoder.encode(1, "status", {
-        {"charger_id", 1.0},
-        {"status", 2.0},
-        {"fault_code", 7.0},
-        {"voltage", 12.0},
-        {"current", 0.0},
-        {"temperature", 25.0}
-    });
+    const PCPFrame frame = encoder.encode(1, "status",
+                                          {{"charger_id", 1.0},
+                                           {"status", 2.0},
+                                           {"fault_code", 7.0},
+                                           {"voltage", 12.0},
+                                           {"current", 0.0},
+                                           {"temperature", 25.0}});
 
     const QString text = PCPFormatter::toConsoleString(frame, "RX", database);
 
@@ -643,10 +602,8 @@ void CoreTests::consoleMessageModel_exposesAndSortsRecords()
 {
     ConsoleMessageModel model;
 
-    const QList<ConsoleMessageRecord> records = {
-        {"10:00:01", "RX", "charger", "status", "1", "8", "AA", "raw1"},
-        {"10:00:00", "TX", "motor", "speed", "2", "4", "BB", "raw2"}
-    };
+    const QList<ConsoleMessageRecord> records = {{"10:00:01", "RX", "charger", "status", "1", "8", "AA", "raw1"},
+                                                 {"10:00:00", "TX", "motor", "speed", "2", "4", "BB", "raw2"}};
 
     model.setRecords(records);
     QCOMPARE(model.rowCount(), 2);
@@ -688,22 +645,18 @@ void CoreTests::consoleMessageModel_handlesInvalidIndexesAndRoles()
     QVERIFY(!model.headerData(0, Qt::Horizontal, Qt::ToolTipRole).isValid());
     QCOMPARE(model.flags(QModelIndex()), Qt::NoItemFlags);
 
-    QCOMPARE(model.data(model.index(0, 1), Qt::TextAlignmentRole).toInt(),
-             static_cast<int>(Qt::AlignCenter));
+    QCOMPARE(model.data(model.index(0, 1), Qt::TextAlignmentRole).toInt(), static_cast<int>(Qt::AlignCenter));
     QCOMPARE(model.data(model.index(0, 0), Qt::TextAlignmentRole).toInt(),
              static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter));
     QVERIFY(!model.data(model.index(0, 0), Qt::ToolTipRole).isValid());
-    QCOMPARE(model.flags(model.index(0, 0)),
-             Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    QCOMPARE(model.flags(model.index(0, 0)), Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 }
 
 void CoreTests::consoleMessageModel_coversAllDisplayColumnsAndFallbacks()
 {
     ConsoleMessageModel model;
-    model.setRecords({
-        {"10:00:03", "RX", "node", "status", "18", "8", "11 22", "raw"},
-        {"10:00:01", "TX", "alpha", "alarm", "02", "4", "AA", "raw2"}
-    });
+    model.setRecords({{"10:00:03", "RX", "node", "status", "18", "8", "11 22", "raw"},
+                      {"10:00:01", "TX", "alpha", "alarm", "02", "4", "AA", "raw2"}});
 
     QCOMPARE(model.data(model.index(0, 0), Qt::DisplayRole).toString(), QString("10:00:03"));
     QCOMPARE(model.data(model.index(0, 1), Qt::DisplayRole).toString(), QString("RX"));
@@ -739,10 +692,8 @@ void CoreTests::consoleMessageModel_coversAllDisplayColumnsAndFallbacks()
 void CoreTests::consoleMessageFilterProxyModel_filtersByConfiguredCriteria()
 {
     auto* model = new ConsoleMessageModel(this);
-    model->setRecords({
-        {"10:00:01", "RX", "charger", "status", "1", "8", "AA BB", "raw1"},
-        {"10:00:02", "TX", "motor", "speed", "2", "8", "CC DD", "raw2"}
-    });
+    model->setRecords({{"10:00:01", "RX", "charger", "status", "1", "8", "AA BB", "raw1"},
+                       {"10:00:02", "TX", "motor", "speed", "2", "8", "CC DD", "raw2"}});
 
     ConsoleMessageFilterProxyModel proxy;
     proxy.setSourceModel(model);
@@ -776,10 +727,8 @@ void CoreTests::consoleMessageFilterProxyModel_handlesNullSourceModelAndCaseInse
     QCOMPARE(proxy.rowCount(), 0);
 
     auto* model = new ConsoleMessageModel(this);
-    model->setRecords({
-        {"10:00:01", "RX", "charger", "status", "18", "8", "AA BB", "raw1"},
-        {"10:00:02", "TX", "motor", "speed", "2", "8", "cc dd", "raw2"}
-    });
+    model->setRecords({{"10:00:01", "RX", "charger", "status", "18", "8", "AA BB", "raw1"},
+                       {"10:00:02", "TX", "motor", "speed", "2", "8", "cc dd", "raw2"}});
 
     proxy.setSourceModel(model);
     proxy.setTextFilters({"aa bb"});
@@ -860,18 +809,18 @@ void CoreTests::logger_handlesConcurrentWrites()
 
     for (int threadIndex = 0; threadIndex < threadCount; ++threadIndex)
     {
-        workers.emplace_back([threadIndex, messagesPerThread, marker]()
-        {
-            for (int messageIndex = 0; messageIndex < messagesPerThread; ++messageIndex)
+        workers.emplace_back(
+            [threadIndex, messagesPerThread, marker]()
             {
-                Logger::instance().logStatus(
-                    QString("%1-status-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
-                Logger::instance().logComs(
-                    QString("%1-coms-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
-                Logger::instance().logDecoded(
-                    QString("%1-decoded-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
-            }
-        });
+                for (int messageIndex = 0; messageIndex < messagesPerThread; ++messageIndex)
+                {
+                    Logger::instance().logStatus(
+                        QString("%1-status-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
+                    Logger::instance().logComs(QString("%1-coms-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
+                    Logger::instance().logDecoded(
+                        QString("%1-decoded-%2-%3").arg(marker).arg(threadIndex).arg(messageIndex));
+                }
+            });
     }
 
     for (std::thread& worker : workers)

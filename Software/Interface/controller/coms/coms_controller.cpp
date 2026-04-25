@@ -6,28 +6,18 @@
 
 #include <iostream>
 
-ComsController::ComsController(Coms *view,
-                               const PCPDatabase* pcpDatabase,
-                               QObject *parent)
-    : QObject(parent),
-      m_view(view),
-      m_pcpDatabase(pcpDatabase)
+ComsController::ComsController(Coms* view, const PCPDatabase* pcpDatabase, QObject* parent)
+    : QObject(parent), m_view(view), m_pcpDatabase(pcpDatabase)
 {
-    connect(m_view, &Coms::addConnectionRequested,
-            this, &ComsController::onAddConnectionRequested);
-    connect(m_view, &Coms::connectConnectionRequested,
-            this, &ComsController::onConnectConnectionRequested);
-    connect(m_view, &Coms::disconnectConnectionRequested,
-            this, &ComsController::onDisconnectConnectionRequested);
-    connect(m_view, &Coms::removeConnectionRequested,
-            this, &ComsController::onRemoveConnectionRequested);
+    connect(m_view, &Coms::addConnectionRequested, this, &ComsController::onAddConnectionRequested);
+    connect(m_view, &Coms::connectConnectionRequested, this, &ComsController::onConnectConnectionRequested);
+    connect(m_view, &Coms::disconnectConnectionRequested, this, &ComsController::onDisconnectConnectionRequested);
+    connect(m_view, &Coms::removeConnectionRequested, this, &ComsController::onRemoveConnectionRequested);
 
     refreshView();
 }
 
-void ComsController::onTypeChanged(int)
-{
-}
+void ComsController::onTypeChanged(int) {}
 
 void ComsController::onAddConnectionRequested()
 {
@@ -52,10 +42,7 @@ void ComsController::onAddConnectionRequested()
             });
 
     connect(entry.backend, &IComsBackend::statusMessage, this,
-            [this](const QString& message)
-            {
-                m_view->setStatusText(message);
-            });
+            [this](const QString& message) { m_view->setStatusText(message); });
 
     connect(entry.backend, &IComsBackend::messageReceived, this,
             [this](const QString&)
@@ -187,10 +174,7 @@ void ComsController::refreshOverallIndicator()
     m_view->setOverallConnected(hasConnected);
 }
 
-bool ComsController::sendChargerCommand(uint32_t chargerId,
-                                        int mode,
-                                        bool start,
-                                        double setpoint)
+bool ComsController::sendChargerCommand(uint32_t chargerId, int mode, bool start, double setpoint)
 {
     if (!m_pcpDatabase)
     {
@@ -202,12 +186,11 @@ bool ComsController::sendChargerCommand(uint32_t chargerId,
     PCPFrame frame;
     try
     {
-        frame = encoder.encode(1, "command", {
-            {"charger_id", static_cast<double>(chargerId)},
-            {"mode", static_cast<double>(mode)},
-            {"setpoint", setpoint},
-            {"start", start ? 1.0 : 0.0}
-        });
+        frame = encoder.encode(1, "command",
+                               {{"charger_id", static_cast<double>(chargerId)},
+                                {"mode", static_cast<double>(mode)},
+                                {"setpoint", setpoint},
+                                {"start", start ? 1.0 : 0.0}});
     }
     catch (const std::exception& ex)
     {
@@ -215,11 +198,8 @@ bool ComsController::sendChargerCommand(uint32_t chargerId,
         return false;
     }
 
-    std::cout << "Status command: charger_id=" << chargerId
-              << " mode=" << mode
-              << " start=" << (start ? 1 : 0)
-              << " setpoint=" << setpoint
-              << std::endl;
+    std::cout << "Status command: charger_id=" << chargerId << " mode=" << mode << " start=" << (start ? 1 : 0)
+              << " setpoint=" << setpoint << std::endl;
 
     for (ConnectionEntry& entry : m_connections)
     {

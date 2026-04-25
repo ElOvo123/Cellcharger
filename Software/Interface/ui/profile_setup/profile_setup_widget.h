@@ -10,7 +10,8 @@
 #include "profile_setup_dialogs.h"
 #include "profile_yaml_logic.h"
 
-namespace Ui {
+namespace Ui
+{
 class ProfileSetupWidget;
 }
 
@@ -19,7 +20,7 @@ class ProfileSetupWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProfileSetupWidget(QWidget *parent = nullptr, ProfileSetupDialogs* dialogs = nullptr);
+    explicit ProfileSetupWidget(QWidget* parent = nullptr, ProfileSetupDialogs* dialogs = nullptr);
     ~ProfileSetupWidget();
 
 signals:
@@ -28,44 +29,42 @@ signals:
 private:
     struct SlotRuntime
     {
-        QTimer *timer = nullptr;
-        QTableWidget *table = nullptr;
+        QTimer* timer = nullptr;
+        QTableWidget* table = nullptr;
         int activeRow = -1;
         int elapsedSeconds = 0;
         bool paused = false;
     };
 
-    Ui::ProfileSetupWidget *ui;
+    Ui::ProfileSetupWidget* ui;
     std::unique_ptr<ProfileSetupDialogs> m_ownedDialogs;
-    ProfileSetupDialogs *m_dialogs = nullptr;
-    ProfilePlotWidget *m_plotWidget1 = nullptr;
-    ProfilePlotWidget *m_plotWidget2 = nullptr;
-    ProfilePlotWidget *m_plotWidget3 = nullptr;
+    ProfileSetupDialogs* m_dialogs = nullptr;
+    ProfilePlotWidget* m_plotWidget1 = nullptr;
+    ProfilePlotWidget* m_plotWidget2 = nullptr;
+    ProfilePlotWidget* m_plotWidget3 = nullptr;
     QIcon m_activeStepIcon;
     std::array<SlotRuntime, 3> m_slotRuntimes;
 
     void addSetpointRow(int slotIndex, int rowIndex);
     void setupSlot(int slotIndex);
-    void updatePlotForSlot(int slotIndex, QTableWidget *table, ProfilePlotWidget *plotWidget);
+    void updatePlotForSlot(int slotIndex, QTableWidget* table, ProfilePlotWidget* plotWidget);
     ProfileDocument profileDocumentFromUi() const;
     void applyProfileDocument(const ProfileDocument& document);
-    void applySetpointsToTable(QTableWidget *table,
-                               const std::vector<Setpoint>& setpoints,
+    void applySetpointsToTable(QTableWidget* table, const std::vector<Setpoint>& setpoints,
                                void (ProfileSetupWidget::*updateSlot)());
     QString serializeProfileToYaml() const;
-    bool deserializeProfileFromYaml(const QString& yamlText, QString *errorMessage = nullptr);
-    void startTestForSlot(int slotIndex, QTableWidget *table);
+    bool deserializeProfileFromYaml(const QString& yamlText, QString* errorMessage = nullptr);
+    void startTestForSlot(int slotIndex, QTableWidget* table);
     void pauseTestForSlot(int slotIndex);
     void resetTestForSlot(int slotIndex);
     void stopTestForSlot(int slotIndex);
     void updateActiveStepIndicator(int slotIndex);
-    int activeStepRowForElapsedSeconds(QTableWidget *table, int elapsedSeconds) const;
+    int activeStepRowForElapsedSeconds(QTableWidget* table, int elapsedSeconds) const;
     ProfilePlotWidget* plotWidgetForSlot(int slotIndex) const;
     int commandModeForSlot(int slotIndex) const;
-    std::vector<Setpoint> setpointsForTable(QTableWidget *table) const;
+    std::vector<Setpoint> setpointsForTable(QTableWidget* table) const;
     static double displayValueForMode(const Setpoint& setpoint, ProfilePlotWidget::DisplayMode mode);
-    static double interpolateProfileValue(const std::vector<Setpoint>& setpoints,
-                                          double timeSeconds,
+    static double interpolateProfileValue(const std::vector<Setpoint>& setpoints, double timeSeconds,
                                           ProfilePlotWidget::DisplayMode mode);
     void showError(const QString& title, const QString& message);
     void showInfo(const QString& title, const QString& message);

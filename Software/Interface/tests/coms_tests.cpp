@@ -34,9 +34,7 @@ private slots:
 
 void ComsTests::canInterfaces_areExposedInExpectedOrder()
 {
-    const QStringList expected = {
-        "vcan0", "vcan1", "vcan2", "can0", "can1", "can2"
-    };
+    const QStringList expected = {"vcan0", "vcan1", "vcan2", "can0", "can1", "can2"};
 
     QCOMPARE(availableCanInterfaces(), expected);
 }

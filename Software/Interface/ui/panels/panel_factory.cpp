@@ -8,7 +8,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-QWidget* PanelFactory::createPanelWidget(PanelType type, QWidget *parent)
+QWidget* PanelFactory::createPanelWidget(PanelType type, QWidget* parent)
 {
     switch (type)
     {

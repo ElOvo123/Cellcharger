@@ -3,9 +3,7 @@
 #include <QDateTime>
 #include <QMutexLocker>
 
-Logger::Logger(QObject *parent) : QObject(parent)
-{
-}
+Logger::Logger(QObject* parent) : QObject(parent) {}
 
 Logger& Logger::instance()
 {
@@ -15,8 +13,7 @@ Logger& Logger::instance()
 
 QString Logger::formatMessage(const QString& message) const
 {
-    const QString timestamp =
-        QDateTime::currentDateTime().toString("[hh:mm:ss] ");
+    const QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss] ");
 
     return timestamp + message;
 }

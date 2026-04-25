@@ -16,7 +16,10 @@
 #include "console_message_filter_proxy_model.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class ConsoleWidget; }
+namespace Ui
+{
+class ConsoleWidget;
+}
 QT_END_NAMESPACE
 
 struct ConsoleTxMessageConfig
@@ -35,8 +38,8 @@ class ConsoleWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ConsoleWidget(QWidget *parent = nullptr);
-    explicit ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget *parent = nullptr);
+    explicit ConsoleWidget(QWidget* parent = nullptr);
+    explicit ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget* parent = nullptr);
     ~ConsoleWidget();
 
     static void setSharedPCPDatabase(const PCPDatabase* pcpDatabase);
@@ -70,15 +73,15 @@ private slots:
     void onTxTimerTimeout();
 
 private:
-    Ui::ConsoleWidget *ui;
+    Ui::ConsoleWidget* ui;
     const PCPDatabase* m_pcpDatabase = nullptr;
 
     static const PCPDatabase* s_sharedPCPDatabase;
 
     QStringList m_allMessages;
     QList<ConsoleMessageRecord> m_messageRecords;
-    QList <ConsoleMessageRecord> m_pausedBuffer;
-    ConsoleMessageModel *m_messageModel = nullptr;
+    QList<ConsoleMessageRecord> m_pausedBuffer;
+    ConsoleMessageModel* m_messageModel = nullptr;
     ConsoleMessageFilterProxyModel* m_messageProxyModel = nullptr;
     bool m_paused = false;
 
@@ -124,19 +127,13 @@ private:
     QString extractMessageId(const QString& message) const;
     QString extractMessageName(const QString& message) const;
 
-    void addWatchedSignal(const QString& deviceName,
-                          const QString& messageName,
-                          const QString& signalName);
+    void addWatchedSignal(const QString& deviceName, const QString& messageName, const QString& signalName);
     void removeSelectedSignal();
-    void updateSignalValue(const QString& deviceName,
-                           const QString& messageName,
-                           const QString& signalName,
+    void updateSignalValue(const QString& deviceName, const QString& messageName, const QString& signalName,
                            const QString& value);
     void processDecodedStatusBlock(const QString& message);
 
-    QString makeWatchKey(const QString& deviceName,
-                         const QString& messageName,
-                         const QString& signalName) const;
+    QString makeWatchKey(const QString& deviceName, const QString& messageName, const QString& signalName) const;
 
     void rebuildFilterSetsFromTable();
     void updateMessageTableLayout();
@@ -145,6 +142,6 @@ private:
     std::optional<uint32_t> deviceIdFromDisplayName(const QString& displayName) const;
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
-    void resizeEvent(QResizeEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 };

@@ -6,7 +6,7 @@
 #include <QLineEdit>
 #include <QTextEdit>
 
-LogWidget::LogWidget(QWidget *parent) : QWidget(parent), ui(new Ui::LogWidget)
+LogWidget::LogWidget(QWidget* parent) : QWidget(parent), ui(new Ui::LogWidget)
 {
     ui->setupUi(this);
 
@@ -16,7 +16,7 @@ LogWidget::LogWidget(QWidget *parent) : QWidget(parent), ui(new Ui::LogWidget)
     connect(ui->clearButton, &QPushButton::clicked, this, &LogWidget::onClearClicked);
     connect(ui->filterEdit, &QLineEdit::textChanged, this, &LogWidget::onFilterTextChanged);
 
-    for (const QString &line : Logger::instance().statusHistory())
+    for (const QString& line : Logger::instance().statusHistory())
     {
         m_allMessages.append(line);
     }
@@ -77,7 +77,7 @@ void LogWidget::refreshView()
 {
     ui->logOutput->clear();
 
-    for (const QString &line : m_allMessages)
+    for (const QString& line : m_allMessages)
     {
         if (passesFilter(line))
             ui->logOutput->append(line);

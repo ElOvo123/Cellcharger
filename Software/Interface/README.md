@@ -16,13 +16,14 @@ Qt/C++ desktop interface for configuring CellCharger communication, monitoring c
 - C++17 compiler
 - Qt 6 modules: Widgets, SerialPort, Network, Test
 - yaml-cpp
+- clang-format for `make format` and `make format-check`
 - gcov/gcc coverage tools for `make coverage`
 
 On Ubuntu-like systems the core dependencies are typically:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake qt6-base-dev qt6-serialport-dev libyaml-cpp-dev
+sudo apt-get install -y build-essential clang-format cmake qt6-base-dev qt6-serialport-dev libyaml-cpp-dev
 ```
 
 ## Build And Run
@@ -114,6 +115,7 @@ ctest --preset smoke
 - `ui/`: Qt widgets and panels.
 - `tests/`: QtTest-based unit, integration, and smoke tests.
 - `config/pcp.yaml`: PCP device/message/signal database.
+- `docs/`: development and testing workflow notes.
 - `scripts/`: project tooling, including coverage summary gate.
 
 ## Quality Expectations
@@ -129,7 +131,8 @@ This runs the full test suite and the coverage gate.
 Additional project hygiene:
 
 ```bash
+make format
 make format-check
 ```
 
-CI runs the same professional gate and uploads the coverage summary as a workflow artifact.
+CI runs formatting, tests, coverage, and uploads the coverage summary as a workflow artifact.

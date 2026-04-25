@@ -1,6 +1,7 @@
 #pragma once
 
-class InterfaceBackend {
+class InterfaceBackend
+{
 public:
     void openComs();
     void openConsole();

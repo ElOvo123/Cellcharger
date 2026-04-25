@@ -25,7 +25,7 @@ signals:
     void newDecodedMessage(const QString& message);
 
 private:
-    explicit Logger(QObject *parent = nullptr);
+    explicit Logger(QObject* parent = nullptr);
 
     QString formatMessage(const QString& message) const;
 

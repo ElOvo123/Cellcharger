@@ -5,6 +5,8 @@ QT_PREFIX := /usr/lib/x86_64-linux-gnu/cmake
 COVERAGE_MIN ?= 85.0
 CMAKE_BUILD_TYPE ?= Debug
 CTEST_ARGS ?= --output-on-failure
+CLANG_FORMAT ?= clang-format
+FORMAT_FILES := $(shell git ls-files '*.cpp' '*.h')
 
 .PHONY: all
 all: build
@@ -64,8 +66,10 @@ coverage:
 	@echo "Running tests with coverage build..."
 	@cd $(BUILD_COVERAGE_DIR) && ctest $(CTEST_ARGS)
 	@echo "Coverage artifacts generated under $(BUILD_COVERAGE_DIR)."
-	@find $(BUILD_COVERAGE_DIR) -name '*.gcda' -print0 | \
-	xargs -0 -n1 gcov -n > $(BUILD_COVERAGE_DIR)/coverage-summary.txt
+	@rm -rf $(BUILD_COVERAGE_DIR)/gcov-lines
+	@mkdir -p $(BUILD_COVERAGE_DIR)/gcov-lines
+	@cd $(BUILD_COVERAGE_DIR)/gcov-lines && find .. -name '*.gcda' -print0 | \
+	xargs -0 -n1 gcov -p -l > ../coverage-summary.txt
 	@python3 scripts/coverage_summary.py $(BUILD_COVERAGE_DIR) $(COVERAGE_MIN)
 .PHONY: coverage-report
 coverage-report: coverage
@@ -77,12 +81,18 @@ rebuild: clean build
 
 .PHONY: format-check
 format-check:
-	@command -v clang-format >/dev/null || { echo "clang-format is not installed."; exit 1; }
-	@find . -path './build*' -prune -o \( -name '*.cpp' -o -name '*.h' \) -print | \
-	xargs clang-format --dry-run --Werror
+	@command -v $(CLANG_FORMAT) >/dev/null || { echo "$(CLANG_FORMAT) is not installed."; exit 1; }
+	@test -n "$(FORMAT_FILES)" || { echo "No C++ files found to format."; exit 1; }
+	@$(CLANG_FORMAT) --dry-run --Werror $(FORMAT_FILES)
+
+.PHONY: format
+format:
+	@command -v $(CLANG_FORMAT) >/dev/null || { echo "$(CLANG_FORMAT) is not installed."; exit 1; }
+	@test -n "$(FORMAT_FILES)" || { echo "No C++ files found to format."; exit 1; }
+	@$(CLANG_FORMAT) -i $(FORMAT_FILES)
 
 .PHONY: ci
-ci: test coverage
+ci: format-check test coverage
 
 .PHONY: verify
 verify: ci

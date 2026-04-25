@@ -39,7 +39,7 @@ QImage renderWidgetImage(QWidget& widget)
     widget.render(&rendered);
     return rendered.toImage();
 }
-}
+} // namespace
 
 class WidgetTests : public QObject
 {
@@ -217,13 +217,12 @@ void WidgetTests::chargerStatusLogic_parsesMessagesAndBuildsCommands()
     QVERIFY(!invalid.valid);
 
     const ParsedChargerStatusMessage parsed =
-        ChargerStatusLogic::parseDecodedStatusMessage(
-            "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-            "  charger_id = 3 (raw=3)\n"
-            "  voltage = 4.12 (raw=4120)\n"
-            "  current = 1.50 (raw=1500)\n"
-            "  temperature = 26 (raw=260)\n"
-            "  status = 1 (raw=1)");
+        ChargerStatusLogic::parseDecodedStatusMessage("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                                      "  charger_id = 3 (raw=3)\n"
+                                                      "  voltage = 4.12 (raw=4120)\n"
+                                                      "  current = 1.50 (raw=1500)\n"
+                                                      "  temperature = 26 (raw=260)\n"
+                                                      "  status = 1 (raw=1)");
     QVERIFY(parsed.valid);
     QCOMPARE(parsed.chargerId, 3u);
     QCOMPARE(parsed.voltageText, QString("4.12"));
@@ -231,21 +230,18 @@ void WidgetTests::chargerStatusLogic_parsesMessagesAndBuildsCommands()
     QCOMPARE(parsed.tempText, QString("26"));
     QCOMPARE(parsed.statusText, QString("Charging"));
 
-    const ChargerStatusCommand general =
-        ChargerStatusLogic::generalCommandForSlot(1, false, 9u, 2, true);
+    const ChargerStatusCommand general = ChargerStatusLogic::generalCommandForSlot(1, false, 9u, 2, true);
     QCOMPARE(general.chargerId, 2u);
     QCOMPARE(general.mode, 2);
     QVERIFY(general.start);
     QCOMPARE(general.setpoint, 4.2);
 
-    const ChargerStatusCommand assigned =
-        ChargerStatusLogic::generalCommandForSlot(1, true, 9u, 0, false);
+    const ChargerStatusCommand assigned = ChargerStatusLogic::generalCommandForSlot(1, true, 9u, 0, false);
     QCOMPARE(assigned.chargerId, 9u);
     QVERIFY(!assigned.start);
     QCOMPARE(assigned.setpoint, 0.0);
 
-    const ChargerStatusCommand detailed =
-        ChargerStatusLogic::detailedCommand(3u, true, 4.175, true);
+    const ChargerStatusCommand detailed = ChargerStatusLogic::detailedCommand(3u, true, 4.175, true);
     QCOMPARE(detailed.chargerId, 3u);
     QCOMPARE(detailed.mode, 1);
     QVERIFY(detailed.start);
@@ -275,20 +271,18 @@ void WidgetTests::chargerStatusLogic_coversFallbackAndInvalidBranches()
     QVERIFY(!wrongMessage.valid);
 
     const ParsedChargerStatusMessage badDevice =
-        ChargerStatusLogic::parseDecodedStatusMessage(
-            "PCP status | DEV=1 | NAME=Bus\n"
-            "  charger_id = nope\n"
-            "  current = 1.0\n"
-            "  voltage = 4.1");
+        ChargerStatusLogic::parseDecodedStatusMessage("PCP status | DEV=1 | NAME=Bus\n"
+                                                      "  charger_id = nope\n"
+                                                      "  current = 1.0\n"
+                                                      "  voltage = 4.1");
     QVERIFY(!badDevice.valid);
 
     const ParsedChargerStatusMessage fallbackParsed =
-        ChargerStatusLogic::parseDecodedStatusMessage(
-            "PCP status | DEV=2 | NAME=Bus\n"
-            "  volt = 4.05\n"
-            "  current = 0.80\n"
-            "  temp = 24\n"
-            "  state = 0");
+        ChargerStatusLogic::parseDecodedStatusMessage("PCP status | DEV=2 | NAME=Bus\n"
+                                                      "  volt = 4.05\n"
+                                                      "  current = 0.80\n"
+                                                      "  temp = 24\n"
+                                                      "  state = 0");
     QVERIFY(fallbackParsed.valid);
     QCOMPARE(fallbackParsed.chargerId, 2u);
     QCOMPARE(fallbackParsed.voltageText, QString("4.05"));
@@ -425,13 +419,12 @@ void WidgetTests::chargerStatusWidget_detailedControlsEmitSelectedCommandAndColl
     QCOMPARE(startCommand.at(2).toBool(), true);
     QCOMPARE(startCommand.at(3).toDouble(), 4.175);
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  charger_id = 2 (raw=2)\n"
-        "  current = 1.5 (raw=1500)\n"
-        "  status = 1 (raw=1)\n"
-        "  temperature = 26 (raw=260)\n"
-        "  voltage = 4.12 (raw=4120)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 2 (raw=2)\n"
+                                  "  current = 1.5 (raw=1500)\n"
+                                  "  status = 1 (raw=1)\n"
+                                  "  temperature = 26 (raw=260)\n"
+                                  "  voltage = 4.12 (raw=4120)");
     QCoreApplication::processEvents();
     QVERIFY(detailedPlot->sampleCountForCharger(2) >= 1);
     QCOMPARE(detailedPlot->selectedCharger(), 2u);
@@ -490,13 +483,12 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QVERIFY(slot2Label->text().contains("Current"));
     QVERIFY(slot3Label->text().contains("Status"));
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  charger_id = 1 (raw=1)\n"
-        "  current = 3.2 (raw=3200)\n"
-        "  status = 1 (raw=1)\n"
-        "  temperature = 31 (raw=310)\n"
-        "  voltage = 12.7 (raw=12700)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 1 (raw=1)\n"
+                                  "  current = 3.2 (raw=3200)\n"
+                                  "  status = 1 (raw=1)\n"
+                                  "  temperature = 31 (raw=310)\n"
+                                  "  voltage = 12.7 (raw=12700)");
     QCoreApplication::processEvents();
 
     QVERIFY(indicator->isSlotFresh(0));
@@ -509,13 +501,12 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalTemp1->text(), QString("Temp: 31 C"));
     QCOMPARE(generalTitle1->text(), QString("Charger 1"));
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  charger_id = 2 (raw=2)\n"
-        "  current = 4.1 (raw=4100)\n"
-        "  status = 0 (raw=0)\n"
-        "  temperature = 29 (raw=290)\n"
-        "  voltage = 12.9 (raw=12900)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 2 (raw=2)\n"
+                                  "  current = 4.1 (raw=4100)\n"
+                                  "  status = 0 (raw=0)\n"
+                                  "  temperature = 29 (raw=290)\n"
+                                  "  voltage = 12.9 (raw=12900)");
     QCoreApplication::processEvents();
 
     QVERIFY(indicator->isSlotFresh(1));
@@ -528,14 +519,13 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalTemp2->text(), QString("Temp: 29 C"));
     QCOMPARE(generalTitle2->text(), QString("Charger 2"));
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  charger_id = 3 (raw=3)\n"
-        "  fault_code = 0 (raw=0)\n"
-        "  current = 5.0 (raw=5000)\n"
-        "  status = 2 (raw=2)\n"
-        "  temperature = 27 (raw=270)\n"
-        "  voltage = 13.1 (raw=13100)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 3 (raw=3)\n"
+                                  "  fault_code = 0 (raw=0)\n"
+                                  "  current = 5.0 (raw=5000)\n"
+                                  "  status = 2 (raw=2)\n"
+                                  "  temperature = 27 (raw=270)\n"
+                                  "  voltage = 13.1 (raw=13100)");
     QCoreApplication::processEvents();
 
     QVERIFY(indicator->isSlotFresh(2));
@@ -548,13 +538,12 @@ void WidgetTests::chargerStatusWidget_updatesFromLoggerTraffic()
     QCOMPARE(generalTemp3->text(), QString("Temp: 27 C"));
     QCOMPARE(generalTitle3->text(), QString("Charger 3"));
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  charger_id = 4 (raw=4)\n"
-        "  current = 6.0 (raw=6000)\n"
-        "  status = 2 (raw=2)\n"
-        "  temperature = 35 (raw=350)\n"
-        "  voltage = 13.3 (raw=13300)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                                  "  charger_id = 4 (raw=4)\n"
+                                  "  current = 6.0 (raw=6000)\n"
+                                  "  status = 2 (raw=2)\n"
+                                  "  temperature = 35 (raw=350)\n"
+                                  "  voltage = 13.3 (raw=13300)");
     QCoreApplication::processEvents();
 
     QVERIFY(slot1Label->text().contains("12.7 V"));
@@ -605,26 +594,23 @@ void WidgetTests::chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevic
     QCOMPARE(generalTitle1->text(), QString("Charger 1"));
     QVERIFY(slot1Label->text().contains("--"));
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
-        "  charger_id = 1 (raw=1)\n"
-        "  volt = 12.1 (raw=12100)\n"
-        "  temp = 24 (raw=240)\n"
-        "  status = 1 (raw=1)");
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
-        "  charger_id = 2 (raw=2)\n"
-        "  voltage = 12.2 (raw=12200)\n"
-        "  current = 2.2 (raw=2200)\n"
-        "  temperature = 25 (raw=250)\n"
-        "  status = 2 (raw=2)");
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
-        "  charger_id = 3 (raw=3)\n"
-        "  voltage = 12.3 (raw=12300)\n"
-        "  current = 3.3 (raw=3300)\n"
-        "  temperature = 26 (raw=260)\n"
-        "  status = 0 (raw=0)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
+                                  "  charger_id = 1 (raw=1)\n"
+                                  "  volt = 12.1 (raw=12100)\n"
+                                  "  temp = 24 (raw=240)\n"
+                                  "  status = 1 (raw=1)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
+                                  "  charger_id = 2 (raw=2)\n"
+                                  "  voltage = 12.2 (raw=12200)\n"
+                                  "  current = 2.2 (raw=2200)\n"
+                                  "  temperature = 25 (raw=250)\n"
+                                  "  status = 2 (raw=2)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
+                                  "  charger_id = 3 (raw=3)\n"
+                                  "  voltage = 12.3 (raw=12300)\n"
+                                  "  current = 3.3 (raw=3300)\n"
+                                  "  temperature = 26 (raw=260)\n"
+                                  "  status = 0 (raw=0)");
     QCoreApplication::processEvents();
 
     QCOMPARE(generalTitle1->text(), QString("Charger 1"));
@@ -635,22 +621,20 @@ void WidgetTests::chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevic
     QVERIFY(activityIndicator->isSlotFresh(2));
 
     const QString slot1StatusBeforeCellInfo = slot1Label->text();
-    Logger::instance().logDecoded(
-        "PCP cell_info | DEV=1 | NAME=Node 1 | MSG=19\n"
-        "  slot_id = 1 (raw=1)\n"
-        "  cell_voltage = 4.024 (raw=4024)\n"
-        "  cell_current = -0.325 (raw=-325)\n"
-        "  cell_temp = 24.475 (raw=24475)");
+    Logger::instance().logDecoded("PCP cell_info | DEV=1 | NAME=Node 1 | MSG=19\n"
+                                  "  slot_id = 1 (raw=1)\n"
+                                  "  cell_voltage = 4.024 (raw=4024)\n"
+                                  "  cell_current = -0.325 (raw=-325)\n"
+                                  "  cell_temp = 24.475 (raw=24475)");
     QCoreApplication::processEvents();
     QCOMPARE(slot1Label->text(), slot1StatusBeforeCellInfo);
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
-        "  charger_id = 1 (raw=1)\n"
-        "  voltage = 12.9 (raw=12900)\n"
-        "  current = 2.9 (raw=2900)\n"
-        "  temperature = 29 (raw=290)\n"
-        "  status = 1 (raw=1)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
+                                  "  charger_id = 1 (raw=1)\n"
+                                  "  voltage = 12.9 (raw=12900)\n"
+                                  "  current = 2.9 (raw=2900)\n"
+                                  "  temperature = 29 (raw=290)\n"
+                                  "  status = 1 (raw=1)");
     QCoreApplication::processEvents();
     QVERIFY(slot1Label->text().contains("12.9 V"));
     QCOMPARE(generalTitle1->text(), QString("Charger 1"));
@@ -659,13 +643,12 @@ void WidgetTests::chargerStatusWidget_ignoresInvalidDecodedMessagesAndExtraDevic
     const QString slot2Before = slot2Label->text();
     const QString slot3Before = slot3Label->text();
 
-    Logger::instance().logDecoded(
-        "PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
-        "  charger_id = 4 (raw=4)\n"
-        "  voltage = 13.4 (raw=13400)\n"
-        "  current = 4.4 (raw=4400)\n"
-        "  temperature = 27 (raw=270)\n"
-        "  status = 2 (raw=2)");
+    Logger::instance().logDecoded("PCP status | DEV=1 | NAME=Node 1 | MSG=18\n"
+                                  "  charger_id = 4 (raw=4)\n"
+                                  "  voltage = 13.4 (raw=13400)\n"
+                                  "  current = 4.4 (raw=4400)\n"
+                                  "  temperature = 27 (raw=270)\n"
+                                  "  status = 2 (raw=2)");
     Logger::instance().logStatus("COMS: connected and healthy");
     QCoreApplication::processEvents();
 
@@ -713,6 +696,12 @@ void WidgetTests::consoleWidget_appendsPausesFiltersAndClearsMessages()
 {
     PCPDatabase database;
     QVERIFY(database.loadFromFile("pcp.yaml"));
+    ConsoleWidget::setSharedPCPDatabase(&database);
+    ConsoleWidget defaultWidget;
+    QVERIFY(defaultWidget.m_pcpDatabase == &database);
+    ConsoleWidget nullDatabaseWidget(static_cast<const PCPDatabase*>(nullptr));
+    QCOMPARE(nullDatabaseWidget.deviceDisplayName(7), QString("Device 7"));
+
     ConsoleWidget widget(&database);
 
     auto* pauseButton = widget.findChild<QPushButton*>("pauseButton");
@@ -722,10 +711,8 @@ void WidgetTests::consoleWidget_appendsPausesFiltersAndClearsMessages()
     QVERIFY(clearButton != nullptr);
     QVERIFY(consoleTable != nullptr);
 
-    const QString statusLine =
-        "[12:00:00] RX | Charger Bus (1) | status | Message 18 | DLC 8 | 01 02";
-    const QString cellLine =
-        "[12:00:01] TX | Charger Bus (1) | cell_info | Message 19 | DLC 8 | 03 04";
+    const QString statusLine = "[12:00:00] RX | Charger Bus (1) | status | Message 18 | DLC 8 | 01 02";
+    const QString cellLine = "[12:00:01] TX | Charger Bus (1) | cell_info | Message 19 | DLC 8 | 03 04";
 
     widget.appendMessage("not a formatted PCP line");
     QCOMPARE(widget.m_messageRecords.size(), 0);
@@ -769,6 +756,7 @@ void WidgetTests::consoleWidget_watchesDecodedSignalsAndManagesFilters()
     auto* filterValueEdit = widget.findChild<QLineEdit*>("filterValueEdit");
     auto* addFilterButton = widget.findChild<QPushButton*>("addFilterButton");
     auto* removeFilterButton = widget.findChild<QPushButton*>("removeFilterButton");
+    auto* clearSignalSelectionButton = widget.findChild<QPushButton*>("clearSignalSelectionButton");
     auto* filtersTable = widget.findChild<QTableWidget*>("filtersTable");
     QVERIFY(deviceCombo != nullptr);
     QVERIFY(messageCombo != nullptr);
@@ -778,6 +766,7 @@ void WidgetTests::consoleWidget_watchesDecodedSignalsAndManagesFilters()
     QVERIFY(filterValueEdit != nullptr);
     QVERIFY(addFilterButton != nullptr);
     QVERIFY(removeFilterButton != nullptr);
+    QVERIFY(clearSignalSelectionButton != nullptr);
     QVERIFY(filtersTable != nullptr);
 
     deviceCombo->setCurrentIndex(deviceCombo->findText("Charger Bus (1)"));
@@ -786,11 +775,15 @@ void WidgetTests::consoleWidget_watchesDecodedSignalsAndManagesFilters()
     widget.onAddSignalClicked();
     QCOMPARE(signalsTable->rowCount(), 1);
     QCOMPARE(signalsTable->item(0, 3)->text(), QString("-"));
+    clearSignalSelectionButton->click();
+    QCOMPARE(deviceCombo->currentIndex(), 0);
 
-    widget.onStatusMessage(
-        "PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
-        "  voltage = 4.200 (raw=4200)\n"
-        "  current = 1.500 (raw=1500)");
+    deviceCombo->setCurrentIndex(deviceCombo->findText("Charger Bus (1)"));
+    messageCombo->setCurrentIndex(messageCombo->findText("status"));
+    signalCombo->setCurrentIndex(signalCombo->findText("voltage"));
+    widget.onStatusMessage("PCP status | DEV=1 | NAME=Charger Bus | MSG=18\n"
+                           "  voltage = 4.200 (raw=4200)\n"
+                           "  current = 1.500 (raw=1500)");
     QCOMPARE(signalsTable->item(0, 3)->text(), QString("4.200"));
 
     widget.onAddSignalClicked();
@@ -813,6 +806,25 @@ void WidgetTests::consoleWidget_watchesDecodedSignalsAndManagesFilters()
     removeFilterButton->click();
     QCOMPARE(filtersTable->rowCount(), 0);
     QVERIFY(widget.m_textFilters.isEmpty());
+
+    filterTypeCombo->setCurrentText("Device");
+    widget.onFilterTypeChanged(0);
+    auto* filterValueCombo = widget.findChild<QComboBox*>("filterValueComboBox");
+    QVERIFY(filterValueCombo != nullptr);
+    QVERIFY(filterValueCombo->count() > 0);
+    addFilterButton->click();
+    QVERIFY(widget.m_deviceFilters.contains(filterValueCombo->currentText()));
+
+    filterTypeCombo->setCurrentText("Message ID");
+    filterValueEdit->setText("18");
+    addFilterButton->click();
+    QVERIFY(widget.m_messageIdFilters.contains("18"));
+
+    filterTypeCombo->setCurrentText("Message");
+    widget.onFilterTypeChanged(0);
+    QVERIFY(filterValueCombo->count() > 0);
+    addFilterButton->click();
+    QVERIFY(widget.m_messageNameFilters.contains(filterValueCombo->currentText()));
 }
 
 void WidgetTests::consoleWidget_sendsManualAndPeriodicTxMessages()
@@ -862,6 +874,10 @@ void WidgetTests::consoleWidget_sendsManualAndPeriodicTxMessages()
     QCOMPARE(txPeriodicTable->rowCount(), 1);
     QCOMPARE(widget.m_periodicTxMessages.size(), 1);
 
+    addPeriodicButton->click();
+    QCOMPARE(txPeriodicTable->rowCount(), 1);
+    QCOMPARE(widget.m_periodicTxMessages.size(), 1);
+
     txPeriodicTable->selectRow(0);
     startPeriodicButton->click();
     QVERIFY(widget.m_periodicTxMessages.front().periodicEnabled);
@@ -877,6 +893,10 @@ void WidgetTests::consoleWidget_sendsManualAndPeriodicTxMessages()
 
     widget.onPeriodicTxRowDoubleClicked(0, 0);
     QVERIFY(txStatusLabel->text().contains("Loaded periodic message"));
+
+    txSignalsTable->item(0, 1)->setText("not-a-number");
+    sendButton->click();
+    QVERIFY(txStatusLabel->text().contains("Invalid value"));
 
     txPeriodicTable->selectRow(0);
     removePeriodicButton->click();

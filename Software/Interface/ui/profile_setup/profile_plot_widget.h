@@ -31,7 +31,7 @@ public:
         Temperature
     };
 
-    explicit ProfilePlotWidget(QWidget *parent = nullptr);
+    explicit ProfilePlotWidget(QWidget* parent = nullptr);
 
     void setSetpoints(const std::vector<Setpoint>& setpoints);
     void setDisplayMode(DisplayMode mode);
@@ -40,11 +40,11 @@ public:
     void updatePlot();
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
     void resetViewRange(double minTime, double maxTime, double minValue, double maxValue);
     double mapToTime(int x, const QRect& plotRect) const;

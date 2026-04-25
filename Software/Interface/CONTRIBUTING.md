@@ -29,6 +29,7 @@ make test-smoke
 For style drift:
 
 ```bash
+make format
 make format-check
 ```
 
@@ -49,6 +50,7 @@ Do not lower the coverage threshold to hide missing tests. If a line is difficul
 - C++ standard: C++17.
 - Build defaults: Debug with exported compile commands for editor tooling.
 - Qt style follows the existing codebase.
+- Formatting is defined in `.clang-format`; run `make format` before submitting broad C++ edits.
 - Project warnings are enabled by default through CMake. Keep new code warning-clean.
 - Keep comments short and useful.
 - Avoid unrelated refactors in feature or bug-fix changes.
@@ -69,3 +71,5 @@ The Makefile exposes these as `make test-unit`, `make test-integration`, and `ma
 ## Pull Requests
 
 Use the pull request template checklist. Include the commands you ran and note any skipped hardware-dependent checks with a clear reason.
+
+For deeper setup details, see `docs/DEVELOPMENT.md` and `docs/TESTING.md`.

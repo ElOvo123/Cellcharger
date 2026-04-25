@@ -33,9 +33,7 @@ public:
     void setDatabase(const PCPDatabase* database);
     const PCPDatabase* database() const;
 
-    std::optional<PCPDecodedMessage> decode(uint32_t canId,
-                                            uint8_t dlc,
-                                            const std::array<uint8_t, 8>& data) const;
+    std::optional<PCPDecodedMessage> decode(uint32_t canId, uint8_t dlc, const std::array<uint8_t, 8>& data) const;
 
 private:
     const PCPDatabase* m_database = nullptr;
@@ -43,11 +41,8 @@ private:
     uint32_t extractDeviceId(uint32_t canId) const;
     uint32_t extractMessageId(uint32_t canId) const;
 
-    static uint64_t unpackBits(const std::array<uint8_t, 8>& data,
-                               int startBit,
-                               int bitLength);
+    static uint64_t unpackBits(const std::array<uint8_t, 8>& data, int startBit, int bitLength);
 
     static int64_t rawToSigned(uint64_t rawValue, int bitLength);
-    static double rawToPhysical(int64_t rawValue,
-                                const PCPSignalDefinition& signal);
+    static double rawToPhysical(int64_t rawValue, const PCPSignalDefinition& signal);
 };

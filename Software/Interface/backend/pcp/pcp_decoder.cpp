@@ -1,9 +1,6 @@
 #include "pcp_decoder.h"
 
-PCPDecoder::PCPDecoder(const PCPDatabase* database)
-    : m_database(database)
-{
-}
+PCPDecoder::PCPDecoder(const PCPDatabase* database) : m_database(database) {}
 
 void PCPDecoder::setDatabase(const PCPDatabase* database)
 {
@@ -15,8 +12,7 @@ const PCPDatabase* PCPDecoder::database() const
     return m_database;
 }
 
-std::optional<PCPDecodedMessage> PCPDecoder::decode(uint32_t canId,
-                                                    uint8_t dlc,
+std::optional<PCPDecodedMessage> PCPDecoder::decode(uint32_t canId, uint8_t dlc,
                                                     const std::array<uint8_t, 8>& data) const
 {
     if (!m_database)
@@ -38,9 +34,8 @@ std::optional<PCPDecodedMessage> PCPDecoder::decode(uint32_t canId,
     for (const auto& [signalName, sigDef] : msgDef->signalDefinitions)
     {
         const uint64_t rawUnsigned = unpackBits(data, sigDef.startBit, sigDef.bitLength);
-        const int64_t rawSigned = sigDef.isSigned
-            ? rawToSigned(rawUnsigned, sigDef.bitLength)
-            : static_cast<int64_t>(rawUnsigned);
+        const int64_t rawSigned =
+            sigDef.isSigned ? rawToSigned(rawUnsigned, sigDef.bitLength) : static_cast<int64_t>(rawUnsigned);
 
         PCPDecodedSignal decoded;
         decoded.rawValue = rawSigned;
@@ -63,9 +58,7 @@ uint32_t PCPDecoder::extractMessageId(uint32_t canId) const
     return canId & mask;
 }
 
-uint64_t PCPDecoder::unpackBits(const std::array<uint8_t, 8>& data,
-                                int startBit,
-                                int bitLength)
+uint64_t PCPDecoder::unpackBits(const std::array<uint8_t, 8>& data, int startBit, int bitLength)
 {
     uint64_t value = 0;
 
@@ -97,8 +90,7 @@ int64_t PCPDecoder::rawToSigned(uint64_t rawValue, int bitLength)
     return static_cast<int64_t>(rawValue);
 }
 
-double PCPDecoder::rawToPhysical(int64_t rawValue,
-                                 const PCPSignalDefinition& signal)
+double PCPDecoder::rawToPhysical(int64_t rawValue, const PCPSignalDefinition& signal)
 {
     return static_cast<double>(rawValue) * signal.scale + signal.offset;
 }

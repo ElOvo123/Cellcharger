@@ -26,7 +26,7 @@ double mapToValue(int y, const QRect& plotRect, const ProfilePlotViewState& view
 {
     return view.maxValue - (y - plotRect.top()) * (view.maxValue - view.minValue) / double(plotRect.height());
 }
-}
+} // namespace
 
 QRect ProfilePlotLogic::plotRectForSize(int width, int height)
 {
@@ -37,10 +37,7 @@ std::vector<Setpoint> ProfilePlotLogic::normalizedPlotPoints(const std::vector<S
 {
     std::vector<Setpoint> plotPoints = setpoints;
     std::sort(plotPoints.begin(), plotPoints.end(),
-              [](const Setpoint& lhs, const Setpoint& rhs)
-              {
-                  return lhs.time < rhs.time;
-              });
+              [](const Setpoint& lhs, const Setpoint& rhs) { return lhs.time < rhs.time; });
 
     if (!plotPoints.empty() && plotPoints.front().time > 0.0)
     {
@@ -154,8 +151,7 @@ ProfilePlotViewState ProfilePlotLogic::defaultViewState(const ProfilePlotBounds&
     return normalizedViewState({bounds.minTime, bounds.maxTime, bounds.minValue, bounds.maxValue});
 }
 
-std::optional<ProfilePlotViewState> ProfilePlotLogic::zoomedViewState(const QRect& plotRect,
-                                                                      const QPointF& position,
+std::optional<ProfilePlotViewState> ProfilePlotLogic::zoomedViewState(const QRect& plotRect, const QPointF& position,
                                                                       int angleDeltaY,
                                                                       const ProfilePlotViewState& current)
 {

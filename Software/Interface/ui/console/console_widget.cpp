@@ -17,9 +17,7 @@
 
 namespace
 {
-double simulatedTxValueForSignal(const std::string& signalName,
-                                 uint32_t deviceId,
-                                 int counter)
+double simulatedTxValueForSignal(const std::string& signalName, uint32_t deviceId, int counter)
 {
     if (signalName == "charger_id" || signalName == "slot_id")
         return static_cast<double>(deviceId);
@@ -68,7 +66,7 @@ double simulatedTxValueForSignal(const std::string& signalName,
 
     return static_cast<double>((counter + deviceId) % 100);
 }
-}
+} // namespace
 
 const PCPDatabase* ConsoleWidget::s_sharedPCPDatabase = nullptr;
 
@@ -77,19 +75,12 @@ void ConsoleWidget::setSharedPCPDatabase(const PCPDatabase* pcpDatabase)
     s_sharedPCPDatabase = pcpDatabase;
 }
 
-ConsoleWidget::ConsoleWidget(QWidget *parent)
-    : ConsoleWidget(s_sharedPCPDatabase, parent)
-{
-}
+ConsoleWidget::ConsoleWidget(QWidget* parent) : ConsoleWidget(s_sharedPCPDatabase, parent) {}
 
-ConsoleWidget::ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget *parent)
-    : QWidget(parent),
-      ui(new Ui::ConsoleWidget),
-      m_pcpDatabase(pcpDatabase),
-      m_messageModel(new ConsoleMessageModel(this)),
-      m_messageProxyModel(new ConsoleMessageFilterProxyModel(this)),
-      m_txEncoder(pcpDatabase),
-      m_txDecoder(pcpDatabase)
+ConsoleWidget::ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget* parent)
+    : QWidget(parent), ui(new Ui::ConsoleWidget), m_pcpDatabase(pcpDatabase),
+      m_messageModel(new ConsoleMessageModel(this)), m_messageProxyModel(new ConsoleMessageFilterProxyModel(this)),
+      m_txEncoder(pcpDatabase), m_txDecoder(pcpDatabase)
 {
     ui->setupUi(this);
 
@@ -101,79 +92,53 @@ ConsoleWidget::ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget *parent)
     setupTxView();
     setupSignalSelectors();
 
-    connect(ui->pauseButton, &QPushButton::toggled,
-            this, &ConsoleWidget::onPauseToggled);
+    connect(ui->pauseButton, &QPushButton::toggled, this, &ConsoleWidget::onPauseToggled);
 
-    connect(ui->clearButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onClearClicked);
+    connect(ui->clearButton, &QPushButton::clicked, this, &ConsoleWidget::onClearClicked);
 
-    connect(ui->addSignalButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onAddSignalClicked);
+    connect(ui->addSignalButton, &QPushButton::clicked, this, &ConsoleWidget::onAddSignalClicked);
 
-    connect(ui->removeSignalButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onRemoveSignalClicked);
+    connect(ui->removeSignalButton, &QPushButton::clicked, this, &ConsoleWidget::onRemoveSignalClicked);
 
-    connect(ui->clearSignalSelectionButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onClearSignalSelectionClicked);
+    connect(ui->clearSignalSelectionButton, &QPushButton::clicked, this, &ConsoleWidget::onClearSignalSelectionClicked);
 
-    connect(ui->deviceComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
+    connect(ui->deviceComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ConsoleWidget::onDeviceChanged);
 
-    connect(ui->messageComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
+    connect(ui->messageComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ConsoleWidget::onMessageChanged);
 
-    connect(ui->addFilterButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onAddFilterClicked);
+    connect(ui->addFilterButton, &QPushButton::clicked, this, &ConsoleWidget::onAddFilterClicked);
 
-    connect(ui->removeFilterButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onRemoveFilterClicked);
+    connect(ui->removeFilterButton, &QPushButton::clicked, this, &ConsoleWidget::onRemoveFilterClicked);
 
-    connect(ui->filterTypeComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
+    connect(ui->filterTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ConsoleWidget::onFilterTypeChanged);
 
-    connect(ui->txDeviceComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
+    connect(ui->txDeviceComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ConsoleWidget::onTxDeviceChanged);
 
-    connect(ui->txMessageComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
+    connect(ui->txMessageComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ConsoleWidget::onTxMessageChanged);
 
-    connect(ui->sendTxButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onSendTxClicked);
+    connect(ui->sendTxButton, &QPushButton::clicked, this, &ConsoleWidget::onSendTxClicked);
 
-    connect(ui->addPeriodicTxButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onAddPeriodicTxClicked);
+    connect(ui->addPeriodicTxButton, &QPushButton::clicked, this, &ConsoleWidget::onAddPeriodicTxClicked);
 
-    connect(ui->startPeriodicTxButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onStartPeriodicTxClicked);
+    connect(ui->startPeriodicTxButton, &QPushButton::clicked, this, &ConsoleWidget::onStartPeriodicTxClicked);
 
-    connect(ui->stopPeriodicTxButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onStopPeriodicTxClicked);
+    connect(ui->stopPeriodicTxButton, &QPushButton::clicked, this, &ConsoleWidget::onStopPeriodicTxClicked);
 
-    connect(ui->removePeriodicTxButton, &QPushButton::clicked,
-            this, &ConsoleWidget::onRemovePeriodicTxClicked);
+    connect(ui->removePeriodicTxButton, &QPushButton::clicked, this, &ConsoleWidget::onRemovePeriodicTxClicked);
 
-    connect(ui->txIntervalSpinBox,
-            QOverload<int>::of(&QSpinBox::valueChanged),
-            this,
+    connect(ui->txIntervalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this,
             &ConsoleWidget::onTxPeriodChanged);
 
-    connect(&m_txTimer, &QTimer::timeout,
-            this, &ConsoleWidget::onTxTimerTimeout);
+    connect(&m_txTimer, &QTimer::timeout, this, &ConsoleWidget::onTxTimerTimeout);
 
-    connect(ui->txPeriodicTable, &QTableWidget::cellDoubleClicked,
-            this, &ConsoleWidget::onPeriodicTxRowDoubleClicked);
+    connect(ui->txPeriodicTable, &QTableWidget::cellDoubleClicked, this, &ConsoleWidget::onPeriodicTxRowDoubleClicked);
 
-    for (const QString &line : Logger::instance().comsHistory())
+    for (const QString& line : Logger::instance().comsHistory())
     {
         m_allMessages.append(line);
 
@@ -189,16 +154,9 @@ ConsoleWidget::ConsoleWidget(const PCPDatabase* pcpDatabase, QWidget *parent)
     refreshFilterValueWidget();
     refreshView();
 
-    connect(&Logger::instance(),
-            &Logger::newComsMessage,
-            this,
-            &ConsoleWidget::appendMessage,
-            Qt::QueuedConnection);
+    connect(&Logger::instance(), &Logger::newComsMessage, this, &ConsoleWidget::appendMessage, Qt::QueuedConnection);
 
-    connect(&Logger::instance(),
-            &Logger::newDecodedMessage,
-            this,
-            &ConsoleWidget::onStatusMessage,
+    connect(&Logger::instance(), &Logger::newDecodedMessage, this, &ConsoleWidget::onStatusMessage,
             Qt::QueuedConnection);
 }
 
@@ -228,24 +186,19 @@ void ConsoleWidget::setupMessageView()
 
     ui->consoleTableView->verticalHeader()->setVisible(false);
     ui->consoleTableView->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    ui->consoleTableView->verticalHeader()->setDefaultSectionSize(
-        ui->consoleTableView->fontMetrics().height() + 6);
+    ui->consoleTableView->verticalHeader()->setDefaultSectionSize(ui->consoleTableView->fontMetrics().height() + 6);
 
     updateMessageTableLayout();
 
-    ui->messagesHeaderBar->setStyleSheet(
-        "QWidget#messagesHeaderBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->messagesHeaderBar->setStyleSheet("QWidget#messagesHeaderBar {"
+                                         "  background-color: #e6e6e6;"
+                                         "  border-bottom: 1px solid #c8c8c8;"
+                                         "}");
 
-    ui->messagesBottomBar->setStyleSheet(
-        "QWidget#messagesBottomBar {"
-        "  background-color: #e6e6e6;"
-        "  border-top: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->messagesBottomBar->setStyleSheet("QWidget#messagesBottomBar {"
+                                         "  background-color: #e6e6e6;"
+                                         "  border-top: 1px solid #c8c8c8;"
+                                         "}");
 }
 
 void ConsoleWidget::setupSignalView()
@@ -263,12 +216,10 @@ void ConsoleWidget::setupSignalView()
     ui->signalsTable->setAlternatingRowColors(true);
     ui->signalsTable->viewport()->installEventFilter(this);
 
-    ui->signalTopBar->setStyleSheet(
-        "QWidget#signalTopBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->signalTopBar->setStyleSheet("QWidget#signalTopBar {"
+                                    "  background-color: #e6e6e6;"
+                                    "  border-bottom: 1px solid #c8c8c8;"
+                                    "}");
 
     ui->messageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     ui->signalComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -288,29 +239,23 @@ void ConsoleWidget::setupFilterView()
     ui->filtersTable->setAlternatingRowColors(true);
     ui->filtersTable->viewport()->installEventFilter(this);
 
-    ui->filterTopBar->setStyleSheet(
-        "QWidget#filterTopBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->filterTopBar->setStyleSheet("QWidget#filterTopBar {"
+                                    "  background-color: #e6e6e6;"
+                                    "  border-bottom: 1px solid #c8c8c8;"
+                                    "}");
 }
 
 void ConsoleWidget::setupTxView()
 {
-    ui->txTopBar->setStyleSheet(
-        "QWidget#txTopBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->txTopBar->setStyleSheet("QWidget#txTopBar {"
+                                "  background-color: #e6e6e6;"
+                                "  border-bottom: 1px solid #c8c8c8;"
+                                "}");
 
-    ui->txPeriodicBar->setStyleSheet(
-        "QWidget#txPeriodicBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->txPeriodicBar->setStyleSheet("QWidget#txPeriodicBar {"
+                                     "  background-color: #e6e6e6;"
+                                     "  border-bottom: 1px solid #c8c8c8;"
+                                     "}");
 
     ui->txDeviceComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     ui->txMessageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -352,9 +297,7 @@ QString ConsoleWidget::deviceDisplayName(uint32_t deviceId) const
     if (!m_pcpDatabase)
         return QString("Device %1").arg(deviceId);
 
-    return QString("%1 (%2)")
-        .arg(QString::fromStdString(m_pcpDatabase->deviceName(deviceId)))
-        .arg(deviceId);
+    return QString("%1 (%2)").arg(QString::fromStdString(m_pcpDatabase->deviceName(deviceId))).arg(deviceId);
 }
 
 std::optional<uint32_t> ConsoleWidget::deviceIdFromDisplayName(const QString& displayName) const
@@ -476,8 +419,7 @@ void ConsoleWidget::refreshTxSignalTable()
     if (!deviceIdOpt.has_value() || messageText.isEmpty())
         return;
 
-    const PCPMessageDefinition* msgDef =
-        m_pcpDatabase->messageByName(*deviceIdOpt, messageText.toStdString());
+    const PCPMessageDefinition* msgDef = m_pcpDatabase->messageByName(*deviceIdOpt, messageText.toStdString());
 
     if (!msgDef)
         return;
@@ -493,8 +435,8 @@ void ConsoleWidget::refreshTxSignalTable()
         signalItem->setFlags(signalItem->flags() & ~Qt::ItemIsEditable);
         ui->txSignalsTable->setItem(row, 0, signalItem);
 
-        auto* valueItem = new QTableWidgetItem(
-            QString::number(simulatedTxValueForSignal(signalName, *deviceIdOpt, m_txCounter)));
+        auto* valueItem =
+            new QTableWidgetItem(QString::number(simulatedTxValueForSignal(signalName, *deviceIdOpt, m_txCounter)));
         valueItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         ui->txSignalsTable->setItem(row, 1, valueItem);
     }
@@ -510,10 +452,8 @@ void ConsoleWidget::refreshPeriodicTxTable()
         ui->txPeriodicTable->insertRow(row);
         ui->txPeriodicTable->setItem(row, 0, new QTableWidgetItem(config.deviceName));
         ui->txPeriodicTable->setItem(row, 1, new QTableWidgetItem(config.messageName));
-        ui->txPeriodicTable->setItem(
-            row, 2, new QTableWidgetItem(QString("%1 ms").arg(config.intervalMs)));
-        ui->txPeriodicTable->setItem(
-            row, 3, new QTableWidgetItem(config.periodicEnabled ? "Running" : "Stopped"));
+        ui->txPeriodicTable->setItem(row, 2, new QTableWidgetItem(QString("%1 ms").arg(config.intervalMs)));
+        ui->txPeriodicTable->setItem(row, 3, new QTableWidgetItem(config.periodicEnabled ? "Running" : "Stopped"));
     }
 }
 
@@ -756,17 +696,14 @@ void ConsoleWidget::onAddPeriodicTxClicked()
     const QString key = makePeriodicTxKey(config.deviceId, config.messageName);
     for (int i = 0; i < m_periodicTxMessages.size(); ++i)
     {
-        if (makePeriodicTxKey(m_periodicTxMessages[i].deviceId,
-                              m_periodicTxMessages[i].messageName) == key)
+        if (makePeriodicTxKey(m_periodicTxMessages[i].deviceId, m_periodicTxMessages[i].messageName) == key)
         {
             config.periodicEnabled = m_periodicTxMessages[i].periodicEnabled;
             config.elapsedMs = 0;
             m_periodicTxMessages[i] = config;
             refreshPeriodicTxTable();
             ui->txStatusLabel->setText(
-                QString("Updated periodic message: %1 | %2")
-                    .arg(config.deviceName)
-                    .arg(config.messageName));
+                QString("Updated periodic message: %1 | %2").arg(config.deviceName).arg(config.messageName));
             syncPeriodicTimerState();
             clearSendSelections();
             return;
@@ -776,9 +713,7 @@ void ConsoleWidget::onAddPeriodicTxClicked()
     m_periodicTxMessages.append(config);
     refreshPeriodicTxTable();
     ui->txStatusLabel->setText(
-        QString("Added periodic message: %1 | %2")
-            .arg(config.deviceName)
-            .arg(config.messageName));
+        QString("Added periodic message: %1 | %2").arg(config.deviceName).arg(config.messageName));
     syncPeriodicTimerState();
     clearSendSelections();
 }
@@ -793,9 +728,7 @@ void ConsoleWidget::onRemovePeriodicTxClicked()
     refreshPeriodicTxTable();
     ui->txPeriodicTable->clearSelection();
     ui->txStatusLabel->setText(
-        QString("Removed periodic message: %1 | %2")
-            .arg(removed.deviceName)
-            .arg(removed.messageName));
+        QString("Removed periodic message: %1 | %2").arg(removed.deviceName).arg(removed.messageName));
     syncPeriodicTimerState();
     clearSendSelections();
 }
@@ -834,9 +767,7 @@ void ConsoleWidget::onPeriodicTxRowDoubleClicked(int row, int column)
     }
 
     ui->txStatusLabel->setText(
-        QString("Loaded periodic message: %1 | %2")
-            .arg(config.deviceName)
-            .arg(config.messageName));
+        QString("Loaded periodic message: %1 | %2").arg(config.deviceName).arg(config.messageName));
     clearSendSelections();
 }
 
@@ -851,10 +782,9 @@ void ConsoleWidget::onStartPeriodicTxClicked()
     refreshPeriodicTxTable();
     ui->txPeriodicTable->selectRow(row);
     syncPeriodicTimerState();
-    ui->txStatusLabel->setText(
-        QString("Started periodic send: %1 | %2")
-            .arg(m_periodicTxMessages[row].deviceName)
-            .arg(m_periodicTxMessages[row].messageName));
+    ui->txStatusLabel->setText(QString("Started periodic send: %1 | %2")
+                                   .arg(m_periodicTxMessages[row].deviceName)
+                                   .arg(m_periodicTxMessages[row].messageName));
     clearSendSelections();
 }
 
@@ -869,10 +799,9 @@ void ConsoleWidget::onStopPeriodicTxClicked()
     refreshPeriodicTxTable();
     ui->txPeriodicTable->selectRow(row);
     syncPeriodicTimerState();
-    ui->txStatusLabel->setText(
-        QString("Stopped periodic send: %1 | %2")
-            .arg(m_periodicTxMessages[row].deviceName)
-            .arg(m_periodicTxMessages[row].messageName));
+    ui->txStatusLabel->setText(QString("Stopped periodic send: %1 | %2")
+                                   .arg(m_periodicTxMessages[row].deviceName)
+                                   .arg(m_periodicTxMessages[row].messageName));
     clearSendSelections();
 }
 
@@ -1017,8 +946,7 @@ bool ConsoleWidget::buildSelectedTxMessage(ConsoleTxMessageConfig& config)
         return false;
     }
 
-    const PCPMessageDefinition* msgDef =
-        m_pcpDatabase->messageByName(*deviceIdOpt, messageText.toStdString());
+    const PCPMessageDefinition* msgDef = m_pcpDatabase->messageByName(*deviceIdOpt, messageText.toStdString());
 
     if (!msgDef)
     {
@@ -1044,8 +972,7 @@ bool ConsoleWidget::buildSelectedTxMessage(ConsoleTxMessageConfig& config)
         const double value = valueItem->text().trimmed().toDouble(&ok);
         if (!ok)
         {
-            ui->txStatusLabel->setText(
-                QString("Invalid value for signal %1").arg(signalItem->text()));
+            ui->txStatusLabel->setText(QString("Invalid value for signal %1").arg(signalItem->text()));
             return false;
         }
 
@@ -1063,11 +990,9 @@ bool ConsoleWidget::sendTxMessage(const ConsoleTxMessageConfig& config)
         for (auto it = config.signalValues.cbegin(); it != config.signalValues.cend(); ++it)
             signalValues[it.key().toStdString()] = it.value();
 
-        const PCPFrame frame =
-            m_txEncoder.encode(config.deviceId, config.messageName.toStdString(), signalValues);
+        const PCPFrame frame = m_txEncoder.encode(config.deviceId, config.messageName.toStdString(), signalValues);
 
-        Logger::instance().logComs(
-            PCPFormatter::toConsoleString(frame, "TX", *m_pcpDatabase));
+        Logger::instance().logComs(PCPFormatter::toConsoleString(frame, "TX", *m_pcpDatabase));
 
         const auto decoded = m_txDecoder.decode(frame.id, frame.dlc, frame.data);
         if (decoded.has_value())
@@ -1079,14 +1004,9 @@ bool ConsoleWidget::sendTxMessage(const ConsoleTxMessageConfig& config)
         return false;
     }
 
-    const QString modeText =
-        config.periodicEnabled ? "Periodic message sent" : "Message sent";
+    const QString modeText = config.periodicEnabled ? "Periodic message sent" : "Message sent";
 
-    ui->txStatusLabel->setText(
-        QString("%1: %2 | %3")
-            .arg(modeText)
-            .arg(config.deviceName)
-            .arg(config.messageName));
+    ui->txStatusLabel->setText(QString("%1: %2 | %3").arg(modeText).arg(config.deviceName).arg(config.messageName));
 
     return true;
 }
@@ -1115,7 +1035,7 @@ void ConsoleWidget::syncPeriodicTimerState()
         m_txTimer.stop();
 }
 
-bool ConsoleWidget::eventFilter(QObject *watched, QEvent *event)
+bool ConsoleWidget::eventFilter(QObject* watched, QEvent* event)
 {
     auto clearSelectionOnRepeatClick = [&](QTableWidget* table) -> bool
     {
@@ -1154,7 +1074,7 @@ bool ConsoleWidget::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
-void ConsoleWidget::resizeEvent(QResizeEvent *event)
+void ConsoleWidget::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
     enforceVisibleMessageCapacity();
@@ -1162,16 +1082,13 @@ void ConsoleWidget::resizeEvent(QResizeEvent *event)
     updateMessageTableLayout();
 }
 
-QString ConsoleWidget::makeWatchKey(const QString& deviceName,
-                                    const QString& messageName,
+QString ConsoleWidget::makeWatchKey(const QString& deviceName, const QString& messageName,
                                     const QString& signalName) const
 {
     return deviceName + "::" + messageName + "::" + signalName;
 }
 
-void ConsoleWidget::addWatchedSignal(const QString& deviceName,
-                                     const QString& messageName,
-                                     const QString& signalName)
+void ConsoleWidget::addWatchedSignal(const QString& deviceName, const QString& messageName, const QString& signalName)
 {
     const QString key = makeWatchKey(deviceName, messageName, signalName);
 
@@ -1195,9 +1112,9 @@ void ConsoleWidget::removeSelectedSignal()
     if (row < 0)
         return;
 
-    QTableWidgetItem *deviceItem = ui->signalsTable->item(row, 0);
-    QTableWidgetItem *signalItem = ui->signalsTable->item(row, 1);
-    QTableWidgetItem *messageItem = ui->signalsTable->item(row, 2);
+    QTableWidgetItem* deviceItem = ui->signalsTable->item(row, 0);
+    QTableWidgetItem* signalItem = ui->signalsTable->item(row, 1);
+    QTableWidgetItem* messageItem = ui->signalsTable->item(row, 2);
 
     if (!deviceItem || !signalItem || !messageItem)
         return;
@@ -1219,9 +1136,7 @@ void ConsoleWidget::removeSelectedSignal()
     ui->signalsTable->clearSelection();
 }
 
-void ConsoleWidget::updateSignalValue(const QString& deviceName,
-                                      const QString& messageName,
-                                      const QString& signalName,
+void ConsoleWidget::updateSignalValue(const QString& deviceName, const QString& messageName, const QString& signalName,
                                       const QString& value)
 {
     const QString key = makeWatchKey(deviceName, messageName, signalName);
@@ -1230,7 +1145,7 @@ void ConsoleWidget::updateSignalValue(const QString& deviceName,
         return;
 
     const int row = m_watchRowByKey.value(key);
-    QTableWidgetItem *valueItem = ui->signalsTable->item(row, 3);
+    QTableWidgetItem* valueItem = ui->signalsTable->item(row, 3);
 
     if (!valueItem)
     {
@@ -1252,10 +1167,9 @@ void ConsoleWidget::processDecodedStatusBlock(const QString& message)
     QRegularExpression headerRe(
         R"(^(?:\[[^\]]+\]\s+)?PCP\s+([A-Za-z_][A-Za-z0-9_]*)\s+\|\s+DEV\s*=\s*([0-9]+)\s+\|\s+NAME\s*=\s*([^|]+?)\s+\|\s+MSG\s*=\s*([0-9]+))");
 
-    QRegularExpression signalRe(
-        R"(^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\(]+))");
+    QRegularExpression signalRe(R"(^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\(]+))");
 
-    for (const QString &line : lines)
+    for (const QString& line : lines)
     {
         QRegularExpressionMatch headerMatch = headerRe.match(line);
         if (headerMatch.hasMatch())
@@ -1290,8 +1204,8 @@ void ConsoleWidget::rebuildFilterSetsFromTable()
 
     for (int i = 0; i < ui->filtersTable->rowCount(); ++i)
     {
-        QTableWidgetItem *typeItem = ui->filtersTable->item(i, 0);
-        QTableWidgetItem *valueItem = ui->filtersTable->item(i, 1);
+        QTableWidgetItem* typeItem = ui->filtersTable->item(i, 0);
+        QTableWidgetItem* valueItem = ui->filtersTable->item(i, 1);
 
         if (!typeItem || !valueItem)
             continue;
@@ -1318,7 +1232,7 @@ void ConsoleWidget::updateMessageTableLayout()
     if (!ui->consoleTableView || !ui->consoleTableView->model())
         return;
 
-    auto *header = ui->consoleTableView->horizontalHeader();
+    auto* header = ui->consoleTableView->horizontalHeader();
 
     header->setStretchLastSection(false);
 

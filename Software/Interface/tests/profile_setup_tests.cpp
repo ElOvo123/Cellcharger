@@ -55,8 +55,14 @@ public:
     QString lastMessage;
     QString lastKind;
 
-    QString getSaveFilePath(QWidget*, const QString&) override { return savePath; }
-    QString getOpenFilePath(QWidget*, const QString&) override { return openPath; }
+    QString getSaveFilePath(QWidget*, const QString&) override
+    {
+        return savePath;
+    }
+    QString getOpenFilePath(QWidget*, const QString&) override
+    {
+        return openPath;
+    }
     void showError(QWidget*, const QString& title, const QString& message) override
     {
         lastKind = "error";
@@ -111,25 +117,19 @@ void ProfileSetupTests::profilePlotLogic_coversBoundsZoomAndSelectionBranches()
     const QRect plotRect = ProfilePlotLogic::plotRectForSize(640, 320);
     QCOMPARE(plotRect, QRect(70, 20, 550, 240));
 
-    const ProfilePlotBounds emptyBounds =
-        ProfilePlotLogic::computeBounds({}, ProfilePlotWidget::DisplayMode::Voltage);
+    const ProfilePlotBounds emptyBounds = ProfilePlotLogic::computeBounds({}, ProfilePlotWidget::DisplayMode::Voltage);
     QVERIFY(!emptyBounds.hasSetpoints);
     QVERIFY(!emptyBounds.hasDistinctTimeRange);
 
-    const std::vector<Setpoint> sameTime = {
-        {0.0, 4.2, 1.0, 25.0, "Linear", 1.0},
-        {0.0, 4.1, 2.0, 30.0, "Linear", 1.0}
-    };
+    const std::vector<Setpoint> sameTime = {{0.0, 4.2, 1.0, 25.0, "Linear", 1.0}, {0.0, 4.1, 2.0, 30.0, "Linear", 1.0}};
     const ProfilePlotBounds sameTimeBounds =
         ProfilePlotLogic::computeBounds(sameTime, ProfilePlotWidget::DisplayMode::Current);
     QVERIFY(sameTimeBounds.hasSetpoints);
     QVERIFY(!sameTimeBounds.hasDistinctTimeRange);
 
-    const std::vector<Setpoint> setpoints = {
-        {5.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
-        {10.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
-        {12.0, 4.1, 1.5, 28.0, "Linear", 0.5}
-    };
+    const std::vector<Setpoint> setpoints = {{5.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
+                                             {10.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
+                                             {12.0, 4.1, 1.5, 28.0, "Linear", 0.5}};
     const std::vector<Setpoint> normalized = ProfilePlotLogic::normalizedPlotPoints(setpoints);
     QCOMPARE(normalized.size(), size_t(4));
     QCOMPARE(normalized.front().time, 0.0);
@@ -137,8 +137,7 @@ void ProfileSetupTests::profilePlotLogic_coversBoundsZoomAndSelectionBranches()
     QCOMPARE(ProfilePlotLogic::valueForDisplay(setpoints[0], ProfilePlotWidget::DisplayMode::Temperature), 25.0);
     QCOMPARE(ProfilePlotLogic::displayLabel(ProfilePlotWidget::DisplayMode::All), QString("Value"));
 
-    const ProfilePlotBounds bounds =
-        ProfilePlotLogic::computeBounds(setpoints, ProfilePlotWidget::DisplayMode::All);
+    const ProfilePlotBounds bounds = ProfilePlotLogic::computeBounds(setpoints, ProfilePlotWidget::DisplayMode::All);
     QVERIFY(bounds.hasSetpoints);
     QVERIFY(bounds.hasDistinctTimeRange);
     QCOMPARE(bounds.plotPoints.size(), size_t(4));
@@ -146,8 +145,7 @@ void ProfileSetupTests::profilePlotLogic_coversBoundsZoomAndSelectionBranches()
     QVERIFY(bounds.maxTime > bounds.minTime);
     QVERIFY(bounds.maxValue > bounds.minValue);
 
-    const ProfilePlotViewState normalizedView =
-        ProfilePlotLogic::normalizedViewState({4.0, 4.0, 2.0, 2.0});
+    const ProfilePlotViewState normalizedView = ProfilePlotLogic::normalizedViewState({4.0, 4.0, 2.0, 2.0});
     QCOMPARE(normalizedView.maxTime, 5.0);
     QCOMPARE(normalizedView.maxValue, 3.0);
 
@@ -169,11 +167,8 @@ void ProfileSetupTests::profilePlotLogic_coversBoundsZoomAndSelectionBranches()
     QVERIFY(!ProfilePlotLogic::selectedViewState(plotRect, QRect(0, 0, 5, 5), defaultView).has_value());
     QVERIFY(!ProfilePlotLogic::selectedViewState(plotRect, QRect(0, 0, 20, 20), defaultView).has_value());
 
-    const std::optional<ProfilePlotViewState> selected =
-        ProfilePlotLogic::selectedViewState(
-            plotRect,
-            QRect(plotRect.topLeft() + QPoint(10, 10), plotRect.bottomRight() - QPoint(20, 20)),
-            defaultView);
+    const std::optional<ProfilePlotViewState> selected = ProfilePlotLogic::selectedViewState(
+        plotRect, QRect(plotRect.topLeft() + QPoint(10, 10), plotRect.bottomRight() - QPoint(20, 20)), defaultView);
     QVERIFY(selected.has_value());
     QVERIFY(selected->maxTime > selected->minTime);
     QVERIFY(selected->maxValue > selected->minValue);
@@ -184,10 +179,7 @@ void ProfileSetupTests::renderPlotWidgetWithoutCrashing()
     ProfilePlotWidget widget;
     widget.resize(600, 300);
 
-    std::vector<Setpoint> setpoints = {
-        {0.0, 0.0, 0.0, 25.0, "Linear", 1.0},
-        {10.0, 10.0, 5.0, 30.0, "Linear", 1.0}
-    };
+    std::vector<Setpoint> setpoints = {{0.0, 0.0, 0.0, 25.0, "Linear", 1.0}, {10.0, 10.0, 5.0, 30.0, "Linear", 1.0}};
     widget.setSetpoints(setpoints);
     widget.setDisplayMode(ProfilePlotWidget::DisplayMode::All);
 
@@ -204,11 +196,9 @@ void ProfileSetupTests::plotWidget_handlesDisplayModesMarkersZoomAndSelection()
     ProfilePlotWidget widget;
     widget.resize(640, 320);
 
-    std::vector<Setpoint> setpoints = {
-        {1.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
-        {3.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
-        {5.0, 4.1, 1.5, 28.0, "Step", 0.5}
-    };
+    std::vector<Setpoint> setpoints = {{1.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
+                                       {3.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
+                                       {5.0, 4.1, 1.5, 28.0, "Step", 0.5}};
     widget.setSetpoints(setpoints);
     widget.setDisplayMode(ProfilePlotWidget::DisplayMode::All);
     widget.setActiveStepMarker(true, 2.0, 4.1);
@@ -234,8 +224,8 @@ void ProfileSetupTests::plotWidget_handlesDisplayModesMarkersZoomAndSelection()
 
     const double initialMinTime = widget.m_viewMinTime;
     const double initialMaxTime = widget.m_viewMaxTime;
-    QWheelEvent zoomEvent(centerF, centerF, QPoint(), QPoint(0, 120),
-                          Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+    QWheelEvent zoomEvent(centerF, centerF, QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase,
+                          false);
     widget.wheelEvent(&zoomEvent);
     QVERIFY(widget.m_useCustomView);
     QVERIFY(widget.m_viewMaxTime - widget.m_viewMinTime < initialMaxTime - initialMinTime);
@@ -246,20 +236,21 @@ void ProfileSetupTests::plotWidget_handlesDisplayModesMarkersZoomAndSelection()
     QMouseEvent panMove(QEvent::MouseMove, center + QPoint(20, -10), Qt::NoButton, Qt::MiddleButton, Qt::NoModifier);
     widget.mouseMoveEvent(&panMove);
     QVERIFY(widget.m_useCustomView);
-    QMouseEvent panRelease(QEvent::MouseButtonRelease, center + QPoint(20, -10), Qt::MiddleButton, Qt::NoButton, Qt::NoModifier);
+    QMouseEvent panRelease(QEvent::MouseButtonRelease, center + QPoint(20, -10), Qt::MiddleButton, Qt::NoButton,
+                           Qt::NoModifier);
     widget.mouseReleaseEvent(&panRelease);
     QVERIFY(!widget.m_panning);
 
-    QMouseEvent selectPress(QEvent::MouseButtonPress, plotRect.topLeft() + QPoint(20, 20),
-                            Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent selectPress(QEvent::MouseButtonPress, plotRect.topLeft() + QPoint(20, 20), Qt::LeftButton,
+                            Qt::LeftButton, Qt::NoModifier);
     widget.mousePressEvent(&selectPress);
     QVERIFY(widget.m_selecting);
-    QMouseEvent selectMove(QEvent::MouseMove, plotRect.bottomRight() - QPoint(20, 20),
-                           Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent selectMove(QEvent::MouseMove, plotRect.bottomRight() - QPoint(20, 20), Qt::NoButton, Qt::LeftButton,
+                           Qt::NoModifier);
     widget.mouseMoveEvent(&selectMove);
     QVERIFY(!widget.m_selectionRect.isNull());
-    QMouseEvent selectRelease(QEvent::MouseButtonRelease, plotRect.bottomRight() - QPoint(20, 20),
-                              Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+    QMouseEvent selectRelease(QEvent::MouseButtonRelease, plotRect.bottomRight() - QPoint(20, 20), Qt::LeftButton,
+                              Qt::NoButton, Qt::NoModifier);
     widget.mouseReleaseEvent(&selectRelease);
     QVERIFY(!widget.m_selecting);
     QVERIFY(widget.m_useCustomView);
@@ -285,8 +276,8 @@ void ProfileSetupTests::plotWidget_ignoresInputAndHandlesZeroRangeRendering()
     const QPoint outside = widget.rect().topLeft() + QPoint(5, 5);
     const QPointF outsideF(outside);
 
-    QWheelEvent ignoredWheel(outsideF, outsideF, QPoint(), QPoint(0, 120),
-                             Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+    QWheelEvent ignoredWheel(outsideF, outsideF, QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                             Qt::NoScrollPhase, false);
     widget.wheelEvent(&ignoredWheel);
     QVERIFY(!widget.m_useCustomView);
 
@@ -295,10 +286,7 @@ void ProfileSetupTests::plotWidget_ignoresInputAndHandlesZeroRangeRendering()
     QVERIFY(!widget.m_selecting);
     QVERIFY(!widget.m_panning);
 
-    widget.setSetpoints({
-        {0.0, 4.2, 1.0, 25.0, "Linear", 1.0},
-        {0.0, 4.1, 2.0, 30.0, "Linear", 1.0}
-    });
+    widget.setSetpoints({{0.0, 4.2, 1.0, 25.0, "Linear", 1.0}, {0.0, 4.1, 2.0, 30.0, "Linear", 1.0}});
 
     QPixmap pix(widget.size());
     pix.fill(Qt::transparent);
@@ -310,22 +298,21 @@ void ProfileSetupTests::plotWidget_ignoresInputAndHandlesZeroRangeRendering()
     widget.m_viewMaxTime = 4.0;
     widget.m_viewMinValue = 2.0;
     widget.m_viewMaxValue = 2.0;
-    QMouseEvent rightReset(QEvent::MouseButtonPress, plotRect.center(), Qt::RightButton, Qt::RightButton, Qt::NoModifier);
+    QMouseEvent rightReset(QEvent::MouseButtonPress, plotRect.center(), Qt::RightButton, Qt::RightButton,
+                           Qt::NoModifier);
     widget.mousePressEvent(&rightReset);
     QVERIFY(!widget.m_useCustomView);
 
-    widget.setSetpoints({
-        {1.0, 4.2, 1.0, 25.0, "Linear", 1.0},
-        {2.0, 4.1, 2.0, 30.0, "Linear", 1.0}
-    });
+    widget.setSetpoints({{1.0, 4.2, 1.0, 25.0, "Linear", 1.0}, {2.0, 4.1, 2.0, 30.0, "Linear", 1.0}});
     widget.m_useCustomView = false;
     widget.render(&pix);
 
-    QMouseEvent selectPress(QEvent::MouseButtonPress, plotRect.center(), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent selectPress(QEvent::MouseButtonPress, plotRect.center(), Qt::LeftButton, Qt::LeftButton,
+                            Qt::NoModifier);
     widget.mousePressEvent(&selectPress);
     QVERIFY(widget.m_selecting);
-    QMouseEvent tinyRelease(QEvent::MouseButtonRelease, plotRect.center() + QPoint(2, 2),
-                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+    QMouseEvent tinyRelease(QEvent::MouseButtonRelease, plotRect.center() + QPoint(2, 2), Qt::LeftButton, Qt::NoButton,
+                            Qt::NoModifier);
     widget.mouseReleaseEvent(&tinyRelease);
     QVERIFY(!widget.m_selecting);
     QVERIFY(!widget.m_useCustomView);
@@ -572,9 +559,12 @@ void ProfileSetupTests::profileSetupWidget_helpersCoverInvalidYamlAndFallbacks()
     QCOMPARE(normalized.size(), size_t(2));
     QCOMPARE(normalized.front().time, 0.0);
     QCOMPARE(normalized.back().time, 5.0);
-    QCOMPARE(ProfileSetupWidget::interpolateProfileValue(normalized, 0.0, ProfilePlotWidget::DisplayMode::Current), 0.0);
-    QCOMPARE(ProfileSetupWidget::interpolateProfileValue(normalized, 5.0, ProfilePlotWidget::DisplayMode::Current), 1.0);
-    QVERIFY(ProfileSetupWidget::interpolateProfileValue(normalized, 2.0, ProfilePlotWidget::DisplayMode::Current) >= 0.0);
+    QCOMPARE(ProfileSetupWidget::interpolateProfileValue(normalized, 0.0, ProfilePlotWidget::DisplayMode::Current),
+             0.0);
+    QCOMPARE(ProfileSetupWidget::interpolateProfileValue(normalized, 5.0, ProfilePlotWidget::DisplayMode::Current),
+             1.0);
+    QVERIFY(ProfileSetupWidget::interpolateProfileValue(normalized, 2.0, ProfilePlotWidget::DisplayMode::Current) >=
+            0.0);
 
     widget.startTestForSlot(1, table1);
     QVERIFY(widget.m_plotWidget1->m_activeStepVisible);
@@ -637,11 +627,9 @@ void ProfileSetupTests::profileSetupWidget_exercisesAdditionalSlotBranches()
 
 void ProfileSetupTests::profileSetupLogic_coversNormalizedExecutionBranches()
 {
-    std::vector<Setpoint> raw = {
-        {5.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
-        {10.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
-        {12.0, 4.1, 1.5, 28.0, "Linear", 0.5}
-    };
+    std::vector<Setpoint> raw = {{5.0, 4.2, 1.0, 25.0, "Ramp", 0.5},
+                                 {10.0, 4.0, 2.0, 30.0, "Exponential", 0.5},
+                                 {12.0, 4.1, 1.5, 28.0, "Linear", 0.5}};
 
     const std::vector<Setpoint> normalized = ProfileSetupLogic::normalizedSetpoints(raw);
     QCOMPARE(normalized.size(), size_t(4));
@@ -660,16 +648,16 @@ void ProfileSetupTests::profileSetupLogic_coversNormalizedExecutionBranches()
     QCOMPARE(ProfileSetupLogic::activeRowForElapsedSeconds(raw, 50), 2);
     QCOMPARE(ProfileSetupLogic::displayValueForMode(raw[0], ProfilePlotWidget::DisplayMode::Current), 1.0);
     QCOMPARE(ProfileSetupLogic::interpolateProfileValue({}, 1.0, ProfilePlotWidget::DisplayMode::Voltage), 0.0);
-    QCOMPARE(ProfileSetupLogic::interpolateProfileValue(normalized, -1.0, ProfilePlotWidget::DisplayMode::Voltage), normalized.front().voltage);
-    QVERIFY(ProfileSetupLogic::interpolateProfileValue(normalized, 6.0, ProfilePlotWidget::DisplayMode::Current) >= 1.0);
+    QCOMPARE(ProfileSetupLogic::interpolateProfileValue(normalized, -1.0, ProfilePlotWidget::DisplayMode::Voltage),
+             normalized.front().voltage);
+    QVERIFY(ProfileSetupLogic::interpolateProfileValue(normalized, 6.0, ProfilePlotWidget::DisplayMode::Current) >=
+            1.0);
     QCOMPARE(ProfileSetupLogic::interpolateProfileValue(
-                 {{0.0, 0.0, 0.0, 25.0, "Linear", 1.0}, {10.0, 5.0, 2.0, 25.0, "Ramp", 0.0}},
-                 5.0,
+                 {{0.0, 0.0, 0.0, 25.0, "Linear", 1.0}, {10.0, 5.0, 2.0, 25.0, "Ramp", 0.0}}, 5.0,
                  ProfilePlotWidget::DisplayMode::Current),
              0.0);
     QCOMPARE(ProfileSetupLogic::interpolateProfileValue(
-                 {{0.0, 0.0, 0.0, 25.0, "Linear", 1.0}, {10.0, 8.0, 0.0, 25.0, "Exponential", 1.0}},
-                 5.0,
+                 {{0.0, 0.0, 0.0, 25.0, "Linear", 1.0}, {10.0, 8.0, 0.0, 25.0, "Exponential", 1.0}}, 5.0,
                  ProfilePlotWidget::DisplayMode::Voltage),
              4.0);
 
@@ -720,7 +708,8 @@ void ProfileSetupTests::profileYamlLogic_roundTripsAndHandlesPartialDocuments()
     QCOMPARE(restored.slotDocuments[2].setpoints.size(), size_t(0));
 
     ProfileDocument partial;
-    QVERIFY(ProfileYamlLogic::deserialize("slot1:\n  setpoints:\n    - time: 3\n      current: 2\n", partial, &errorMessage));
+    QVERIFY(ProfileYamlLogic::deserialize("slot1:\n  setpoints:\n    - time: 3\n      current: 2\n", partial,
+                                          &errorMessage));
     QCOMPARE(partial.slotDocuments[0].setpoints.size(), size_t(1));
     QCOMPARE(partial.slotDocuments[0].setpoints.front().curveType, QString("Ramp"));
     QCOMPARE(partial.slotDocuments[0].setpoints.front().rampStep, 1.0);
@@ -730,14 +719,12 @@ void ProfileSetupTests::profileYamlLogic_roundTripsAndHandlesPartialDocuments()
     QVERIFY(!errorMessage.isEmpty());
 
     ProfileDocument fallbackDocument;
-    QVERIFY(ProfileYamlLogic::deserialize(
-        "slot1:\n"
-        "  setpoints:\n"
-        "    - []\n"
-        "profileName1: [bad]\n"
-        "displayMode1: nope\n",
-        fallbackDocument,
-        &errorMessage));
+    QVERIFY(ProfileYamlLogic::deserialize("slot1:\n"
+                                          "  setpoints:\n"
+                                          "    - []\n"
+                                          "profileName1: [bad]\n"
+                                          "displayMode1: nope\n",
+                                          fallbackDocument, &errorMessage));
     QCOMPARE(fallbackDocument.slotDocuments[0].setpoints.size(), size_t(0));
     QCOMPARE(fallbackDocument.slotDocuments[0].profileName, QString());
     QCOMPARE(fallbackDocument.slotDocuments[0].displayModeIndex, 0);

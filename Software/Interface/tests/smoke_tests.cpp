@@ -20,14 +20,13 @@ namespace
 {
 void renderSmoke(QWidget& widget)
 {
-    widget.resize(qMax(widget.sizeHint().width(), 640),
-                  qMax(widget.sizeHint().height(), 360));
+    widget.resize(qMax(widget.sizeHint().width(), 640), qMax(widget.sizeHint().height(), 360));
     QPixmap pixmap(widget.size());
     pixmap.fill(Qt::transparent);
     widget.render(&pixmap);
     QVERIFY(!pixmap.isNull());
 }
-}
+} // namespace
 
 class SmokeTests : public QObject
 {
@@ -73,7 +72,7 @@ void SmokeTests::mainWindowSignalsComsRemovalAndDispatchPaths()
 
     auto triggerAction = [&window](const QString& name)
     {
-        QAction *action = window.findChild<QAction*>(name);
+        QAction* action = window.findChild<QAction*>(name);
         QVERIFY(action != nullptr);
         action->trigger();
     };
@@ -102,7 +101,7 @@ void SmokeTests::mainWindowSignalsComsRemovalAndDispatchPaths()
     QVERIFY(Logger::instance().statusHistory().size() > historyBefore);
     QVERIFY(Logger::instance().statusHistory().last().contains("no connected backend"));
 
-    PanelContainer *panel = qobject_cast<PanelContainer*>(window.m_panelSplitter->widget(0));
+    PanelContainer* panel = qobject_cast<PanelContainer*>(window.m_panelSplitter->widget(0));
     QVERIFY(panel != nullptr);
     window.removePanel(panel);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
@@ -110,6 +109,13 @@ void SmokeTests::mainWindowSignalsComsRemovalAndDispatchPaths()
 
     window.removePanel(nullptr);
     window.centerWindow(nullptr);
+
+    QWidget child;
+    child.resize(120, 80);
+    window.centerWindow(&child);
+
+    window.addPanel(nullptr, "Ignored");
+    window.openPanel(static_cast<PanelType>(999));
 }
 
 void SmokeTests::panelFactoryCreatesEveryKnownPanel()
@@ -118,12 +124,8 @@ void SmokeTests::panelFactoryCreatesEveryKnownPanel()
     QVERIFY(database.loadFromFile("pcp.yaml"));
     ConsoleWidget::setSharedPCPDatabase(&database);
 
-    const QList<PanelType> panelTypes = {
-        PanelType::Console,
-        PanelType::Log,
-        PanelType::ComsStatus,
-        PanelType::ProfileSetup
-    };
+    const QList<PanelType> panelTypes = {PanelType::Console, PanelType::Log, PanelType::ComsStatus,
+                                         PanelType::ProfileSetup};
 
     for (PanelType type : panelTypes)
     {

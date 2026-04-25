@@ -3,10 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
-PCPEncoder::PCPEncoder(const PCPDatabase* database)
-    : m_database(database)
-{
-}
+PCPEncoder::PCPEncoder(const PCPDatabase* database) : m_database(database) {}
 
 void PCPEncoder::setDatabase(const PCPDatabase* database)
 {
@@ -18,8 +15,7 @@ const PCPDatabase* PCPEncoder::database() const
     return m_database;
 }
 
-PCPFrame PCPEncoder::encode(uint32_t deviceId,
-                            const std::string& messageName,
+PCPFrame PCPEncoder::encode(uint32_t deviceId, const std::string& messageName,
                             const std::map<std::string, double>& signalValues) const
 {
     if (!m_database)
@@ -63,8 +59,7 @@ uint32_t PCPEncoder::buildId(uint32_t deviceId, uint32_t messageId) const
     return (deviceId << layout.messageIdBits) | messageId;
 }
 
-uint64_t PCPEncoder::physicalToRaw(double physicalValue,
-                                   const PCPSignalDefinition& signal)
+uint64_t PCPEncoder::physicalToRaw(double physicalValue, const PCPSignalDefinition& signal)
 {
     const double rawDouble = (physicalValue - signal.offset) / signal.scale;
     int64_t rawSigned = static_cast<int64_t>(std::llround(rawDouble));
@@ -72,7 +67,7 @@ uint64_t PCPEncoder::physicalToRaw(double physicalValue,
     if (signal.isSigned)
     {
         const int64_t minVal = -(1LL << (signal.bitLength - 1));
-        const int64_t maxVal =  (1LL << (signal.bitLength - 1)) - 1;
+        const int64_t maxVal = (1LL << (signal.bitLength - 1)) - 1;
 
         if (rawSigned < minVal || rawSigned > maxVal)
             throw std::runtime_error("Signed signal out of range");
@@ -96,10 +91,7 @@ uint64_t PCPEncoder::physicalToRaw(double physicalValue,
     return static_cast<uint64_t>(rawSigned);
 }
 
-void PCPEncoder::packBits(std::array<uint8_t, 8>& data,
-                          uint64_t rawValue,
-                          int startBit,
-                          int bitLength)
+void PCPEncoder::packBits(std::array<uint8_t, 8>& data, uint64_t rawValue, int startBit, int bitLength)
 {
     for (int i = 0; i < bitLength; ++i)
     {

@@ -12,10 +12,8 @@ QString PCPDecodeFormatter::toText(const PCPDecodedMessage& msg)
 
     for (const auto& [name, sig] : msg.decodedSignals)
     {
-        out += QString("  %1 = %2 (raw=%3)\n")
-                   .arg(QString::fromStdString(name))
-                   .arg(sig.physicalValue)
-                   .arg(sig.rawValue);
+        out +=
+            QString("  %1 = %2 (raw=%3)\n").arg(QString::fromStdString(name)).arg(sig.physicalValue).arg(sig.rawValue);
     }
 
     return out.trimmed();

@@ -90,7 +90,7 @@ void loadSlotFromYamlNode(const YAML::Node& slotNode, ProfileSlotDocument& slot)
         slot.setpoints.push_back(setpoint);
     }
 }
-}
+} // namespace
 
 QString ProfileYamlLogic::serialize(const ProfileDocument& document)
 {
@@ -105,14 +105,14 @@ QString ProfileYamlLogic::serialize(const ProfileDocument& document)
 
     for (size_t i = 0; i < document.slotDocuments.size(); ++i)
     {
-        out << YAML::Key << QString("profileName%1").arg(i + 1).toStdString()
-            << YAML::Value << document.slotDocuments[i].profileName.toStdString();
+        out << YAML::Key << QString("profileName%1").arg(i + 1).toStdString() << YAML::Value
+            << document.slotDocuments[i].profileName.toStdString();
     }
 
     for (size_t i = 0; i < document.slotDocuments.size(); ++i)
     {
-        out << YAML::Key << QString("displayMode%1").arg(i + 1).toStdString()
-            << YAML::Value << document.slotDocuments[i].displayModeIndex;
+        out << YAML::Key << QString("displayMode%1").arg(i + 1).toStdString() << YAML::Value
+            << document.slotDocuments[i].displayModeIndex;
     }
 
     out << YAML::EndMap;
@@ -135,7 +135,8 @@ bool ProfileYamlLogic::deserialize(const QString& yamlText, ProfileDocument& doc
         {
             ProfileSlotDocument& slot = document.slotDocuments[i];
             loadSlotFromYamlNode(root[QString("slot%1").arg(i + 1).toStdString()], slot);
-            slot.profileName = yamlStringValue(root, QString("profileName%1").arg(i + 1).toStdString().c_str(), slot.profileName);
+            slot.profileName =
+                yamlStringValue(root, QString("profileName%1").arg(i + 1).toStdString().c_str(), slot.profileName);
             slot.displayModeIndex = yamlIntValue(root, QString("displayMode%1").arg(i + 1).toStdString().c_str(), 0);
         }
 

@@ -7,7 +7,5 @@
 class PCPFormatter
 {
 public:
-    static QString toConsoleString(const PCPFrame& frame,
-                                   const QString& direction,
-                                   const PCPDatabase& database);
+    static QString toConsoleString(const PCPFrame& frame, const QString& direction, const PCPDatabase& database);
 };

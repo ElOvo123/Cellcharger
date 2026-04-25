@@ -9,7 +9,7 @@
 class ChargerHistoryPlotWidget : public QWidget
 {
 public:
-    explicit ChargerHistoryPlotWidget(QWidget *parent = nullptr);
+    explicit ChargerHistoryPlotWidget(QWidget* parent = nullptr);
 
     void clearHistory();
     void appendSample(uint32_t chargerId, double timeSeconds, double voltage, double current);
@@ -18,7 +18,7 @@ public:
     int sampleCountForCharger(uint32_t chargerId) const;
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     struct Sample

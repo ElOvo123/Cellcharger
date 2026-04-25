@@ -35,26 +35,25 @@ namespace
 {
 constexpr int kCompactControlHeight = 32;
 constexpr int kCompactButtonSize = 36;
-const char kComboBoxStyle[] =
-    "QComboBox {"
-    "  padding: 0 10px;"
-    "  border: 1px solid #c7ccd4;"
-    "  border-radius: 5px;"
-    "  background: #ffffff;"
-    "  color: #1f2933;"
-    "}"
-    "QComboBox::drop-down {"
-    "  width: 22px;"
-    "  border: 0;"
-    "}"
-    "QComboBox QAbstractItemView {"
-    "  border: 1px solid #c7ccd4;"
-    "  background: #ffffff;"
-    "  color: #1f2933;"
-    "  selection-background-color: #dcecff;"
-    "  selection-color: #102a43;"
-    "  outline: 0;"
-    "}";
+const char kComboBoxStyle[] = "QComboBox {"
+                              "  padding: 0 10px;"
+                              "  border: 1px solid #c7ccd4;"
+                              "  border-radius: 5px;"
+                              "  background: #ffffff;"
+                              "  color: #1f2933;"
+                              "}"
+                              "QComboBox::drop-down {"
+                              "  width: 22px;"
+                              "  border: 0;"
+                              "}"
+                              "QComboBox QAbstractItemView {"
+                              "  border: 1px solid #c7ccd4;"
+                              "  background: #ffffff;"
+                              "  color: #1f2933;"
+                              "  selection-background-color: #dcecff;"
+                              "  selection-color: #102a43;"
+                              "  outline: 0;"
+                              "}";
 
 QIcon makeAddIcon()
 {
@@ -90,44 +89,39 @@ QPixmap makeWifiPixmap(const QColor& color)
 
     return pixmap;
 }
-}
+} // namespace
 
-Coms::Coms(QWidget *parent) : QDialog(parent), ui(new Ui::Coms)
+Coms::Coms(QWidget* parent) : QDialog(parent), ui(new Ui::Coms)
 {
     ui->setupUi(this);
 
-    ui->topActionBar->setStyleSheet(
-        "QWidget#topActionBar {"
-        "  background-color: #e6e6e6;"
-        "  border-bottom: 1px solid #c8c8c8;"
-        "}"
-    );
+    ui->topActionBar->setStyleSheet("QWidget#topActionBar {"
+                                    "  background-color: #e6e6e6;"
+                                    "  border-bottom: 1px solid #c8c8c8;"
+                                    "}");
 
-    ui->addConnectionButton->setStyleSheet(
-        "QToolButton {"
-        "  background-color: transparent;"
-        "  color: #1f1f1f;"
-        "  border: 1px solid #c8c8c8;"
-        "  border-radius: 4px;"
-        "  font-size: 12px;"
-        "  font-weight: 500;"
-        "  padding: 4px 10px;"
-        "  text-align: center;"
-        "}"
-        "QToolButton:hover {"
-        "  background-color: #f0f0f0;"
-        "}"
-        "QToolButton:pressed {"
-        "  background-color: #e2e2e2;"
-        "}"
-    );
+    ui->addConnectionButton->setStyleSheet("QToolButton {"
+                                           "  background-color: transparent;"
+                                           "  color: #1f1f1f;"
+                                           "  border: 1px solid #c8c8c8;"
+                                           "  border-radius: 4px;"
+                                           "  font-size: 12px;"
+                                           "  font-weight: 500;"
+                                           "  padding: 4px 10px;"
+                                           "  text-align: center;"
+                                           "}"
+                                           "QToolButton:hover {"
+                                           "  background-color: #f0f0f0;"
+                                           "}"
+                                           "QToolButton:pressed {"
+                                           "  background-color: #e2e2e2;"
+                                           "}");
     ui->addConnectionButton->setMinimumSize(56, 52);
     ui->addConnectionButton->setMaximumWidth(64);
     ui->addConnectionButton->setIcon(makeAddIcon());
     ui->addConnectionButton->setIconSize(QSize(24, 24));
 
-    connect(ui->addConnectionButton, &QPushButton::clicked,
-            this, &Coms::addConnectionRequested);
+    connect(ui->addConnectionButton, &QPushButton::clicked, this, &Coms::addConnectionRequested);
 
     setStatusText("No active connections");
 }
@@ -168,7 +162,7 @@ void Coms::setConnections(const QList<ComsConnectionInfo>& connections)
         updateRowWidget(i, connections[i]);
 }
 
-void Coms::setStatusText(const QString &text)
+void Coms::setStatusText(const QString& text)
 {
     setToolTip(text);
 }
@@ -178,9 +172,7 @@ void Coms::setOverallConnected(bool connected)
     Q_UNUSED(connected);
 }
 
-void Coms::pulseReceiveActivity()
-{
-}
+void Coms::pulseReceiveActivity() {}
 
 void Coms::ensureConnectionRows(int count)
 {
@@ -193,13 +185,11 @@ void Coms::ensureConnectionRows(int count)
         widgets->root->setObjectName("connectionRowFrame");
         widgets->root->setMinimumHeight(52);
         widgets->root->setMaximumHeight(58);
-        widgets->root->setStyleSheet(
-            "QFrame#connectionRowFrame {"
-            "  background-color: #fbfbfb;"
-            "  border: 1px solid #d7d7d7;"
-            "  border-radius: 6px;"
-            "}"
-        );
+        widgets->root->setStyleSheet("QFrame#connectionRowFrame {"
+                                     "  background-color: #fbfbfb;"
+                                     "  border: 1px solid #d7d7d7;"
+                                     "  border-radius: 6px;"
+                                     "}");
 
         auto* rootLayout = new QVBoxLayout(widgets->root);
         rootLayout->setContentsMargins(10, 6, 10, 6);
@@ -235,21 +225,19 @@ void Coms::ensureConnectionRows(int count)
         widgets->serialPortCombo->setMinimumContentsLength(6);
         widgets->serialPortCombo->setFixedHeight(kCompactControlHeight);
         widgets->serialPortCombo->setStyleSheet(kComboBoxStyle);
-        for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts())
+        for (const QSerialPortInfo& info : QSerialPortInfo::availablePorts())
             widgets->serialPortCombo->addItem(info.portName());
         widgets->baudrateEdit = new QLineEdit(serialPage);
         widgets->baudrateEdit->setObjectName("baudrateEdit");
         widgets->baudrateEdit->setFixedHeight(kCompactControlHeight);
         widgets->baudrateEdit->setFixedWidth(90);
         widgets->baudrateEdit->setText("115200");
-        widgets->baudrateEdit->setStyleSheet(
-            "QLineEdit {"
-            "  padding: 0 10px;"
-            "  border: 1px solid #c7ccd4;"
-            "  border-radius: 5px;"
-            "  background: #ffffff;"
-            "}"
-        );
+        widgets->baudrateEdit->setStyleSheet("QLineEdit {"
+                                             "  padding: 0 10px;"
+                                             "  border: 1px solid #c7ccd4;"
+                                             "  border-radius: 5px;"
+                                             "  background: #ffffff;"
+                                             "}");
         serialLayout->addWidget(widgets->serialPortCombo);
         serialLayout->addWidget(new QLabel("Baudrate:", serialPage));
         serialLayout->addWidget(widgets->baudrateEdit);
@@ -308,28 +296,24 @@ void Coms::ensureConnectionRows(int count)
         widgets->removeButton->setFixedSize(kCompactButtonSize, kCompactButtonSize);
         widgets->wifiLabel->setFixedSize(30, 30);
         widgets->connectButton->setIconSize(QSize(20, 20));
-        widgets->removeButton->setStyleSheet(
-            "QPushButton {"
-            "  font-size: 16px;"
-            "  font-weight: 700;"
-            "  border: 1px solid #c7ccd4;"
-            "  border-radius: 5px;"
-            "  background: #ffffff;"
-            "}"
-            "QPushButton:hover {"
-            "  background: #f5f7fa;"
-            "}"
-        );
-        widgets->connectButton->setStyleSheet(
-            "QPushButton {"
-            "  border: 1px solid #c7ccd4;"
-            "  border-radius: 5px;"
-            "  background: #ffffff;"
-            "}"
-            "QPushButton:hover {"
-            "  background: #f5f7fa;"
-            "}"
-        );
+        widgets->removeButton->setStyleSheet("QPushButton {"
+                                             "  font-size: 16px;"
+                                             "  font-weight: 700;"
+                                             "  border: 1px solid #c7ccd4;"
+                                             "  border-radius: 5px;"
+                                             "  background: #ffffff;"
+                                             "}"
+                                             "QPushButton:hover {"
+                                             "  background: #f5f7fa;"
+                                             "}");
+        widgets->connectButton->setStyleSheet("QPushButton {"
+                                              "  border: 1px solid #c7ccd4;"
+                                              "  border-radius: 5px;"
+                                              "  background: #ffffff;"
+                                              "}"
+                                              "QPushButton:hover {"
+                                              "  background: #f5f7fa;"
+                                              "}");
 
         controlsLayout->addWidget(widgets->configStack);
         controlsLayout->addStretch();
@@ -338,13 +322,10 @@ void Coms::ensureConnectionRows(int count)
         controlsLayout->addWidget(widgets->wifiLabel);
         rootLayout->addLayout(controlsLayout);
 
-        connect(widgets->typeCombo,
-                QOverload<int>::of(&QComboBox::currentIndexChanged),
-                widgets->root,
+        connect(widgets->typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), widgets->root,
                 [widgets](int index)
                 {
-                    const auto type =
-                        static_cast<ComsType>(widgets->typeCombo->itemData(index).toInt());
+                    const auto type = static_cast<ComsType>(widgets->typeCombo->itemData(index).toInt());
                     widgets->configStack->setCurrentIndex(configPageIndexForType(type));
                 });
 
@@ -359,10 +340,7 @@ void Coms::ensureConnectionRows(int count)
                         emit connectConnectionRequested(row);
                 });
         connect(widgets->removeButton, &QPushButton::clicked, this,
-                [this, widgets]()
-                {
-                    emit removeConnectionRequested(widgets->root->property("row").toInt());
-                });
+                [this, widgets]() { emit removeConnectionRequested(widgets->root->property("row").toInt()); });
 
         layout->insertWidget(m_rowWidgets.size(), widgets->root);
         m_rowWidgets.append(widgets);
@@ -401,8 +379,7 @@ void Coms::updateRowWidget(int row, const ComsConnectionInfo& connection)
 
     widgets->serialPortCombo->setCurrentText(connection.config.serialPort);
     widgets->baudrateEdit->setText(QString::number(connection.config.baudrate));
-    widgets->canInterfaceCombo->setCurrentText(
-        normalizedCanInterface(connection.config.canInterface));
+    widgets->canInterfaceCombo->setCurrentText(normalizedCanInterface(connection.config.canInterface));
     widgets->ipEdit->setText(connection.config.ip);
     widgets->portEdit->setText(QString::number(connection.config.port));
 

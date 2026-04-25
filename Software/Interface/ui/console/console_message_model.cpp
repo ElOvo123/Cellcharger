@@ -2,12 +2,9 @@
 
 #include <algorithm>
 
-ConsoleMessageModel::ConsoleMessageModel(QObject *parent)
-    : QAbstractTableModel(parent)
-{
-}
+ConsoleMessageModel::ConsoleMessageModel(QObject* parent) : QAbstractTableModel(parent) {}
 
-int ConsoleMessageModel::rowCount(const QModelIndex &parent) const
+int ConsoleMessageModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid())
         return 0;
@@ -15,7 +12,7 @@ int ConsoleMessageModel::rowCount(const QModelIndex &parent) const
     return m_records.size();
 }
 
-int ConsoleMessageModel::columnCount(const QModelIndex &parent) const
+int ConsoleMessageModel::columnCount(const QModelIndex& parent) const
 {
     if (parent.isValid())
         return 0;
@@ -23,7 +20,7 @@ int ConsoleMessageModel::columnCount(const QModelIndex &parent) const
     return 7;
 }
 
-QVariant ConsoleMessageModel::data(const QModelIndex &index, int role) const
+QVariant ConsoleMessageModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid())
         return QVariant();
@@ -37,14 +34,22 @@ QVariant ConsoleMessageModel::data(const QModelIndex &index, int role) const
     {
         switch (index.column())
         {
-            case 0: return record.timestamp;
-            case 1: return record.direction;
-            case 2: return record.deviceName;
-            case 3: return record.messageName;
-            case 4: return record.messageId;
-            case 5: return record.dlc;
-            case 6: return record.data;
-            default: return QVariant();
+            case 0:
+                return record.timestamp;
+            case 1:
+                return record.direction;
+            case 2:
+                return record.deviceName;
+            case 3:
+                return record.messageName;
+            case 4:
+                return record.messageId;
+            case 5:
+                return record.dlc;
+            case 6:
+                return record.data;
+            default:
+                return QVariant();
         }
     }
 
@@ -64,9 +69,7 @@ QVariant ConsoleMessageModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-QVariant ConsoleMessageModel::headerData(int section,
-                                         Qt::Orientation orientation,
-                                         int role) const
+QVariant ConsoleMessageModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role != Qt::DisplayRole)
         return QVariant();
@@ -75,21 +78,29 @@ QVariant ConsoleMessageModel::headerData(int section,
     {
         switch (section)
         {
-            case 0: return "Time";
-            case 1: return "Dir";
-            case 2: return "Device";
-            case 3: return "Name";
-            case 4: return "Msg";
-            case 5: return "DLC";
-            case 6: return "Data";
-            default: return QVariant();
+            case 0:
+                return "Time";
+            case 1:
+                return "Dir";
+            case 2:
+                return "Device";
+            case 3:
+                return "Name";
+            case 4:
+                return "Msg";
+            case 5:
+                return "DLC";
+            case 6:
+                return "Data";
+            default:
+                return QVariant();
         }
     }
 
     return QVariant();
 }
 
-Qt::ItemFlags ConsoleMessageModel::flags(const QModelIndex &index) const
+Qt::ItemFlags ConsoleMessageModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
         return Qt::NoItemFlags;
@@ -125,25 +136,30 @@ const ConsoleMessageRecord& ConsoleMessageModel::recordAt(int row) const
     return m_records.at(row);
 }
 
-bool ConsoleMessageModel::lessThan(const ConsoleMessageRecord& a,
-                                   const ConsoleMessageRecord& b,
-                                   int column,
+bool ConsoleMessageModel::lessThan(const ConsoleMessageRecord& a, const ConsoleMessageRecord& b, int column,
                                    Qt::SortOrder order)
 {
-    auto cmp = [&](const QString& lhs, const QString& rhs) {
-        return order == Qt::AscendingOrder ? lhs < rhs : lhs > rhs;
-    };
+    auto cmp = [&](const QString& lhs, const QString& rhs)
+    { return order == Qt::AscendingOrder ? lhs < rhs : lhs > rhs; };
 
     switch (column)
     {
-        case 0: return cmp(a.timestamp, b.timestamp);
-        case 1: return cmp(a.direction, b.direction);
-        case 2: return cmp(a.deviceName, b.deviceName);
-        case 3: return cmp(a.messageName, b.messageName);
-        case 4: return cmp(a.messageId, b.messageId);
-        case 5: return cmp(a.dlc, b.dlc);
-        case 6: return cmp(a.data, b.data);
-        default: return false;
+        case 0:
+            return cmp(a.timestamp, b.timestamp);
+        case 1:
+            return cmp(a.direction, b.direction);
+        case 2:
+            return cmp(a.deviceName, b.deviceName);
+        case 3:
+            return cmp(a.messageName, b.messageName);
+        case 4:
+            return cmp(a.messageId, b.messageId);
+        case 5:
+            return cmp(a.dlc, b.dlc);
+        case 6:
+            return cmp(a.data, b.data);
+        default:
+            return false;
     }
 }
 
@@ -153,9 +169,7 @@ void ConsoleMessageModel::sort(int column, Qt::SortOrder order)
 
     std::sort(m_records.begin(), m_records.end(),
               [column, order](const ConsoleMessageRecord& a, const ConsoleMessageRecord& b)
-              {
-                  return lessThan(a, b, column, order);
-              });
+              { return lessThan(a, b, column, order); });
 
     endResetModel();
 }

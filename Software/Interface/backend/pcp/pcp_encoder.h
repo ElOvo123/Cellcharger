@@ -22,8 +22,7 @@ public:
     void setDatabase(const PCPDatabase* database);
     const PCPDatabase* database() const;
 
-    PCPFrame encode(uint32_t deviceId,
-                    const std::string& messageName,
+    PCPFrame encode(uint32_t deviceId, const std::string& messageName,
                     const std::map<std::string, double>& signalValues) const;
 
 private:
@@ -31,11 +30,7 @@ private:
 
     uint32_t buildId(uint32_t deviceId, uint32_t messageId) const;
 
-    static uint64_t physicalToRaw(double physicalValue,
-                                  const PCPSignalDefinition& signal);
+    static uint64_t physicalToRaw(double physicalValue, const PCPSignalDefinition& signal);
 
-    static void packBits(std::array<uint8_t, 8>& data,
-                         uint64_t rawValue,
-                         int startBit,
-                         int bitLength);
+    static void packBits(std::array<uint8_t, 8>& data, uint64_t rawValue, int startBit, int bitLength);
 };

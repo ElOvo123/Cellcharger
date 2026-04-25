@@ -5,16 +5,10 @@
 
 #include <iostream>
 
-SimulatedComsBackend::SimulatedComsBackend(const PCPDatabase* db, QObject *parent)
-    : IComsBackend(parent),
-      m_pcpDatabase(db),
-      m_pcpEncoder(db),
-      m_pcpDecoder(db)
+SimulatedComsBackend::SimulatedComsBackend(const PCPDatabase* db, QObject* parent)
+    : IComsBackend(parent), m_pcpDatabase(db), m_pcpEncoder(db), m_pcpDecoder(db)
 {
-    connect(&m_timer,
-            &QTimer::timeout,
-            this,
-            &SimulatedComsBackend::generateFakeMessage);
+    connect(&m_timer, &QTimer::timeout, this, &SimulatedComsBackend::generateFakeMessage);
 
     if (m_pcpDatabase)
         m_deviceIds = m_pcpDatabase->deviceIds();
@@ -28,7 +22,7 @@ void SimulatedComsBackend::setType(ComsType type)
     m_type = type;
 }
 
-void SimulatedComsBackend::setConfig(const ComsConfig &config)
+void SimulatedComsBackend::setConfig(const ComsConfig& config)
 {
     m_config = config;
 }
@@ -97,12 +91,9 @@ void SimulatedComsBackend::setState(State state)
     emit stateChanged(m_state);
 }
 
-void SimulatedComsBackend::publishFrame(const PCPFrame& frame,
-                                        const QString& direction,
-                                        bool decodeFrame)
+void SimulatedComsBackend::publishFrame(const PCPFrame& frame, const QString& direction, bool decodeFrame)
 {
-    const QString message =
-        PCPFormatter::toConsoleString(frame, direction, *m_pcpDatabase);
+    const QString message = PCPFormatter::toConsoleString(frame, direction, *m_pcpDatabase);
 
     if (direction == "TX")
         emit messageSent(message);
@@ -119,9 +110,7 @@ void SimulatedComsBackend::publishFrame(const PCPFrame& frame,
     Logger::instance().logComs(message);
 }
 
-double SimulatedComsBackend::fakeValueForSignal(const std::string& signalName,
-                                                uint32_t deviceId,
-                                                int counter) const
+double SimulatedComsBackend::fakeValueForSignal(const std::string& signalName, uint32_t deviceId, int counter) const
 {
     const uint32_t logicalChargerId = deviceId;
 
@@ -183,19 +172,16 @@ void SimulatedComsBackend::generateFakeMessage()
 
     ++m_counter;
     const uint32_t busDeviceId = m_deviceIds.front();
-    const uint32_t logicalChargerId =
-        static_cast<uint32_t>(((m_counter - 1) / 2) % 3) + 1u;
+    const uint32_t logicalChargerId = static_cast<uint32_t>(((m_counter - 1) / 2) % 3) + 1u;
     const std::string messageName = (m_counter % 2 == 1) ? "status" : "cell_info";
 
-    const PCPMessageDefinition* msgDef =
-        m_pcpDatabase->messageByName(busDeviceId, messageName);
+    const PCPMessageDefinition* msgDef = m_pcpDatabase->messageByName(busDeviceId, messageName);
 
     if (!msgDef)
     {
-        Logger::instance().logStatus(
-            QString("COMS: message '%1' not found for device %2")
-                .arg(QString::fromStdString(messageName))
-                .arg(busDeviceId));
+        Logger::instance().logStatus(QString("COMS: message '%1' not found for device %2")
+                                         .arg(QString::fromStdString(messageName))
+                                         .arg(busDeviceId));
         return;
     }
 

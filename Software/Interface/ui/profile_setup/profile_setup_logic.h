@@ -23,10 +23,8 @@ public:
     static std::vector<Setpoint> normalizedSetpoints(const std::vector<Setpoint>& setpoints);
     static int activeRowForElapsedSeconds(const std::vector<Setpoint>& setpoints, int elapsedSeconds);
     static double displayValueForMode(const Setpoint& setpoint, ProfilePlotWidget::DisplayMode mode);
-    static double interpolateProfileValue(const std::vector<Setpoint>& setpoints,
-                                          double timeSeconds,
+    static double interpolateProfileValue(const std::vector<Setpoint>& setpoints, double timeSeconds,
                                           ProfilePlotWidget::DisplayMode mode);
-    static ProfileStepState stepStateForElapsedSeconds(const std::vector<Setpoint>& rawSetpoints,
-                                                       int elapsedSeconds,
+    static ProfileStepState stepStateForElapsedSeconds(const std::vector<Setpoint>& rawSetpoints, int elapsedSeconds,
                                                        int controlModeIndex);
 };

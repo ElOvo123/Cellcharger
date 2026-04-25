@@ -48,14 +48,11 @@ public:
     std::string deviceName(uint32_t deviceId) const;
     std::vector<uint32_t> deviceIds() const;
 
-    const PCPMessageDefinition* messageByName(uint32_t deviceId,
-                                              const std::string& messageName) const;
+    const PCPMessageDefinition* messageByName(uint32_t deviceId, const std::string& messageName) const;
 
-    const PCPMessageDefinition* messageById(uint32_t deviceId,
-                                            uint32_t messageId) const;
+    const PCPMessageDefinition* messageById(uint32_t deviceId, uint32_t messageId) const;
 
-    std::vector<std::string> signalNames(uint32_t deviceId,
-                                         const std::string& messageName) const;
+    std::vector<std::string> signalNames(uint32_t deviceId, const std::string& messageName) const;
 
     std::vector<std::string> messageNames(uint32_t deviceId) const;
 

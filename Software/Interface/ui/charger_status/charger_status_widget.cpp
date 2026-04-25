@@ -22,82 +22,78 @@ namespace
 constexpr int kFreshTimeoutMs = 500;
 }
 
-ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
-    : QWidget(parent),
-      ui(new Ui::ChargerStatusWidget)
+ChargerStatusWidget::ChargerStatusWidget(QWidget* parent) : QWidget(parent), ui(new Ui::ChargerStatusWidget)
 {
     ui->setupUi(this);
 
     setObjectName("comsStatusRoot");
     m_tabWidget = ui->statusTabWidget;
-    setStyleSheet(
-        "QWidget#comsStatusRoot {"
-        "  background-color: palette(window);"
-        "}"
-        "QLabel#slotStatusLabel1, QLabel#slotStatusLabel2, QLabel#slotStatusLabel3 {"
-        "  color: palette(window-text);"
-        "  line-height: 1.35;"
-        "}"
-        "QFrame#generalColumn1, QFrame#generalColumn2, QFrame#generalColumn3 {"
-        "  background-color: palette(base);"
-        "  border: 1px solid #c8c8c8;"
-        "}"
-        "QLabel#generalTitleLabel1, QLabel#generalTitleLabel2, QLabel#generalTitleLabel3 {"
-        "  color: palette(window-text);"
-        "  font-weight: 600;"
-        "}"
-        "QLabel#generalVoltageLabel1, QLabel#generalVoltageLabel2, QLabel#generalVoltageLabel3,"
-        "QLabel#generalCurrentLabel1, QLabel#generalCurrentLabel2, QLabel#generalCurrentLabel3,"
-        "QLabel#generalTempLabel1, QLabel#generalTempLabel2, QLabel#generalTempLabel3,"
-        "QLabel#detailedTabPlaceholderLabel {"
-        "  color: palette(window-text);"
-        "}"
-        "QWidget#detailedTab {"
-        "  background-color: palette(window);"
-        "}"
-        "QFrame#detailedControlsFrame {"
-        "  background-color: palette(base);"
-        "  border: 1px solid #c8c8c8;"
-        "}"
-        "QTabWidget#detailedChargerTabWidget::pane {"
-        "  border: 1px solid #c8c8c8;"
-        "  background-color: palette(base);"
-        "}"
-        "QDoubleSpinBox#detailedSetpointSpinBox {"
-        "  min-height: 30px;"
-        "  background-color: white;"
-        "  border: 1px solid #b8b8b8;"
-        "  padding: 2px 8px;"
-        "}"
-        "QPushButton#detailedSetpointMinusButton, QPushButton#detailedSetpointPlusButton {"
-        "  min-height: 30px;"
-        "  min-width: 34px;"
-        "  background-color: white;"
-        "  border: 1px solid #b8b8b8;"
-        "  font-weight: 700;"
-        "}"
-        "QPushButton#detailedSetSetpointButton {"
-        "  min-height: 30px;"
-        "  background-color: white;"
-        "  border: 1px solid #b8b8b8;"
-        "  padding: 0 12px;"
-        "}"
-        "QPushButton#detailedModeCcButton, QPushButton#detailedModeCvButton {"
-        "  min-height: 30px;"
-        "  min-width: 58px;"
-        "  background-color: white;"
-        "  border: 1px solid #b8b8b8;"
-        "  font-weight: 600;"
-        "}"
-        "QPushButton#detailedModeCcButton:checked, QPushButton#detailedModeCvButton:checked {"
-        "  background-color: #e9e9e9;"
-        "  color: palette(button-text);"
-        "  border: 1px solid #9d9d9d;"
-        "}"
-        "QPushButton#detailedStartButton, QPushButton#detailedStopButton {"
-        "  min-height: 32px;"
-        "}"
-    );
+    setStyleSheet("QWidget#comsStatusRoot {"
+                  "  background-color: palette(window);"
+                  "}"
+                  "QLabel#slotStatusLabel1, QLabel#slotStatusLabel2, QLabel#slotStatusLabel3 {"
+                  "  color: palette(window-text);"
+                  "  line-height: 1.35;"
+                  "}"
+                  "QFrame#generalColumn1, QFrame#generalColumn2, QFrame#generalColumn3 {"
+                  "  background-color: palette(base);"
+                  "  border: 1px solid #c8c8c8;"
+                  "}"
+                  "QLabel#generalTitleLabel1, QLabel#generalTitleLabel2, QLabel#generalTitleLabel3 {"
+                  "  color: palette(window-text);"
+                  "  font-weight: 600;"
+                  "}"
+                  "QLabel#generalVoltageLabel1, QLabel#generalVoltageLabel2, QLabel#generalVoltageLabel3,"
+                  "QLabel#generalCurrentLabel1, QLabel#generalCurrentLabel2, QLabel#generalCurrentLabel3,"
+                  "QLabel#generalTempLabel1, QLabel#generalTempLabel2, QLabel#generalTempLabel3,"
+                  "QLabel#detailedTabPlaceholderLabel {"
+                  "  color: palette(window-text);"
+                  "}"
+                  "QWidget#detailedTab {"
+                  "  background-color: palette(window);"
+                  "}"
+                  "QFrame#detailedControlsFrame {"
+                  "  background-color: palette(base);"
+                  "  border: 1px solid #c8c8c8;"
+                  "}"
+                  "QTabWidget#detailedChargerTabWidget::pane {"
+                  "  border: 1px solid #c8c8c8;"
+                  "  background-color: palette(base);"
+                  "}"
+                  "QDoubleSpinBox#detailedSetpointSpinBox {"
+                  "  min-height: 30px;"
+                  "  background-color: white;"
+                  "  border: 1px solid #b8b8b8;"
+                  "  padding: 2px 8px;"
+                  "}"
+                  "QPushButton#detailedSetpointMinusButton, QPushButton#detailedSetpointPlusButton {"
+                  "  min-height: 30px;"
+                  "  min-width: 34px;"
+                  "  background-color: white;"
+                  "  border: 1px solid #b8b8b8;"
+                  "  font-weight: 700;"
+                  "}"
+                  "QPushButton#detailedSetSetpointButton {"
+                  "  min-height: 30px;"
+                  "  background-color: white;"
+                  "  border: 1px solid #b8b8b8;"
+                  "  padding: 0 12px;"
+                  "}"
+                  "QPushButton#detailedModeCcButton, QPushButton#detailedModeCvButton {"
+                  "  min-height: 30px;"
+                  "  min-width: 58px;"
+                  "  background-color: white;"
+                  "  border: 1px solid #b8b8b8;"
+                  "  font-weight: 600;"
+                  "}"
+                  "QPushButton#detailedModeCcButton:checked, QPushButton#detailedModeCvButton:checked {"
+                  "  background-color: #e9e9e9;"
+                  "  color: palette(button-text);"
+                  "  border: 1px solid #9d9d9d;"
+                  "}"
+                  "QPushButton#detailedStartButton, QPushButton#detailedStopButton {"
+                  "  min-height: 32px;"
+                  "}");
     setupTabWidget();
     setupCommandButtons();
     setupDetailedControls();
@@ -134,10 +130,7 @@ ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
         m_slots[static_cast<size_t>(i)].led->setProperty("active", false);
 
         connect(m_slots[static_cast<size_t>(i)].timer, &QTimer::timeout, this,
-                [this, i]()
-                {
-                    applySlotState(i, false);
-                });
+                [this, i]() { applySlotState(i, false); });
     }
 
     clearSlots();
@@ -149,21 +142,15 @@ ChargerStatusWidget::ChargerStatusWidget(QWidget *parent)
                 if (!lower.contains("coms:"))
                     return;
 
-                if (lower.contains("disconnected") ||
-                    lower.contains("connection failed") ||
-                    lower.contains("no pcp") ||
-                    lower.contains("no devices") ||
-                    lower.contains("error"))
+                if (lower.contains("disconnected") || lower.contains("connection failed") || lower.contains("no pcp") ||
+                    lower.contains("no devices") || lower.contains("error"))
                 {
                     clearSlots();
                 }
             });
 
     connect(&Logger::instance(), &Logger::newDecodedMessage, this,
-            [this](const QString& message)
-            {
-                processDecodedMessage(message);
-            });
+            [this](const QString& message) { processDecodedMessage(message); });
 }
 
 ChargerStatusWidget::~ChargerStatusWidget()
@@ -223,7 +210,7 @@ void ChargerStatusWidget::setupDetailedControls()
 
     ui->detailedChargerTabWidget->tabBar()->setExpanding(false);
 
-    auto *modeGroup = new QButtonGroup(this);
+    auto* modeGroup = new QButtonGroup(this);
     modeGroup->setExclusive(true);
     modeGroup->addButton(ui->detailedModeCcButton, 0);
     modeGroup->addButton(ui->detailedModeCvButton, 1);
@@ -261,15 +248,9 @@ void ChargerStatusWidget::setupDetailedControls()
                 if (ui->detailedSetpointSpinBox)
                     ui->detailedSetpointSpinBox->stepUp();
             });
-    connect(ui->detailedSetSetpointButton, &QPushButton::clicked, this,
-            [this]()
-            {
-                emitDetailedCommand(true);
-            });
-    connect(ui->detailedStartButton, &QPushButton::clicked, this,
-            [this]() { emitDetailedCommand(true); });
-    connect(ui->detailedStopButton, &QPushButton::clicked, this,
-            [this]() { emitDetailedCommand(false); });
+    connect(ui->detailedSetSetpointButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(true); });
+    connect(ui->detailedStartButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(true); });
+    connect(ui->detailedStopButton, &QPushButton::clicked, this, [this]() { emitDetailedCommand(false); });
 }
 
 uint32_t ChargerStatusWidget::selectedDetailedChargerId() const
@@ -321,7 +302,7 @@ void ChargerStatusWidget::clearSlots()
         applySlotState(i, false);
     }
 
-    for (ChargerHistoryPlotWidget *plot : m_historyPlots)
+    for (ChargerHistoryPlotWidget* plot : m_historyPlots)
     {
         if (plot)
             plot->clearHistory();
@@ -334,14 +315,12 @@ void ChargerStatusWidget::applySlotState(int slotIndex, bool active)
     if (slotIndex < 0 || slotIndex >= static_cast<int>(m_slots.size()))
         return;
 
-    QWidget *led = m_slots[static_cast<size_t>(slotIndex)].led;
+    QWidget* led = m_slots[static_cast<size_t>(slotIndex)].led;
     if (led)
     {
         led->setProperty("active", active);
-        led->setStyleSheet(
-            active
-                ? "background-color: #35b56a; border: 1px solid #1f7a45; border-radius: 13px;"
-                : "background-color: #d95c5c; border: 1px solid #7b1f1f; border-radius: 13px;");
+        led->setStyleSheet(active ? "background-color: #35b56a; border: 1px solid #1f7a45; border-radius: 13px;"
+                                  : "background-color: #d95c5c; border: 1px solid #7b1f1f; border-radius: 13px;");
         led->style()->unpolish(led);
         led->style()->polish(led);
         led->update();
@@ -373,19 +352,15 @@ int ChargerStatusWidget::slotIndexForDevice(uint32_t deviceId)
     return -1;
 }
 
-void ChargerStatusWidget::updateSlotLabel(int slotIndex,
-                                          const QString& voltText,
-                                          const QString& currentText,
-                                          const QString& tempText,
-                                          const QString& statusText)
+void ChargerStatusWidget::updateSlotLabel(int slotIndex, const QString& voltText, const QString& currentText,
+                                          const QString& tempText, const QString& statusText)
 {
     if (slotIndex < 0 || slotIndex >= static_cast<int>(m_slots.size()))
         return;
 
     SlotWidgets& slot = m_slots[static_cast<size_t>(slotIndex)];
     if (slot.overviewLabel)
-        slot.overviewLabel->setText(
-            ChargerStatusLogic::overviewMarkup(voltText, currentText, tempText, statusText));
+        slot.overviewLabel->setText(ChargerStatusLogic::overviewMarkup(voltText, currentText, tempText, statusText));
 
     if (slot.generalTitleLabel)
     {
@@ -408,7 +383,7 @@ void ChargerStatusWidget::markSlotFresh(int slotIndex)
 
     applySlotState(slotIndex, true);
 
-    QTimer *timer = m_slots[static_cast<size_t>(slotIndex)].timer;
+    QTimer* timer = m_slots[static_cast<size_t>(slotIndex)].timer;
     if (timer)
         timer->start(kFreshTimeoutMs);
 }
@@ -426,21 +401,16 @@ void ChargerStatusWidget::emitCommandForSlot(int slotIndex, int mode, bool start
 
 void ChargerStatusWidget::emitDetailedCommand(bool start)
 {
-    if (!ui->detailedSetpointSpinBox || !ui->detailedModeCcButton ||
-        !ui->detailedModeCvButton)
+    if (!ui->detailedSetpointSpinBox || !ui->detailedModeCcButton || !ui->detailedModeCvButton)
         return;
 
     const ChargerStatusCommand command =
-        ChargerStatusLogic::detailedCommand(
-            selectedDetailedChargerId(),
-            ui->detailedModeCvButton->isChecked(),
-            ui->detailedSetpointSpinBox->value(),
-            start);
+        ChargerStatusLogic::detailedCommand(selectedDetailedChargerId(), ui->detailedModeCvButton->isChecked(),
+                                            ui->detailedSetpointSpinBox->value(), start);
     emit commandRequested(command.chargerId, command.mode, command.start, command.setpoint);
 }
 
-void ChargerStatusWidget::appendHistorySample(uint32_t chargerId,
-                                              const QMap<QString, QString>& signalValues)
+void ChargerStatusWidget::appendHistorySample(uint32_t chargerId, const QMap<QString, QString>& signalValues)
 {
     double voltage = 0.0;
     double current = 0.0;
@@ -454,7 +424,7 @@ void ChargerStatusWidget::appendHistorySample(uint32_t chargerId,
         return;
 
     const double elapsedSeconds = static_cast<double>(m_historyTimer.elapsed()) / 1000.0;
-    for (ChargerHistoryPlotWidget *plot : m_historyPlots)
+    for (ChargerHistoryPlotWidget* plot : m_historyPlots)
     {
         if (plot)
             plot->appendSample(chargerId, elapsedSeconds, voltage, current);
@@ -472,11 +442,6 @@ void ChargerStatusWidget::processDecodedMessage(const QString& message)
         return;
 
     appendHistorySample(parsed.chargerId, parsed.signalValues);
-    updateSlotLabel(
-        slotIndex,
-        parsed.voltageText,
-        parsed.currentText,
-        parsed.tempText,
-        parsed.statusText);
+    updateSlotLabel(slotIndex, parsed.voltageText, parsed.currentText, parsed.tempText, parsed.statusText);
     markSlotFresh(slotIndex);
 }

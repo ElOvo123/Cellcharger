@@ -11,14 +11,9 @@ class ComsController : public QObject
     Q_OBJECT
 
 public:
-    explicit ComsController(Coms *view,
-                            const PCPDatabase* pcpDatabase,
-                            QObject *parent = nullptr);
+    explicit ComsController(Coms* view, const PCPDatabase* pcpDatabase, QObject* parent = nullptr);
 
-    bool sendChargerCommand(uint32_t chargerId,
-                            int mode,
-                            bool start,
-                            double setpoint);
+    bool sendChargerCommand(uint32_t chargerId, int mode, bool start, double setpoint);
 
 private slots:
     void onTypeChanged(int index);
@@ -42,7 +37,7 @@ private:
     void refreshOverallIndicator();
 
 private:
-    Coms *m_view;
+    Coms* m_view;
     const PCPDatabase* m_pcpDatabase = nullptr;
     QList<ConnectionEntry> m_connections;
 };

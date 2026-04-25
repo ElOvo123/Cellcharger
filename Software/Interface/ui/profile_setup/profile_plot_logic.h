@@ -36,15 +36,11 @@ public:
     static std::vector<Setpoint> normalizedPlotPoints(const std::vector<Setpoint>& setpoints);
     static double valueForDisplay(const Setpoint& setpoint, ProfilePlotWidget::DisplayMode mode);
     static QString displayLabel(ProfilePlotWidget::DisplayMode mode);
-    static ProfilePlotBounds computeBounds(const std::vector<Setpoint>& setpoints,
-                                           ProfilePlotWidget::DisplayMode mode);
+    static ProfilePlotBounds computeBounds(const std::vector<Setpoint>& setpoints, ProfilePlotWidget::DisplayMode mode);
     static ProfilePlotViewState normalizedViewState(const ProfilePlotViewState& current);
     static ProfilePlotViewState defaultViewState(const ProfilePlotBounds& bounds);
-    static std::optional<ProfilePlotViewState> zoomedViewState(const QRect& plotRect,
-                                                               const QPointF& position,
-                                                               int angleDeltaY,
-                                                               const ProfilePlotViewState& current);
-    static std::optional<ProfilePlotViewState> selectedViewState(const QRect& plotRect,
-                                                                 const QRect& selectionRect,
+    static std::optional<ProfilePlotViewState> zoomedViewState(const QRect& plotRect, const QPointF& position,
+                                                               int angleDeltaY, const ProfilePlotViewState& current);
+    static std::optional<ProfilePlotViewState> selectedViewState(const QRect& plotRect, const QRect& selectionRect,
                                                                  const ProfilePlotViewState& current);
 };
