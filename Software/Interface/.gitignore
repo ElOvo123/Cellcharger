@@ -1,11 +1,15 @@
 # Build artifacts
 build/
 build-coverage/
+build-release/
 CMakeFiles/
 CMakeCache.txt
+compile_commands.json
 cmake_install.cmake
 coverage-reports/
 *.gcov
+*.gcda
+*.gcno
 
 # Qt / CMake
 *.autosave

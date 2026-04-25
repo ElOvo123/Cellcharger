@@ -15,6 +15,7 @@ target_link_libraries(coms_tests PRIVATE
     Qt6::Widgets
     Qt6::SerialPort
 )
+target_project_warnings(coms_tests)
 
 add_executable(core_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/core_tests.cpp
@@ -41,6 +42,7 @@ target_link_libraries(core_tests PRIVATE
     Qt6::Core
     yaml-cpp
 )
+target_project_warnings(core_tests)
 
 add_test(NAME coms_tests COMMAND coms_tests)
 set_tests_properties(coms_tests PROPERTIES
@@ -81,6 +83,7 @@ target_link_libraries(backend_coms_tests PRIVATE
     Qt6::SerialPort
     yaml-cpp
 )
+target_project_warnings(backend_coms_tests)
 
 add_test(NAME backend_coms_tests COMMAND backend_coms_tests)
 set_tests_properties(backend_coms_tests PROPERTIES
@@ -142,6 +145,7 @@ target_link_libraries(widget_tests PRIVATE
     Qt6::Widgets
     yaml-cpp
 )
+target_project_warnings(widget_tests)
 
 add_test(NAME widget_tests COMMAND widget_tests)
 set_tests_properties(widget_tests PROPERTIES
@@ -175,6 +179,7 @@ target_link_libraries(profile_setup_tests PRIVATE
     Qt6::Widgets
     yaml-cpp
 )
+target_project_warnings(profile_setup_tests)
 
 add_test(NAME profile_setup_tests COMMAND profile_setup_tests)
 set_tests_properties(profile_setup_tests PROPERTIES
@@ -226,6 +231,7 @@ target_link_libraries(integration_tests PRIVATE
     yaml-cpp
     profile_setup
 )
+target_project_warnings(integration_tests)
 
 add_test(NAME integration_tests COMMAND integration_tests)
 set_tests_properties(integration_tests PROPERTIES
@@ -320,9 +326,31 @@ target_link_libraries(smoke_tests PRIVATE
     yaml-cpp
     profile_setup
 )
+target_project_warnings(smoke_tests)
 
 add_test(NAME smoke_tests COMMAND smoke_tests)
 set_tests_properties(smoke_tests PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+set_tests_properties(
+    coms_tests
+    core_tests
+    backend_coms_tests
+    widget_tests
+    profile_setup_tests
+    PROPERTIES
+        LABELS "unit"
+        TIMEOUT 30
+)
+
+set_tests_properties(integration_tests PROPERTIES
+    LABELS "integration"
+    TIMEOUT 30
+)
+
+set_tests_properties(smoke_tests PROPERTIES
+    LABELS "smoke"
+    TIMEOUT 30
 )

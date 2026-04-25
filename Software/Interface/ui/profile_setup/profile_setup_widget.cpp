@@ -653,7 +653,6 @@ void ProfileSetupWidget::updateActiveStepIndicator(int slotIndex)
     runtime.table->selectRow(row);
     runtime.activeRow = row;
 
-    const auto *timeSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 1));
     const auto *voltSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 2));
     const auto *currSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 3));
     const auto *tempSpin = qobject_cast<QDoubleSpinBox*>(runtime.table->cellWidget(row, 4));
