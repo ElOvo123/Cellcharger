@@ -52,9 +52,8 @@ bool CsvLogWriter::append(const LogRecord& record, QString* errorMessage)
 
     QTextStream out(&m_file);
     out << record.timestampMs << ',' << record.cycleIndex << ',' << record.stepIndex << ',' << record.stepName << ','
-        << QString::number(record.sample.voltageV, 'f', 6) << ','
-        << QString::number(record.sample.currentA, 'f', 6) << ','
-        << QString::number(record.sample.temperatureDegC, 'f', 3) << ','
+        << QString::number(record.sample.voltageV, 'f', 6) << ',' << QString::number(record.sample.currentA, 'f', 6)
+        << ',' << QString::number(record.sample.temperatureDegC, 'f', 3) << ','
         << QString::number(record.sample.pressureBar, 'f', 6) << ',' << QString::number(record.capacityAh, 'f', 9)
         << ',' << QString::number(record.energyWh, 'f', 9) << '\n';
     return true;

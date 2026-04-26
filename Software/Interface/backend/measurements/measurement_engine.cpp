@@ -58,7 +58,8 @@ IntegrationState CapacityIntegrator::state() const
     return m_state;
 }
 
-bool InternalResistanceCalculator::pulseParametersValid(double pulseCurrentA, double pulseWidthMs, QString* errorMessage)
+bool InternalResistanceCalculator::pulseParametersValid(double pulseCurrentA, double pulseWidthMs,
+                                                        QString* errorMessage)
 {
     if (pulseCurrentA < SystemRequirements::pulseCurrentRangeA.min ||
         pulseCurrentA > SystemRequirements::pulseCurrentRangeA.max)

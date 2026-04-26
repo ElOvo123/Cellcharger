@@ -48,9 +48,8 @@ bool TestRecipeValidator::validate(const TestRecipe& recipe, QString* errorMessa
             return false;
         }
 
-        if (step.stop.temperatureEnabled &&
-            (step.stop.temperatureDegC < SystemRequirements::temperatureRangeDegC.min ||
-             step.stop.temperatureDegC > SystemRequirements::temperatureRangeDegC.max))
+        if (step.stop.temperatureEnabled && (step.stop.temperatureDegC < SystemRequirements::temperatureRangeDegC.min ||
+                                             step.stop.temperatureDegC > SystemRequirements::temperatureRangeDegC.max))
         {
             if (errorMessage)
                 *errorMessage = "temperature condition is outside SRS range";
