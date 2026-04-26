@@ -4,6 +4,7 @@
 #include "profile_setup_logic.h"
 #include "profile_yaml_logic.h"
 #include "logger_backend.h"
+#include "system_requirements.h"
 
 #include <QComboBox>
 #include <QFile>
@@ -22,6 +23,22 @@
 
 namespace
 {
+QString commandModeName(int mode)
+{
+    switch (mode)
+    {
+        case SystemRequirements::commandModeCV:
+            return "CV";
+        case SystemRequirements::commandModeCP:
+            return "CP";
+        case SystemRequirements::commandModeCR:
+            return "CR";
+        case SystemRequirements::commandModeCC:
+        default:
+            return "CC";
+    }
+}
+
 QIcon makeActiveStepIcon()
 {
     QPixmap pixmap(14, 14);
@@ -272,21 +289,28 @@ void ProfileSetupWidget::addSetpointRow(int slotIndex, int rowIndex)
 
     auto* timeSpin = new QDoubleSpinBox();
     timeSpin->setRange(0, 3600);
+    timeSpin->setDecimals(3);
     timeSpin->setValue(prevTime + 60.0);
     table->setCellWidget(rowIndex, 1, timeSpin);
 
     auto* voltSpin = new QDoubleSpinBox();
-    voltSpin->setRange(0, 100);
+    voltSpin->setRange(SystemRequirements::voltageRangeV.min, SystemRequirements::voltageRangeV.max);
+    voltSpin->setDecimals(3);
+    voltSpin->setSingleStep(SystemRequirements::resolution.voltageV);
     voltSpin->setValue(prevVolt);
     table->setCellWidget(rowIndex, 2, voltSpin);
 
     auto* currSpin = new QDoubleSpinBox();
-    currSpin->setRange(0, 50);
+    currSpin->setRange(SystemRequirements::currentRangeA.min, SystemRequirements::currentRangeA.max);
+    currSpin->setDecimals(1);
+    currSpin->setSingleStep(SystemRequirements::resolution.currentA);
     currSpin->setValue(prevCurr);
     table->setCellWidget(rowIndex, 3, currSpin);
 
     auto* tempSpin = new QDoubleSpinBox();
-    tempSpin->setRange(0, 100);
+    tempSpin->setRange(SystemRequirements::temperatureRangeDegC.min, SystemRequirements::temperatureRangeDegC.max);
+    tempSpin->setDecimals(1);
+    tempSpin->setSingleStep(SystemRequirements::resolution.temperatureDegC);
     tempSpin->setValue(prevTemp);
     table->setCellWidget(rowIndex, 4, tempSpin);
 
@@ -421,24 +445,31 @@ void ProfileSetupWidget::applySetpointsToTable(QTableWidget* table, const std::v
 
         auto* timeSpin = new QDoubleSpinBox();
         timeSpin->setRange(0, 3600);
+        timeSpin->setDecimals(3);
         timeSpin->setValue(point.time);
         table->setCellWidget(row, 1, timeSpin);
         connect(timeSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
 
         auto* voltSpin = new QDoubleSpinBox();
-        voltSpin->setRange(0, 100);
+        voltSpin->setRange(SystemRequirements::voltageRangeV.min, SystemRequirements::voltageRangeV.max);
+        voltSpin->setDecimals(3);
+        voltSpin->setSingleStep(SystemRequirements::resolution.voltageV);
         voltSpin->setValue(point.voltage);
         table->setCellWidget(row, 2, voltSpin);
         connect(voltSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
 
         auto* currSpin = new QDoubleSpinBox();
-        currSpin->setRange(0, 50);
+        currSpin->setRange(SystemRequirements::currentRangeA.min, SystemRequirements::currentRangeA.max);
+        currSpin->setDecimals(1);
+        currSpin->setSingleStep(SystemRequirements::resolution.currentA);
         currSpin->setValue(point.current);
         table->setCellWidget(row, 3, currSpin);
         connect(currSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
 
         auto* tempSpin = new QDoubleSpinBox();
-        tempSpin->setRange(0, 100);
+        tempSpin->setRange(SystemRequirements::temperatureRangeDegC.min, SystemRequirements::temperatureRangeDegC.max);
+        tempSpin->setDecimals(1);
+        tempSpin->setSingleStep(SystemRequirements::resolution.temperatureDegC);
         tempSpin->setValue(point.temperature);
         table->setCellWidget(row, 4, tempSpin);
         connect(tempSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), this, updateSlot);
@@ -781,7 +812,7 @@ void ProfileSetupWidget::updateActiveStepIndicator(int slotIndex)
             .arg(currSpin ? QString::number(currSpin->value(), 'f', 3) : QString("--"))
             .arg(tempSpin ? QString::number(tempSpin->value(), 'f', 1) : QString("--"))
             .arg(curveCombo ? curveCombo->currentText() : QString("--"))
-            .arg(mode == 1 ? QString("CV") : QString("CC"))
+            .arg(commandModeName(mode))
             .arg(QString::number(setpoint, 'f', 3));
 
     std::cout << message.toStdString() << std::endl;

@@ -22,4 +22,5 @@ target_link_libraries(profile_setup
 target_include_directories(profile_setup PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/backend/logger
+    ${CMAKE_SOURCE_DIR}/backend/requirements
 )

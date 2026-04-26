@@ -81,8 +81,8 @@ devices:
 
       command:
         message_id: 20
-        dlc: 4
-        # mode: 0 = cc, 1 = cv, 2 = ir, 3 = ecm, 4 = capacity
+        dlc: 5
+        # mode: 0 = cc, 1 = cv, 2 = cp, 3 = cr
         # start: 0 = stop, 1 = start
         signals:
           charger_id:
@@ -99,12 +99,12 @@ devices:
             offset: 0.0
           setpoint:
             start_bit: 11
-            bit_length: 16
-            signed: false
+            bit_length: 24
+            signed: true
             scale: 0.001
             offset: 0.0
           start:
-            start_bit: 27
+            start_bit: 35
             bit_length: 1
             signed: false
             scale: 1.0

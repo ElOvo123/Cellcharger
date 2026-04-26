@@ -172,6 +172,7 @@ add_executable(profile_setup_tests
 target_include_directories(profile_setup_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/ui/profile_setup
     ${CMAKE_SOURCE_DIR}/backend/logger
+    ${CMAKE_SOURCE_DIR}/backend/requirements
 )
 
 target_link_libraries(profile_setup_tests PRIVATE
@@ -217,6 +218,7 @@ add_executable(integration_tests
 target_include_directories(integration_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/backend/coms
     ${CMAKE_SOURCE_DIR}/backend/logger
+    ${CMAKE_SOURCE_DIR}/backend/requirements
     ${CMAKE_SOURCE_DIR}/backend/pcp
     ${CMAKE_SOURCE_DIR}/controller/coms
     ${CMAKE_SOURCE_DIR}/ui/coms
@@ -235,6 +237,69 @@ target_project_warnings(integration_tests)
 
 add_test(NAME integration_tests COMMAND integration_tests)
 set_tests_properties(integration_tests PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+add_executable(requirements_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/requirements_tests.cpp
+    ${CMAKE_SOURCE_DIR}/backend/logger/logger_backend.cpp
+    ${CMAKE_SOURCE_DIR}/backend/pcp/pcp_database.cpp
+)
+
+target_include_directories(requirements_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/backend/pcp
+    ${CMAKE_SOURCE_DIR}/backend/logger
+    ${CMAKE_SOURCE_DIR}/backend/requirements
+    ${CMAKE_SOURCE_DIR}/ui/profile_setup
+)
+
+target_compile_definitions(requirements_tests PRIVATE
+    REQUIREMENTS_DOC_PATH="${CMAKE_SOURCE_DIR}/docs/SYSTEM_REQUIREMENTS.md"
+)
+
+target_link_libraries(requirements_tests PRIVATE
+    Qt6::Test
+    Qt6::Widgets
+    yaml-cpp
+    profile_setup
+)
+target_project_warnings(requirements_tests)
+
+add_test(NAME requirements_tests COMMAND requirements_tests)
+set_tests_properties(requirements_tests PROPERTIES
+    LABELS requirements
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+add_executable(software_requirements_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/software_requirements_tests.cpp
+    ${CMAKE_SOURCE_DIR}/backend/calibration/calibration.cpp
+    ${CMAKE_SOURCE_DIR}/backend/data_management/data_log_writer.cpp
+    ${CMAKE_SOURCE_DIR}/backend/measurements/measurement_engine.cpp
+    ${CMAKE_SOURCE_DIR}/backend/safety/safety_monitor.cpp
+    ${CMAKE_SOURCE_DIR}/backend/test_recipe/test_recipe.cpp
+)
+
+target_include_directories(software_requirements_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/backend/calibration
+    ${CMAKE_SOURCE_DIR}/backend/data_management
+    ${CMAKE_SOURCE_DIR}/backend/measurements
+    ${CMAKE_SOURCE_DIR}/backend/requirements
+    ${CMAKE_SOURCE_DIR}/backend/safety
+    ${CMAKE_SOURCE_DIR}/backend/test_recipe
+)
+
+target_link_libraries(software_requirements_tests PRIVATE
+    Qt6::Test
+    Qt6::Core
+)
+target_project_warnings(software_requirements_tests)
+
+add_test(NAME software_requirements_tests COMMAND software_requirements_tests)
+set_tests_properties(software_requirements_tests PROPERTIES
+    LABELS requirements
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )

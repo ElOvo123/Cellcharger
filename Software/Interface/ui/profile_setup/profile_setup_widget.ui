@@ -61,22 +61,22 @@
           <widget class="QComboBox" name="controlModeComboBox1">
            <item>
             <property name="text">
-             <string>All Parameters</string>
+             <string>CC</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Voltage Only</string>
+             <string>CV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Current Only</string>
+             <string>CP</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Temperature Only</string>
+             <string>CR</string>
             </property>
            </item>
           </widget>
@@ -246,22 +246,22 @@
           <widget class="QComboBox" name="controlModeComboBox2">
            <item>
             <property name="text">
-             <string>All Parameters</string>
+             <string>CC</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Voltage Only</string>
+             <string>CV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Current Only</string>
+             <string>CP</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Temperature Only</string>
+             <string>CR</string>
             </property>
            </item>
           </widget>
@@ -431,22 +431,22 @@
           <widget class="QComboBox" name="controlModeComboBox3">
            <item>
             <property name="text">
-             <string>All Parameters</string>
+             <string>CC</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Voltage Only</string>
+             <string>CV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Current Only</string>
+             <string>CP</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Temperature Only</string>
+             <string>CR</string>
             </property>
            </item>
           </widget>

@@ -3,6 +3,7 @@
 #include "coms_backend.h"
 #include "logger_backend.h"
 #include "simulated_coms_backend.h"
+#include "system_requirements.h"
 
 #include <cmath>
 #include <iostream>
@@ -37,6 +38,20 @@ bool physicalValueFitsSignal(double physicalValue, const PCPSignalDefinition& si
 
     const double maxVal = static_cast<double>((1ULL << signal.bitLength) - 1ULL);
     return rounded >= 0.0 && rounded <= maxVal;
+}
+
+bool supportedCommandMode(int mode)
+{
+    return mode == SystemRequirements::commandModeCC || mode == SystemRequirements::commandModeCV ||
+           mode == SystemRequirements::commandModeCP || mode == SystemRequirements::commandModeCR;
+}
+
+bool setpointFitsCommandMode(int mode, double setpoint)
+{
+    if (mode == SystemRequirements::commandModeCV)
+        return setpoint >= SystemRequirements::voltageRangeV.min && setpoint <= SystemRequirements::voltageRangeV.max;
+
+    return setpoint >= SystemRequirements::currentRangeA.min && setpoint <= SystemRequirements::currentRangeA.max;
 }
 } // namespace
 
@@ -229,6 +244,20 @@ bool ComsController::validateChargerCommand(uint32_t chargerId, int mode, bool s
     {
         if (errorMessage)
             *errorMessage = "setpoint must be finite";
+        return false;
+    }
+
+    if (!supportedCommandMode(mode))
+    {
+        if (errorMessage)
+            *errorMessage = "mode is not supported";
+        return false;
+    }
+
+    if (!setpointFitsCommandMode(mode, setpoint))
+    {
+        if (errorMessage)
+            *errorMessage = "setpoint is outside the supported range for mode";
         return false;
     }
 

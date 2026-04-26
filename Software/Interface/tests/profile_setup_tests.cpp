@@ -375,7 +375,7 @@ void ProfileSetupTests::profileSetupWidget_serializesAndLoadsYaml()
     QCOMPARE(restoredControlModeComboBox1->currentIndex(), 2);
     QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 1))->value(), 12.0);
     QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 2))->value(), 4.15);
-    QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 3))->value(), 1.75);
+    QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 3))->value(), 1.8);
     QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 4))->value(), 28.5);
     QCOMPARE(qobject_cast<QComboBox*>(restoredTable1->cellWidget(0, 5))->currentText(), QString("Exponential"));
     QCOMPARE(qobject_cast<QDoubleSpinBox*>(restoredTable1->cellWidget(0, 6))->value(), 0.5);
@@ -395,10 +395,10 @@ void ProfileSetupTests::profileSetupWidget_tracksActiveStepAndLogsProgress()
 
     auto* controlModeComboBox1 = widget.findChild<QComboBox*>("controlModeComboBox1");
     QVERIFY(controlModeComboBox1 != nullptr);
-    controlModeComboBox1->setCurrentIndex(2);
+    controlModeComboBox1->setCurrentIndex(0);
     qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 1))->setValue(1.0);
     qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 1))->setValue(2.0);
-    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 3))->setValue(1.25);
+    qobject_cast<QDoubleSpinBox*>(table1->cellWidget(0, 3))->setValue(1.3);
     qobject_cast<QDoubleSpinBox*>(table1->cellWidget(1, 3))->setValue(2.50);
 
     const int historyBefore = Logger::instance().statusHistory().size();
@@ -422,15 +422,15 @@ void ProfileSetupTests::profileSetupWidget_tracksActiveStepAndLogsProgress()
     QVERIFY(table1->item(1, 0)->icon().isNull());
     QVERIFY(plot1->m_activeStepVisible);
     QCOMPARE(plot1->m_activeStepTime, 1.0);
-    QCOMPARE(plot1->m_activeStepValue, 1.25);
+    QCOMPARE(plot1->m_activeStepValue, 1.3);
     QCOMPARE(plot1->m_activeStepVoltage, 4.2);
-    QCOMPARE(plot1->m_activeStepCurrent, 1.25);
+    QCOMPARE(plot1->m_activeStepCurrent, 1.3);
     QCOMPARE(plot1->m_activeStepTemperature, 25.0);
     QVERIFY(commandSpy.count() >= 2);
     QCOMPARE(commandSpy.at(1).at(0).toUInt(), 1u);
     QCOMPARE(commandSpy.at(1).at(1).toInt(), 0);
     QCOMPARE(commandSpy.at(1).at(2).toBool(), true);
-    QCOMPARE(commandSpy.at(1).at(3).toDouble(), 1.25);
+    QCOMPARE(commandSpy.at(1).at(3).toDouble(), 1.3);
 
     QTest::qWait(1100);
 
@@ -540,7 +540,7 @@ void ProfileSetupTests::profileSetupWidget_helpersCoverInvalidYamlAndFallbacks()
     controlModeComboBox1->setCurrentIndex(1);
     QCOMPARE(widget.commandModeForSlot(1), 1);
     controlModeComboBox1->setCurrentIndex(3);
-    QCOMPARE(widget.commandModeForSlot(1), 0);
+    QCOMPARE(widget.commandModeForSlot(1), 3);
 
     widget.addSetpoint1();
     auto* table1 = widget.findChild<QTableWidget*>("setpointsTable1");
@@ -609,11 +609,11 @@ void ProfileSetupTests::profileSetupWidget_exercisesAdditionalSlotBranches()
     qobject_cast<QDoubleSpinBox*>(table3->cellWidget(0, 2))->setValue(4.15);
     qobject_cast<QDoubleSpinBox*>(table3->cellWidget(0, 3))->setValue(0.75);
     mode3->setCurrentIndex(3);
-    QCOMPARE(widget.commandModeForSlot(3), 0);
+    QCOMPARE(widget.commandModeForSlot(3), 3);
     widget.startTestForSlot(3, table3);
     QVERIFY(widget.m_plotWidget3->m_activeStepVisible);
     QVERIFY(commandSpy.count() >= 1);
-    QCOMPARE(commandSpy.takeLast().at(1).toInt(), 0);
+    QCOMPARE(commandSpy.takeLast().at(1).toInt(), 3);
     widget.stopTestForSlot(3);
     QVERIFY(!widget.m_plotWidget3->m_activeStepVisible);
 
@@ -636,12 +636,12 @@ void ProfileSetupTests::profileSetupLogic_coversNormalizedExecutionBranches()
     QCOMPARE(normalized.front().time, 0.0);
     QCOMPARE(ProfileSetupLogic::normalizedSetpoints({}).size(), size_t(0));
     QCOMPARE(ProfileSetupLogic::normalizedSetpoints({{0.0, 4.0, 1.0, 25.0, "Linear", 1.0}}).size(), size_t(1));
-    QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(0), ProfilePlotWidget::DisplayMode::All);
+    QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(0), ProfilePlotWidget::DisplayMode::Current);
     QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(1), ProfilePlotWidget::DisplayMode::Voltage);
     QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(2), ProfilePlotWidget::DisplayMode::Current);
-    QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(3), ProfilePlotWidget::DisplayMode::Temperature);
+    QCOMPARE(ProfileSetupLogic::displayModeForControlIndex(3), ProfilePlotWidget::DisplayMode::Current);
     QCOMPARE(ProfileSetupLogic::commandModeForControlIndex(1), 1);
-    QCOMPARE(ProfileSetupLogic::commandModeForControlIndex(3), 0);
+    QCOMPARE(ProfileSetupLogic::commandModeForControlIndex(3), 3);
     QCOMPARE(ProfileSetupLogic::activeRowForElapsedSeconds({}, 0), -1);
     QCOMPARE(ProfileSetupLogic::activeRowForElapsedSeconds(raw, 0), 0);
     QCOMPARE(ProfileSetupLogic::activeRowForElapsedSeconds(raw, 11), 2);
@@ -666,7 +666,7 @@ void ProfileSetupTests::profileSetupLogic_coversNormalizedExecutionBranches()
     const ProfileStepState step0 = ProfileSetupLogic::stepStateForElapsedSeconds(raw, 0, 2);
     QVERIFY(step0.valid);
     QCOMPARE(step0.activeRow, 0);
-    QCOMPARE(step0.commandMode, 0);
+    QCOMPARE(step0.commandMode, 2);
     QCOMPARE(step0.markerTime, 0.0);
     QCOMPARE(step0.setpoint, 0.0);
     QVERIFY(!step0.finished);

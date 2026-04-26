@@ -1,4 +1,5 @@
 #include "profile_setup_logic.h"
+#include "system_requirements.h"
 
 #include <algorithm>
 #include <cmath>
@@ -7,12 +8,12 @@ ProfilePlotWidget::DisplayMode ProfileSetupLogic::displayModeForControlIndex(int
 {
     switch (controlModeIndex)
     {
-        case 1:
+        case SystemRequirements::commandModeCV:
             return ProfilePlotWidget::DisplayMode::Voltage;
-        case 2:
+        case SystemRequirements::commandModeCC:
+        case SystemRequirements::commandModeCP:
+        case SystemRequirements::commandModeCR:
             return ProfilePlotWidget::DisplayMode::Current;
-        case 3:
-            return ProfilePlotWidget::DisplayMode::Temperature;
         default:
             return ProfilePlotWidget::DisplayMode::All;
     }
@@ -20,7 +21,18 @@ ProfilePlotWidget::DisplayMode ProfileSetupLogic::displayModeForControlIndex(int
 
 int ProfileSetupLogic::commandModeForControlIndex(int controlModeIndex)
 {
-    return controlModeIndex == 1 ? 1 : 0;
+    switch (controlModeIndex)
+    {
+        case SystemRequirements::commandModeCV:
+            return SystemRequirements::commandModeCV;
+        case SystemRequirements::commandModeCP:
+            return SystemRequirements::commandModeCP;
+        case SystemRequirements::commandModeCR:
+            return SystemRequirements::commandModeCR;
+        case SystemRequirements::commandModeCC:
+        default:
+            return SystemRequirements::commandModeCC;
+    }
 }
 
 std::vector<Setpoint> ProfileSetupLogic::normalizedSetpoints(const std::vector<Setpoint>& setpoints)
@@ -136,8 +148,9 @@ ProfileStepState ProfileSetupLogic::stepStateForElapsedSeconds(const std::vector
     state.commandMode = commandModeForControlIndex(controlModeIndex);
     state.markerTime = static_cast<double>(elapsedSeconds);
 
-    const ProfilePlotWidget::DisplayMode displayMode =
-        state.commandMode == 1 ? ProfilePlotWidget::DisplayMode::Voltage : ProfilePlotWidget::DisplayMode::Current;
+    const ProfilePlotWidget::DisplayMode displayMode = state.commandMode == SystemRequirements::commandModeCV
+                                                           ? ProfilePlotWidget::DisplayMode::Voltage
+                                                           : ProfilePlotWidget::DisplayMode::Current;
     const std::vector<Setpoint> normalized = normalizedSetpoints(rawSetpoints);
     state.markerValue = interpolateProfileValue(normalized, state.markerTime, displayMode);
     state.setpoint = state.markerValue;

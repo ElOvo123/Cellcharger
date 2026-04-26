@@ -8,6 +8,8 @@ Qt/C++ desktop interface for configuring CellCharger communication, monitoring c
 - PCP YAML database loading, encoding, decoding, and formatted console output.
 - Simulated communications backend for local development and automated tests.
 - Profile setup plotting with active markers for voltage, current, and temperature.
+- Requirements baseline covering electrical, measurement, control, environmental,
+  safety, mechanical, calibration, software, reliability, and compliance needs.
 - Unit, integration, smoke, and coverage-gated test workflow.
 
 ## Requirements
@@ -117,6 +119,23 @@ ctest --preset smoke
 - `config/pcp.yaml`: PCP device/message/signal database.
 - `docs/`: development and testing workflow notes.
 - `scripts/`: project tooling, including coverage summary gate.
+
+## System Requirements
+
+The project requirements baseline is maintained in
+[`docs/SYSTEM_REQUIREMENTS.md`](docs/SYSTEM_REQUIREMENTS.md). Requirement IDs are
+stable and should be referenced by future implementation work, automated tests,
+bench validation, calibration records, and release evidence.
+
+`make verify` runs `requirements_tests`, which checks that the SRS requirement
+IDs, interface limits, command modes, and command encoding stay aligned with the
+baseline.
+
+The interface also includes backend acceptance components for software-side
+requirements: capacity/energy integration, IR pulse calculation, CSV and alarm
+logging, recipe validation, safety interlock decisions, and calibration/self-test
+math. Hardware-only electrical, mechanical, thermal, and compliance requirements
+still require external bench or certification evidence.
 
 ## Quality Expectations
 
