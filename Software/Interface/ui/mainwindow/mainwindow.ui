@@ -105,7 +105,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normalon>:/images/chain.png</normalon>
+     <normalon>:/images/mcu.svg</normalon>
     </iconset>
    </property>
   </action>

@@ -5,17 +5,19 @@
 #include <QSizePolicy>
 #include <QtMath>
 
+#include <array>
 #include <cmath>
 
 namespace
 {
-const QColor kCenterColor("#8e99a5");
-const QColor kCenterDarkColor("#556270");
-const QColor kFrameColor("#314252");
-const QColor kFreshSlotColor("#35b56a");
-const QColor kFreshSlotBorderColor("#1f7a45");
-const QColor kIdleSlotColor("#d95c5c");
-const QColor kIdleSlotBorderColor("#7b1f1f");
+const QColor kCenterColor("#e8eef4");
+const QColor kCenterDarkColor("#566575");
+const QColor kFrameColor("#9fb3c5");
+const QColor kFreshSlotColor("#39d98a");
+const QColor kFreshSlotBorderColor("#178858");
+const QColor kIdleSlotColor("#e35d6a");
+const QColor kIdleSlotBorderColor("#8f2f3d");
+const QColor kPinColor("#6f8193");
 } // namespace
 
 ComsActivityWidget::ComsActivityWidget(QWidget* parent) : QWidget(parent)
@@ -75,27 +77,45 @@ void ComsActivityWidget::paintEvent(QPaintEvent* event)
     const QPointF center = bounds.center();
     const qreal side = qMin(bounds.height() * 0.82, bounds.width() * 0.82);
     const QRectF centerSquare(center.x() - side / 2.0, center.y() - side / 2.0, side, side);
-    const QRectF centerInner = centerSquare.adjusted(side * 0.08, side * 0.08, -side * 0.08, -side * 0.08);
+    const QRectF centerInner = centerSquare.adjusted(side * 0.14, side * 0.14, -side * 0.14, -side * 0.14);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(0, 0, 0, 28));
-    painter.drawRoundedRect(centerSquare.translated(side * 0.035, side * 0.045), 10.0, 10.0);
+    painter.drawRect(centerSquare.translated(side * 0.025, side * 0.035));
+
+    painter.setPen(QPen(kPinColor, 2.0, Qt::SolidLine, Qt::SquareCap));
+    const int pinCount = 6;
+    const qreal pinSpacing = centerSquare.width() / (pinCount + 1);
+    const qreal pinLength = side * 0.09;
+    for (int i = 1; i <= pinCount; ++i)
+    {
+        const qreal x = centerSquare.left() + pinSpacing * i;
+        painter.drawLine(QPointF(x, centerSquare.top() - pinLength), QPointF(x, centerSquare.top()));
+        painter.drawLine(QPointF(x, centerSquare.bottom()), QPointF(x, centerSquare.bottom() + pinLength));
+
+        const qreal y = centerSquare.top() + pinSpacing * i;
+        painter.drawLine(QPointF(centerSquare.left() - pinLength, y), QPointF(centerSquare.left(), y));
+        painter.drawLine(QPointF(centerSquare.right(), y), QPointF(centerSquare.right() + pinLength, y));
+    }
 
     painter.setPen(QPen(kFrameColor, 1.6));
     painter.setBrush(kCenterColor);
-    painter.drawRoundedRect(centerSquare, 10.0, 10.0);
+    painter.drawRect(centerSquare);
 
-    painter.setPen(QPen(QColor(255, 255, 255, 90), 1.0));
+    painter.setPen(QPen(QColor(255, 255, 255, 150), 1.0));
     painter.setBrush(Qt::NoBrush);
-    painter.drawRoundedRect(centerInner, 8.0, 8.0);
+    painter.drawRect(centerInner);
 
     painter.setPen(QPen(kCenterDarkColor, 1.2));
-    const qreal ventLeft = centerInner.left() + centerInner.width() * 0.18;
-    const qreal ventRight = centerInner.right() - centerInner.width() * 0.18;
-    for (int i = 0; i < 3; ++i)
+    painter.drawText(centerInner, Qt::AlignCenter, "MCU");
+
+    const qreal traceLeft = centerSquare.left() + centerSquare.width() * 0.16;
+    const qreal traceRight = centerSquare.right() - centerSquare.width() * 0.16;
+    for (int i = 0; i < 2; ++i)
     {
-        const qreal y = centerInner.top() + centerInner.height() * (0.28 + i * 0.18);
-        painter.drawLine(QPointF(ventLeft, y), QPointF(ventRight, y));
+        const qreal y = centerSquare.top() + centerSquare.height() * (0.25 + i * 0.5);
+        painter.drawLine(QPointF(traceLeft, y), QPointF(centerInner.left(), y));
+        painter.drawLine(QPointF(centerInner.right(), y), QPointF(traceRight, y));
     }
 
     const qreal orbitRadius = side * 0.72;
@@ -114,16 +134,16 @@ void ComsActivityWidget::paintEvent(QPaintEvent* event)
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(QColor(0, 0, 0, 36));
-        painter.drawEllipse(slotRect.translated(slotRadius * 0.12, slotRadius * 0.18));
+        painter.drawRect(slotRect.translated(slotRadius * 0.1, slotRadius * 0.14));
 
         painter.setPen(QPen(borderColor, 1.6));
         painter.setBrush(fillColor);
-        painter.drawEllipse(slotRect);
+        painter.drawRect(slotRect);
 
         painter.setPen(QPen(QColor(255, 255, 255, fresh ? 170 : 110), 1.0));
         painter.setBrush(Qt::NoBrush);
-        painter.drawArc(slotRect.adjusted(slotRadius * 0.25, slotRadius * 0.25, -slotRadius * 0.25, -slotRadius * 0.25),
-                        35 * 16, 120 * 16);
+        painter.drawLine(slotRect.topLeft() + QPointF(slotRadius * 0.4, slotRadius * 0.35),
+                         slotRect.topRight() + QPointF(-slotRadius * 0.4, slotRadius * 0.35));
     }
 }
 

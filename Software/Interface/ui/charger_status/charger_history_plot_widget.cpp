@@ -16,11 +16,11 @@ constexpr int kTopMargin = 48;
 constexpr int kBottomMargin = 34;
 constexpr int kGridLines = 4;
 const QColor kVoltageColor("#2f6fed");
-const QColor kCurrentColor("#cf3e3e");
-const QColor kGridColor("#dfd6a1");
-const QColor kAxisColor("#6f6232");
+const QColor kCurrentColor("#f05d5e");
+const QColor kGridColor("#dbe4ec");
+const QColor kAxisColor("#566575");
 const QColor kBackgroundColor("#ffffff");
-const QColor kAxisFillColor("#fff3c2");
+const QColor kAxisFillColor("#f7fafc");
 
 QString valueText(double value)
 {
@@ -197,7 +197,7 @@ void ChargerHistoryPlotWidget::paintEvent(QPaintEvent* event)
     painter.drawText(QRect(plotRect.right() + 8, plotRect.bottom() - 20, kRightMargin - 10, 20),
                      Qt::AlignRight | Qt::AlignBottom, valueText(minCurrent));
 
-    painter.setPen(Qt::black);
+    painter.setPen(kAxisColor);
     painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, plotRect.width(), 20), Qt::AlignCenter, "Time (s)");
     painter.setPen(kAxisColor);
     painter.drawText(QRect(plotRect.left(), plotRect.bottom() + 8, 80, 20), Qt::AlignLeft,

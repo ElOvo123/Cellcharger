@@ -17,6 +17,8 @@
 
 namespace
 {
+const char kConsoleBarStyle[] = "background-color: #f2f6fa; border-bottom: 1px solid #d6dee6;";
+
 double simulatedTxValueForSignal(const std::string& signalName, uint32_t deviceId, int counter)
 {
     if (signalName == "charger_id" || signalName == "slot_id")
@@ -190,15 +192,10 @@ void ConsoleWidget::setupMessageView()
 
     updateMessageTableLayout();
 
-    ui->messagesHeaderBar->setStyleSheet("QWidget#messagesHeaderBar {"
-                                         "  background-color: #e6e6e6;"
-                                         "  border-bottom: 1px solid #c8c8c8;"
-                                         "}");
+    ui->messagesHeaderBar->setStyleSheet(QString("QWidget#messagesHeaderBar { %1 }").arg(kConsoleBarStyle));
 
-    ui->messagesBottomBar->setStyleSheet("QWidget#messagesBottomBar {"
-                                         "  background-color: #e6e6e6;"
-                                         "  border-top: 1px solid #c8c8c8;"
-                                         "}");
+    ui->messagesBottomBar->setStyleSheet(
+        "QWidget#messagesBottomBar { background-color: #f2f6fa; border-top: 1px solid #d6dee6; }");
 }
 
 void ConsoleWidget::setupSignalView()
@@ -216,10 +213,7 @@ void ConsoleWidget::setupSignalView()
     ui->signalsTable->setAlternatingRowColors(true);
     ui->signalsTable->viewport()->installEventFilter(this);
 
-    ui->signalTopBar->setStyleSheet("QWidget#signalTopBar {"
-                                    "  background-color: #e6e6e6;"
-                                    "  border-bottom: 1px solid #c8c8c8;"
-                                    "}");
+    ui->signalTopBar->setStyleSheet(QString("QWidget#signalTopBar { %1 }").arg(kConsoleBarStyle));
 
     ui->messageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     ui->signalComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -239,23 +233,14 @@ void ConsoleWidget::setupFilterView()
     ui->filtersTable->setAlternatingRowColors(true);
     ui->filtersTable->viewport()->installEventFilter(this);
 
-    ui->filterTopBar->setStyleSheet("QWidget#filterTopBar {"
-                                    "  background-color: #e6e6e6;"
-                                    "  border-bottom: 1px solid #c8c8c8;"
-                                    "}");
+    ui->filterTopBar->setStyleSheet(QString("QWidget#filterTopBar { %1 }").arg(kConsoleBarStyle));
 }
 
 void ConsoleWidget::setupTxView()
 {
-    ui->txTopBar->setStyleSheet("QWidget#txTopBar {"
-                                "  background-color: #e6e6e6;"
-                                "  border-bottom: 1px solid #c8c8c8;"
-                                "}");
+    ui->txTopBar->setStyleSheet(QString("QWidget#txTopBar { %1 }").arg(kConsoleBarStyle));
 
-    ui->txPeriodicBar->setStyleSheet("QWidget#txPeriodicBar {"
-                                     "  background-color: #e6e6e6;"
-                                     "  border-bottom: 1px solid #c8c8c8;"
-                                     "}");
+    ui->txPeriodicBar->setStyleSheet(QString("QWidget#txPeriodicBar { %1 }").arg(kConsoleBarStyle));
 
     ui->txDeviceComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     ui->txMessageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);

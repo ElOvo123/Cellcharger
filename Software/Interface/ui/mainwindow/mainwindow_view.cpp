@@ -13,22 +13,175 @@
 
 #include <QList>
 #include <QSizePolicy>
+#include <QStatusBar>
 #include <QVBoxLayout>
 #include <QMenu>
 #include <QSplitter>
+
+namespace
+{
+const char kApplicationStyleSheet[] =
+    "QMainWindow {"
+    "  background-color: #f4f7fa;"
+    "  color: #17212b;"
+    "}"
+    "QWidget {"
+    "  font-family: \"Inter\", \"Segoe UI\", \"Roboto\", \"Helvetica Neue\", Arial, sans-serif;"
+    "  font-size: 10pt;"
+    "}"
+    "QMenuBar {"
+    "  background-color: #ffffff;"
+    "  color: #17212b;"
+    "  border-bottom: 1px solid #d6dee6;"
+    "  padding: 3px 8px;"
+    "}"
+    "QMenuBar::item {"
+    "  padding: 5px 10px;"
+    "  background: transparent;"
+    "}"
+    "QMenuBar::item:selected {"
+    "  background-color: #e8f1fb;"
+    "}"
+    "QMenu {"
+    "  background-color: #ffffff;"
+    "  color: #17212b;"
+    "  border: 1px solid #cbd5df;"
+    "}"
+    "QMenu::item:selected {"
+    "  background-color: #2a78c4;"
+    "}"
+    "QToolBar {"
+    "  background-color: #ffffff;"
+    "  border: 0;"
+    "  border-bottom: 1px solid #d6dee6;"
+    "  spacing: 6px;"
+    "  padding: 7px 10px;"
+    "}"
+    "QToolButton {"
+    "  color: #253341;"
+    "  background-color: transparent;"
+    "  border: 1px solid transparent;"
+    "  border-radius: 2px;"
+    "  padding: 5px 10px;"
+    "  min-width: 76px;"
+    "}"
+    "QToolButton:hover {"
+    "  background-color: #edf4fb;"
+    "  border-color: #b9c8d6;"
+    "}"
+    "QToolButton:pressed {"
+    "  background-color: #dceaf6;"
+    "}"
+    "QSplitter {"
+    "  background-color: #f4f7fa;"
+    "}"
+    "QSplitter::handle {"
+    "  background-color: #d6dee6;"
+    "}"
+    "QSplitter::handle:hover {"
+    "  background-color: #3b83c7;"
+    "}"
+    "QStatusBar {"
+    "  background-color: #ffffff;"
+    "  color: #566575;"
+    "  border-top: 1px solid #d6dee6;"
+    "}"
+    "QTabWidget::pane {"
+    "  border: 1px solid #d6dee6;"
+    "  background-color: #ffffff;"
+    "}"
+    "QTabBar::tab {"
+    "  color: #566575;"
+    "  background-color: #edf2f6;"
+    "  border: 1px solid #d6dee6;"
+    "  border-bottom: 0;"
+    "  padding: 7px 14px;"
+    "  margin-right: 3px;"
+    "  min-width: 82px;"
+    "}"
+    "QTabBar::tab:selected {"
+    "  color: #17212b;"
+    "  background-color: #ffffff;"
+    "  border-top: 2px solid #4aa3ff;"
+    "}"
+    "QPushButton {"
+    "  min-height: 30px;"
+    "  color: #17212b;"
+    "  background-color: #eef3f7;"
+    "  border: 1px solid #c4d0dc;"
+    "  border-radius: 2px;"
+    "  padding: 4px 12px;"
+    "  font-weight: 600;"
+    "}"
+    "QPushButton:hover {"
+    "  background-color: #e1edf7;"
+    "  border-color: #9fb3c5;"
+    "}"
+    "QPushButton:pressed {"
+    "  background-color: #d2e2f0;"
+    "}"
+    "QPushButton:disabled {"
+    "  color: #9aa8b5;"
+    "  background-color: #edf1f5;"
+    "  border-color: #d8e0e8;"
+    "}"
+    "QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {"
+    "  min-height: 28px;"
+    "  color: #17212b;"
+    "  background-color: #ffffff;"
+    "  border: 1px solid #c4d0dc;"
+    "  border-radius: 2px;"
+    "  padding: 3px 8px;"
+    "}"
+    "QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {"
+    "  border-color: #4aa3ff;"
+    "}"
+    "QHeaderView::section {"
+    "  background-color: #e9eff5;"
+    "  color: #17212b;"
+    "  border: 0;"
+    "  border-right: 1px solid #d6dee6;"
+    "  padding: 6px 8px;"
+    "  font-weight: 600;"
+    "}"
+    "QTableView, QTableWidget, QTextEdit {"
+    "  color: #17212b;"
+    "  background-color: #ffffff;"
+    "  alternate-background-color: #f5f8fb;"
+    "  border: 1px solid #d6dee6;"
+    "  selection-background-color: #285f94;"
+    "  selection-color: #ffffff;"
+    "}"
+    "QScrollBar:vertical, QScrollBar:horizontal {"
+    "  background: #f4f7fa;"
+    "  border: 0;"
+    "}"
+    "QScrollBar::handle {"
+    "  background: #b9c8d6;"
+    "  border-radius: 1px;"
+    "}";
+} // namespace
 
 MainWindowView::MainWindowView(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_panelSplitter(new QSplitter(Qt::Horizontal, this))
 {
     ui->setupUi(this);
 
-    ui->mainToolBar->setIconSize(QSize(48, 48));
+    setWindowTitle("CellCharger Test Bench");
+    resize(1280, 760);
+    setStyleSheet(kApplicationStyleSheet);
+
+    ui->mainToolBar->setIconSize(QSize(32, 32));
     ui->mainToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->mainToolBar->setMovable(false);
+    ui->mainToolBar->setFloatable(false);
+    ui->statusbar->showMessage("Ready - industrial cell charger interface");
 
     m_centralContainer = new QWidget(this);
+    m_centralContainer->setObjectName("centralWorkspace");
     auto* centralLayout = new QVBoxLayout(m_centralContainer);
-    centralLayout->setContentsMargins(0, 0, 0, 0);
-    centralLayout->setSpacing(0);
+    centralLayout->setContentsMargins(10, 10, 10, 10);
+    centralLayout->setSpacing(10);
     centralLayout->addWidget(m_panelSplitter);
 
     setCentralWidget(m_centralContainer);
